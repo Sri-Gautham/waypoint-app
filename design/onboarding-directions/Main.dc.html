@@ -1,0 +1,1047 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap">
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    body { margin: 0; font-family: 'Manrope', system-ui, sans-serif; }
+    a { color: oklch(45% 0.14 260); text-decoration: none; font-weight: 600; }
+    a:hover { color: oklch(35% 0.14 260); }
+    input::placeholder { color: oklch(70% 0.003 250); }
+    input { outline: none; }
+    input:focus { border-bottom-color: oklch(45% 0.14 260) !important; }
+    button { cursor: pointer; }
+    .wp-field { display:flex; flex-direction:column; gap:7px; }
+    .wp-label { font-size:12px; font-weight:600; color: oklch(50% 0.005 250); text-transform:uppercase; letter-spacing:0.04em; }
+    .wp-input { border:none; border-bottom:1.5px solid oklch(88% 0.003 250); background: transparent; border-radius:0; padding:8px 0; font-size:15px; font-family:inherit; color: oklch(18% 0.005 250); box-sizing:border-box; width:100%; }
+    .wp-primary { width:100%; border:none; border-radius:8px; background: oklch(45% 0.14 260); color:white; font-family:inherit; font-weight:700; font-size:15px; padding:15px; box-sizing:border-box; }
+    .wp-back { width:36px; height:36px; border-radius:999px; border:none; background: oklch(95% 0.003 250); display:flex; align-items:center; justify-content:center; padding:0; }
+  </style>
+</helmet>
+<div style="width:390px; height:844px; background: oklch(99% 0.002 250); box-sizing:border-box; overflow:hidden; position:relative;">
+
+<sc-if value="{{isStep0}}" hint-placeholder-val="{{true}}">
+<div style="width:100%; height:100%; display:flex; flex-direction:column; box-sizing:border-box;">
+  <div style="display:flex; align-items:center; justify-content:space-between; padding:28px 28px 0 28px;">
+    <div style="display:flex; align-items:center; gap:9px;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="oklch(18% 0.005 250)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"></path>
+        <circle cx="12" cy="10" r="2.5"></circle>
+      </svg>
+      <span style="font-weight:800; font-size:15px; letter-spacing:0.02em; color: oklch(18% 0.005 250);">WAYPOINT</span>
+    </div>
+    <span style="font-size:12px; font-weight:600; color: oklch(60% 0.005 250);">{{stepLabel}}</span>
+  </div>
+
+  <div style="padding: 40px 28px 0 28px;">
+    <h1 style="margin:0 0 8px 0; font-size:24px; line-height:1.3; font-weight:800; color: oklch(18% 0.005 250); letter-spacing:-0.01em;">Create your account</h1>
+    <p style="margin:0; font-size:14px; line-height:1.5; color: oklch(50% 0.005 250);">Takes about a minute. You'll verify your email and phone next.</p>
+  </div>
+
+  <div style="padding: 36px 28px 0 28px; display:flex; flex-direction:column; gap:22px; flex-grow:1;">
+    <div style="display:flex; gap:16px;">
+      <div class="wp-field" style="flex-grow:1;">
+        <label class="wp-label">First name</label>
+        <input type="text" placeholder="Jamie" class="wp-input" value="{{firstName}}" onChange="{{onFirstName}}">
+      </div>
+      <div class="wp-field" style="flex-grow:1;">
+        <label class="wp-label">Last name</label>
+        <input type="text" placeholder="Rivera" class="wp-input" value="{{lastName}}" onChange="{{onLastName}}">
+      </div>
+    </div>
+    <div class="wp-field">
+      <label class="wp-label">Email</label>
+      <input type="email" placeholder="jamie@email.com" class="wp-input" value="{{email}}" onChange="{{onEmail}}">
+    </div>
+    <div class="wp-field">
+      <label class="wp-label">Phone number</label>
+      <input type="tel" placeholder="(555) 010-0198" class="wp-input" value="{{phone}}" onChange="{{onPhone}}">
+    </div>
+  </div>
+
+  <div style="padding: 24px 28px 32px 28px; display:flex; flex-direction:column; gap:18px;">
+    <button type="button" class="wp-primary" onClick="{{goNext}}">Continue</button>
+    <span style="font-size:13px; color: oklch(50% 0.005 250); text-align:center;">Already have an account? <a href="#">Log in</a></span>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{isStep1}}" hint-placeholder-val="{{false}}">
+<div style="width:100%; height:100%; display:flex; flex-direction:column; box-sizing:border-box;">
+  <div style="display:flex; align-items:center; justify-content:space-between; padding:28px 28px 0 28px;">
+    <button type="button" class="wp-back" onClick="{{goBack}}">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="oklch(18% 0.005 250)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"></path></svg>
+    </button>
+    <span style="font-size:12px; font-weight:600; color: oklch(60% 0.005 250);">{{stepLabel}}</span>
+  </div>
+
+  <div style="padding: 36px 28px 0 28px;">
+    <h1 style="margin:0 0 8px 0; font-size:24px; line-height:1.3; font-weight:800; color: oklch(18% 0.005 250); letter-spacing:-0.01em;">Verify your email</h1>
+    <p style="margin:0; font-size:14px; line-height:1.5; color: oklch(50% 0.005 250);">Enter the 6-digit code we sent to</p>
+    <p style="margin:2px 0 0 0; font-size:14px; font-weight:700; color: oklch(18% 0.005 250);">{{emailDisplay}}</p>
+  </div>
+
+  <div style="padding: 32px 28px 0 28px; display:flex; flex-direction:column; gap:20px; flex-grow:1;">
+    <div style="display:flex; gap:10px; justify-content:space-between;">
+      <sc-for list="{{emailCodeCells}}" as="cell" hint-placeholder-count="6">
+        <input type="text" maxlength="1" value="{{cell.value}}" onChange="{{cell.onChange}}" style="width:44px; height:56px; text-align:center; font-size:22px; font-weight:700; border:none; border-bottom:2px solid oklch(88% 0.003 250); background:transparent; font-family:inherit; color: oklch(18% 0.005 250); box-sizing:border-box;">
+      </sc-for>
+    </div>
+    <div style="font-size:13px; color: oklch(50% 0.005 250);">Didn't get a code? <a href="#" onClick="{{resendEmail}}">Resend</a> &middot; <a href="#" onClick="{{goBack}}">Edit email</a></div>
+  </div>
+
+  <div style="padding: 24px 28px 32px 28px;">
+    <button type="button" class="wp-primary" onClick="{{goNext}}">Continue</button>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{isStep2}}" hint-placeholder-val="{{false}}">
+<div style="width:100%; height:100%; display:flex; flex-direction:column; box-sizing:border-box;">
+  <div style="display:flex; align-items:center; justify-content:space-between; padding:28px 28px 0 28px;">
+    <button type="button" class="wp-back" onClick="{{goBack}}">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="oklch(18% 0.005 250)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"></path></svg>
+    </button>
+    <span style="font-size:12px; font-weight:600; color: oklch(60% 0.005 250);">{{stepLabel}}</span>
+  </div>
+
+  <div style="padding: 36px 28px 0 28px;">
+    <h1 style="margin:0 0 8px 0; font-size:24px; line-height:1.3; font-weight:800; color: oklch(18% 0.005 250); letter-spacing:-0.01em;">Verify your phone</h1>
+    <p style="margin:0; font-size:14px; line-height:1.5; color: oklch(50% 0.005 250);">Enter the 6-digit code we texted to</p>
+    <p style="margin:2px 0 0 0; font-size:14px; font-weight:700; color: oklch(18% 0.005 250);">{{phoneDisplay}}</p>
+  </div>
+
+  <div style="padding: 32px 28px 0 28px; display:flex; flex-direction:column; gap:20px; flex-grow:1;">
+    <div style="display:flex; gap:10px; justify-content:space-between;">
+      <sc-for list="{{phoneCodeCells}}" as="cell" hint-placeholder-count="6">
+        <input type="text" maxlength="1" value="{{cell.value}}" onChange="{{cell.onChange}}" style="width:44px; height:56px; text-align:center; font-size:22px; font-weight:700; border:none; border-bottom:2px solid oklch(88% 0.003 250); background:transparent; font-family:inherit; color: oklch(18% 0.005 250); box-sizing:border-box;">
+      </sc-for>
+    </div>
+    <div style="font-size:13px; color: oklch(50% 0.005 250);">Didn't get a code? <a href="#" onClick="{{resendPhone}}">Resend</a> &middot; <a href="#" onClick="{{goBack}}">Edit number</a></div>
+  </div>
+
+  <div style="padding: 24px 28px 32px 28px;">
+    <button type="button" class="wp-primary" onClick="{{goNext}}">Continue</button>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{isStep3}}" hint-placeholder-val="{{false}}">
+<div style="width:100%; height:100%; display:flex; flex-direction:column; box-sizing:border-box;">
+  <div style="display:flex; align-items:center; justify-content:space-between; padding:28px 28px 0 28px;">
+    <button type="button" class="wp-back" onClick="{{goBack}}">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="oklch(18% 0.005 250)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"></path></svg>
+    </button>
+    <span style="font-size:12px; font-weight:600; color: oklch(60% 0.005 250);">{{stepLabel}}</span>
+  </div>
+
+  <div style="padding: 32px 28px 0 28px;">
+    <h1 style="margin:0 0 8px 0; font-size:24px; line-height:1.3; font-weight:800; color: oklch(18% 0.005 250); letter-spacing:-0.01em;">Add your home address</h1>
+    <p style="margin:0; font-size:14px; line-height:1.5; color: oklch(50% 0.005 250);">Used to plan routes and carpools for your trips. You can update it anytime.</p>
+  </div>
+
+  <div style="padding: 20px 28px 0 28px; display:flex; flex-direction:column; gap:18px; flex-grow:1; overflow:auto;">
+    <button type="button" onClick="{{useLocation}}" style="display:flex; align-items:center; gap:8px; align-self:flex-start; background: oklch(95% 0.02 260); border: none; border-radius:999px; padding:9px 16px 9px 12px; font-family:inherit; font-size:13px; font-weight:700; color: oklch(45% 0.14 260);">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="oklch(45% 0.14 260)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"></path><circle cx="12" cy="10" r="2.5"></circle></svg>
+      Use current location
+    </button>
+
+    <div class="wp-field">
+      <label class="wp-label">Street address</label>
+      <input type="text" placeholder="1400 Elm Street" class="wp-input" value="{{street}}" onChange="{{onStreet}}">
+    </div>
+    <div class="wp-field">
+      <label class="wp-label">Apt / Unit (optional)</label>
+      <input type="text" placeholder="Apt 4B" class="wp-input" value="{{apt}}" onChange="{{onApt}}">
+    </div>
+    <div class="wp-field">
+      <label class="wp-label">City</label>
+      <input type="text" placeholder="Austin" class="wp-input" value="{{city}}" onChange="{{onCity}}">
+    </div>
+    <div style="display:flex; gap:16px;">
+      <div class="wp-field" style="flex-grow:1;">
+        <label class="wp-label">State</label>
+        <input type="text" placeholder="TX" class="wp-input" value="{{stateField}}" onChange="{{onState}}">
+      </div>
+      <div class="wp-field" style="flex-grow:1;">
+        <label class="wp-label">ZIP code</label>
+        <input type="text" placeholder="78701" class="wp-input" value="{{zip}}" onChange="{{onZip}}">
+      </div>
+    </div>
+  </div>
+
+  <div style="padding: 20px 28px 32px 28px;">
+    <button type="button" class="wp-primary" onClick="{{goNext}}">Finish</button>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{isStep4}}" hint-placeholder-val="{{false}}">
+<div style="width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; box-sizing:border-box; padding:32px; text-align:center;">
+  <div style="width:64px; height:64px; border-radius:999px; background: oklch(45% 0.14 260); display:flex; align-items:center; justify-content:center; margin-bottom:24px;">
+    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg>
+  </div>
+  <h1 style="margin:0 0 10px 0; font-size:24px; font-weight:800; color: oklch(18% 0.005 250); letter-spacing:-0.01em;">You're all set, {{firstNameDisplay}}</h1>
+  <p style="margin:0 0 32px 0; font-size:14px; line-height:1.5; color: oklch(50% 0.005 250); max-width:280px;">Your account is ready. Let's get you to your trips.</p>
+  <button type="button" class="wp-primary" onClick="{{goNext}}" style="width:100%;">Get started</button>
+</div>
+</sc-if>
+
+<sc-if value="{{isStep5}}" hint-placeholder-val="{{false}}">
+<div style="width:100%; height:100%; display:flex; flex-direction:column; box-sizing:border-box; position:relative;">
+
+  <div style="flex-grow:1; overflow:auto; padding-bottom:12px;">
+
+  <sc-if value="{{isTabHome}}" hint-placeholder-val="{{true}}">
+  <div>
+    <div style="display:flex; align-items:center; justify-content:space-between; padding:24px 24px 0 24px;">
+      <div>
+        <h1 style="margin:0; font-size:22px; font-weight:800; color: oklch(18% 0.005 250); letter-spacing:-0.01em;">Hi, {{firstNameDisplay}}</h1>
+        <p style="margin:4px 0 0 0; font-size:13px; color: oklch(55% 0.005 250);">Here's what's coming up</p>
+      </div>
+      <div style="width:38px; height:38px; border-radius:999px; background: oklch(45% 0.14 260); color:white; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:800;">{{initials}}</div>
+    </div>
+
+    <div onClick="{{openTripDetail}}" style="margin:24px 24px 0 24px; border-radius:16px; overflow:hidden; position:relative; height:168px; cursor:pointer;">
+      <svg viewBox="0 0 400 200" preserveAspectRatio="xMidYMid slice" style="position:absolute; inset:0; width:100%; height:100%; display:block;">
+        <defs>
+          <linearGradient id="skyCard" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="{{coverSky1}}"></stop>
+            <stop offset="55%" stop-color="{{coverSky2}}"></stop>
+            <stop offset="100%" stop-color="{{coverSky3}}"></stop>
+          </linearGradient>
+          <linearGradient id="lakeCard" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="{{coverBand1}}"></stop>
+            <stop offset="100%" stop-color="{{coverBand2}}"></stop>
+          </linearGradient>
+        </defs>
+        <rect x="0" y="0" width="400" height="200" fill="url(#skyCard)"></rect>
+        <circle cx="300" cy="55" r="26" fill="{{coverSun}}"></circle>
+        <polygon points="0,130 60,80 120,120 180,70 240,115 300,75 360,110 400,90 400,150 0,150" fill="{{coverMid}}"></polygon>
+        <polygon points="0,150 90,105 170,140 260,100 340,135 400,115 400,160 0,160" fill="{{coverFront}}"></polygon>
+        <rect x="0" y="150" width="400" height="50" fill="url(#lakeCard)"></rect>
+      </svg>
+      <div style="position:absolute; inset:0; background: linear-gradient(to bottom, rgba(10,12,20,0) 35%, rgba(10,12,20,0.78) 100%);"></div>
+      <div style="position:absolute; left:0; right:0; bottom:0; padding:16px;">
+        <span style="font-size:11px; font-weight:700; letter-spacing:0.06em; color: rgba(255,255,255,0.85); text-transform:uppercase;">Next trip</span>
+        <h2 style="margin:4px 0 6px 0; font-size:18px; font-weight:800; color:white;">{{groupName}}</h2>
+        <div style="display:flex; align-items:center; gap:5px; margin-bottom:10px;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"></path><circle cx="12" cy="10" r="2.5"></circle></svg>
+          <span style="font-size:12.5px; color: rgba(255,255,255,0.9);">{{groupDestinationDate}}</span>
+        </div>
+        <div style="display:flex;">
+          <sc-for list="{{cardAvatars}}" as="av" hint-placeholder-count="2">
+            <div style="width:26px; height:26px; border-radius:999px; background: oklch(85% 0.01 260); border:2px solid white; margin-left:{{av.marginLeft}}; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; color: oklch(30% 0.01 260);">{{av.initials}}</div>
+          </sc-for>
+          <sc-if value="{{hasCardOverflow}}" hint-placeholder-val="{{true}}">
+            <div style="width:26px; height:26px; border-radius:999px; background: rgba(255,255,255,0.25); border:2px solid white; margin-left:-8px; display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:700; color:white;">{{cardOverflowLabel}}</div>
+          </sc-if>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex; gap:10px; margin:20px 24px 0 24px;">
+      <button type="button" onClick="{{openCreateFlow}}" style="flex-grow:1; border:none; border-radius:8px; background: oklch(45% 0.14 260); color:white; font-family:inherit; font-weight:700; font-size:13px; padding:12px; box-sizing:border-box;">Create a group</button>
+      <button type="button" style="flex-grow:1; border:1.5px solid oklch(88% 0.003 250); border-radius:8px; background:transparent; color: oklch(18% 0.005 250); font-family:inherit; font-weight:700; font-size:13px; padding:12px; box-sizing:border-box;">Join with code</button>
+    </div>
+
+    <div style="margin:28px 24px 0 24px; display:flex; align-items:center; justify-content:space-between;">
+      <span style="font-size:14px; font-weight:800; color: oklch(18% 0.005 250);">Recent activity</span>
+      <a href="#" onClick="{{goToActivity}}" style="font-size:12px;">See all</a>
+    </div>
+    <div style="margin:12px 24px 0 24px; display:flex; flex-direction:column;">
+      <sc-for list="{{activityItems}}" as="item" hint-placeholder-count="3">
+        <div style="display:flex; gap:10px; padding:10px 0; border-bottom:1px solid oklch(94% 0.003 250);">
+          <div style="width:8px; height:8px; border-radius:999px; background: oklch(45% 0.14 260); margin-top:6px; flex-shrink:0;"></div>
+          <div>
+            <p style="margin:0; font-size:13px; color: oklch(25% 0.005 250); line-height:1.4;">{{item.text}}</p>
+            <span style="font-size:12px; color: oklch(60% 0.005 250);">{{item.time}}</span>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{isTabTrips}}" hint-placeholder-val="{{false}}">
+  <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:80px 32px 0 32px;">
+    <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="oklch(70% 0.005 250)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 3"></path></svg>
+    <h2 style="margin:16px 0 6px 0; font-size:17px; font-weight:800; color: oklch(18% 0.005 250);">Trips &amp; Balances</h2>
+    <p style="margin:0; font-size:13px; line-height:1.5; color: oklch(55% 0.005 250);">Your full trip list and who-owes-who balances will live here.</p>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{isTabActivity}}" hint-placeholder-val="{{false}}">
+  <div>
+    <h1 style="margin:0; padding:24px 24px 0 24px; font-size:20px; font-weight:800; color: oklch(18% 0.005 250);">Activity</h1>
+    <div style="margin:16px 24px 0 24px; display:flex; flex-direction:column;">
+      <sc-for list="{{activityItems}}" as="item" hint-placeholder-count="3">
+        <div style="display:flex; gap:10px; padding:12px 0; border-bottom:1px solid oklch(94% 0.003 250);">
+          <div style="width:8px; height:8px; border-radius:999px; background: oklch(45% 0.14 260); margin-top:6px; flex-shrink:0;"></div>
+          <div>
+            <p style="margin:0; font-size:13px; color: oklch(25% 0.005 250); line-height:1.4;">{{item.text}}</p>
+            <span style="font-size:12px; color: oklch(60% 0.005 250);">{{item.time}}</span>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{isTabProfile}}" hint-placeholder-val="{{false}}">
+  <div style="padding:24px;">
+    <div style="display:flex; flex-direction:column; align-items:center; padding:12px 0 24px 0;">
+      <div style="width:64px; height:64px; border-radius:999px; background: oklch(45% 0.14 260); color:white; display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:800; margin-bottom:12px;">{{initials}}</div>
+      <h2 style="margin:0; font-size:17px; font-weight:800; color: oklch(18% 0.005 250);">{{fullName}}</h2>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:14px;">
+      <div style="border-bottom:1px solid oklch(94% 0.003 250); padding-bottom:12px;">
+        <span class="wp-label">Email</span>
+        <p style="margin:4px 0 0 0; font-size:14px; color: oklch(25% 0.005 250);">{{emailDisplay}}</p>
+      </div>
+      <div style="border-bottom:1px solid oklch(94% 0.003 250); padding-bottom:12px;">
+        <span class="wp-label">Phone</span>
+        <p style="margin:4px 0 0 0; font-size:14px; color: oklch(25% 0.005 250);">{{phoneDisplay}}</p>
+      </div>
+      <div style="padding-bottom:12px;">
+        <span class="wp-label">Home address</span>
+        <p style="margin:4px 0 0 0; font-size:14px; color: oklch(25% 0.005 250);">{{addressDisplay}}</p>
+      </div>
+    </div>
+    <a href="#" onClick="{{restart}}" style="display:block; margin-top:28px; font-size:12px; color: oklch(65% 0.005 250); font-weight:600; text-align:center;">Restart demo</a>
+  </div>
+  </sc-if>
+
+  </div>
+
+  <div style="flex-shrink:0; display:flex; border-top:1px solid oklch(93% 0.003 250); padding:10px 8px 22px 8px; background: oklch(99% 0.002 250);">
+    <button type="button" onClick="{{goToHome}}" style="flex-grow:1; background:none; border:none; display:flex; flex-direction:column; align-items:center; gap:4px; padding:6px 0; font-family:inherit;">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="{{homeColor}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"></path><path d="M5 10v10h14V10"></path></svg>
+      <span style="font-size:10.5px; font-weight:700; color:{{homeColor}};">Home</span>
+    </button>
+    <button type="button" onClick="{{goToTrips}}" style="flex-grow:1; background:none; border:none; display:flex; flex-direction:column; align-items:center; gap:4px; padding:6px 0; font-family:inherit;">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="{{tripsColor}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 3"></path></svg>
+      <span style="font-size:10.5px; font-weight:700; color:{{tripsColor}};">Trips &amp; Balances</span>
+    </button>
+    <button type="button" onClick="{{goToActivity}}" style="flex-grow:1; background:none; border:none; display:flex; flex-direction:column; align-items:center; gap:4px; padding:6px 0; font-family:inherit;">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="{{activityColor}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.7 21a2 2 0 0 1-3.4 0"></path></svg>
+      <span style="font-size:10.5px; font-weight:700; color:{{activityColor}};">Activity</span>
+    </button>
+    <button type="button" onClick="{{goToProfile}}" style="flex-grow:1; background:none; border:none; display:flex; flex-direction:column; align-items:center; gap:4px; padding:6px 0; font-family:inherit;">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="{{profileColor}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4 4-6 8-6s8 2 8 6"></path></svg>
+      <span style="font-size:10.5px; font-weight:700; color:{{profileColor}};">Profile</span>
+    </button>
+  </div>
+
+  <sc-if value="{{isTripDetailVisible}}" hint-placeholder-val="{{false}}">
+  <div style="position:absolute; inset:0; background: oklch(99% 0.002 250); display:flex; flex-direction:column; z-index:20;">
+    <div style="display:flex; align-items:center; justify-content:space-between; padding:20px 20px 0 20px; flex-shrink:0;">
+      <button type="button" class="wp-back" onClick="{{closeTripDetail}}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="oklch(18% 0.005 250)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"></path></svg>
+      </button>
+      <span style="font-size:15px; font-weight:800; color: oklch(18% 0.005 250);">{{groupName}}</span>
+      <button type="button" onClick="{{openChat}}" style="width:36px; height:36px; border-radius:999px; border:none; background: oklch(45% 0.14 260); display:flex; align-items:center; justify-content:center; padding:0;">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-1 4 8.5 8.5 0 0 1-7.5 4.5 8.4 8.4 0 0 1-4-1L3 21l2-5.5a8.4 8.4 0 0 1-1-4A8.5 8.5 0 0 1 8.5 3a8.4 8.4 0 0 1 4-1h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+      </button>
+    </div>
+
+    <div style="flex-grow:1; overflow:auto;">
+      <div style="margin:18px 20px 0 20px; border-radius:16px; overflow:hidden; position:relative; height:150px;">
+        <svg viewBox="0 0 400 200" preserveAspectRatio="xMidYMid slice" style="position:absolute; inset:0; width:100%; height:100%; display:block;">
+          <defs>
+            <linearGradient id="skyDetail" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="{{coverSky1}}"></stop>
+              <stop offset="55%" stop-color="{{coverSky2}}"></stop>
+              <stop offset="100%" stop-color="{{coverSky3}}"></stop>
+            </linearGradient>
+            <linearGradient id="lakeDetail" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="{{coverBand1}}"></stop>
+              <stop offset="100%" stop-color="{{coverBand2}}"></stop>
+            </linearGradient>
+          </defs>
+          <rect x="0" y="0" width="400" height="200" fill="url(#skyDetail)"></rect>
+          <circle cx="300" cy="55" r="26" fill="{{coverSun}}"></circle>
+          <polygon points="0,130 60,80 120,120 180,70 240,115 300,75 360,110 400,90 400,150 0,150" fill="{{coverMid}}"></polygon>
+          <polygon points="0,150 90,105 170,140 260,100 340,135 400,115 400,160 0,160" fill="{{coverFront}}"></polygon>
+          <rect x="0" y="150" width="400" height="50" fill="url(#lakeDetail)"></rect>
+        </svg>
+        <div style="position:absolute; inset:0; background: linear-gradient(to bottom, rgba(10,12,20,0) 45%, rgba(10,12,20,0.7) 100%);"></div>
+        <div style="position:absolute; left:16px; right:16px; bottom:14px; display:flex; align-items:center; gap:6px;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"></path><circle cx="12" cy="10" r="2.5"></circle></svg>
+          <span style="font-size:13px; color:white; font-weight:700;">{{groupDestination}}</span>
+        </div>
+      </div>
+
+      <div style="display:flex; gap:10px; margin:16px 20px 0 20px;">
+        <div style="flex:1; border:1.5px solid oklch(90% 0.003 250); border-radius:12px; padding:12px; text-align:center;">
+          <span style="display:block; font-size:20px; font-weight:800; color: oklch(18% 0.005 250);">{{daysLeftLabel}}</span>
+          <span style="font-size:11px; color: oklch(55% 0.005 250); font-weight:600;">days left</span>
+        </div>
+        <div style="flex:1; border:1.5px solid oklch(90% 0.003 250); border-radius:12px; padding:12px; text-align:center;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="oklch(70% 0.13 75)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin:0 auto 2px auto; display:block;"><circle cx="12" cy="12" r="5"></circle><path d="M12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"></path></svg>
+          <span style="display:block; font-size:14px; font-weight:800; color: oklch(18% 0.005 250);">{{weatherTemp}}</span>
+          <span style="font-size:11px; color: oklch(55% 0.005 250); font-weight:600;">{{weatherCondition}}</span>
+        </div>
+      </div>
+
+      <div style="margin:24px 20px 0 20px; display:flex; align-items:center; justify-content:space-between;">
+        <span style="font-size:14px; font-weight:800; color: oklch(18% 0.005 250);">Members</span>
+        <span style="font-size:12px; color: oklch(55% 0.005 250);">{{memberCountLabel}}</span>
+      </div>
+      <div style="margin:10px 20px 16px 20px; display:flex; flex-direction:column;">
+        <sc-for list="{{members}}" as="m" hint-placeholder-count="5">
+          <div style="display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid oklch(94% 0.003 250);">
+            <div style="width:34px; height:34px; border-radius:999px; background: oklch(90% 0.01 260); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color: oklch(35% 0.01 260); flex-shrink:0;">{{m.initials}}</div>
+            <div style="flex-grow:1;">
+              <div style="display:flex; align-items:center; gap:6px;">
+                <span style="font-size:13.5px; font-weight:700; color: oklch(18% 0.005 250);">{{m.name}}</span>
+                <span style="font-size:10.5px; font-weight:700; padding:2px 7px; border-radius:999px; background:{{m.badgeBg}}; color:{{m.badgeColor}};">{{m.status}}</span>
+              </div>
+              <span style="font-size:12px; color: oklch(55% 0.005 250);">{{m.distance}} from home</span>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{isChatVisible}}" hint-placeholder-val="{{false}}">
+  <div style="position:absolute; inset:0; background: oklch(99% 0.002 250); display:flex; flex-direction:column; z-index:30;">
+    <div style="display:flex; align-items:center; gap:12px; padding:20px 20px 14px 20px; border-bottom:1px solid oklch(93% 0.003 250); flex-shrink:0;">
+      <button type="button" class="wp-back" onClick="{{closeChat}}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="oklch(18% 0.005 250)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"></path></svg>
+      </button>
+      <div>
+        <div style="font-size:14.5px; font-weight:800; color: oklch(18% 0.005 250);">{{groupName}}</div>
+        <div style="font-size:11.5px; color: oklch(55% 0.005 250);">{{chatSubtitle}}</div>
+      </div>
+    </div>
+
+    <div style="flex-grow:1; overflow:auto; padding:16px 20px; display:flex; flex-direction:column; gap:12px;">
+      <sc-for list="{{chatMessages}}" as="msg" hint-placeholder-count="4">
+        <div style="display:flex; flex-direction:column; align-items:{{msg.align}};">
+          <sc-if value="{{msg.showName}}" hint-placeholder-val="{{true}}">
+            <span style="font-size:11px; font-weight:700; color: oklch(55% 0.005 250); margin-bottom:3px;">{{msg.sender}}</span>
+          </sc-if>
+          <div style="max-width:240px; padding:10px 13px; border-radius:14px; background:{{msg.bg}}; color:{{msg.color}}; font-size:13.5px; line-height:1.4;">{{msg.text}}</div>
+          <span style="font-size:10.5px; color: oklch(65% 0.005 250); margin-top:3px;">{{msg.time}}</span>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="flex-shrink:0; display:flex; align-items:center; gap:10px; padding:12px 16px 24px 16px; border-top:1px solid oklch(93% 0.003 250);">
+      <input type="text" placeholder="Message" value="{{chatInput}}" onChange="{{onChatInput}}" onKeyDown="{{onChatKeyDown}}" style="flex-grow:1; border:1.5px solid oklch(88% 0.003 250); border-radius:999px; padding:10px 16px; font-size:14px; font-family:inherit; color: oklch(18% 0.005 250); box-sizing:border-box;">
+      <button type="button" onClick="{{sendMessage}}" style="width:38px; height:38px; border-radius:999px; border:none; background: oklch(45% 0.14 260); display:flex; align-items:center; justify-content:center; flex-shrink:0; padding:0;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"></path><path d="M22 2l-7 20-4-9-9-4 20-7z"></path></svg>
+      </button>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{isCreateVisible}}" hint-placeholder-val="{{false}}">
+  <div style="position:absolute; inset:0; background: oklch(99% 0.002 250); display:flex; flex-direction:column; z-index:40;">
+    <div style="display:flex; align-items:center; justify-content:space-between; padding:20px 20px 0 20px; flex-shrink:0;">
+      <button type="button" class="wp-back" onClick="{{createGoBack}}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="oklch(18% 0.005 250)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"></path></svg>
+      </button>
+      <span style="font-size:15px; font-weight:800; color: oklch(18% 0.005 250);">New trip</span>
+      <span style="font-size:12px; font-weight:600; color: oklch(60% 0.005 250); width:36px; text-align:right;">{{createStepLabel}}</span>
+    </div>
+
+    <div style="flex-grow:1; overflow:auto; padding-top:20px;">
+
+      <sc-if value="{{isCreateStep0}}" hint-placeholder-val="{{true}}">
+      <div style="padding:0 20px 20px 20px;">
+        <div class="wp-field" style="margin-bottom:20px;">
+          <label class="wp-label">Cover</label>
+          <div style="display:flex; gap:10px; margin-top:6px;">
+            <sc-for list="{{coverOptions}}" as="opt" hint-placeholder-count="4">
+              <button type="button" onClick="{{opt.onSelect}}" style="width:56px; height:56px; border-radius:14px; background:{{opt.tint}}; border:{{opt.ringStyle}}; display:flex; align-items:center; justify-content:center; padding:0; flex-shrink:0;">
+                <sc-if value="{{opt.isMountain}}" hint-placeholder-val="{{true}}">
+                  <svg width="22" height="22" viewBox="0 0 24 24"><polygon points="2,19 8,9 12,15 16,6 22,19" fill="{{opt.accent}}"></polygon></svg>
+                </sc-if>
+                <sc-if value="{{opt.isWave}}" hint-placeholder-val="{{false}}">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="{{opt.accent}}" stroke-width="2" stroke-linecap="round"><path d="M2 13c2-3 4-3 6 0s4 3 6 0 4-3 6 0"></path><path d="M2 18c2-3 4-3 6 0s4 3 6 0 4-3 6 0" opacity="0.5"></path></svg>
+                </sc-if>
+                <sc-if value="{{opt.isDesert}}" hint-placeholder-val="{{false}}">
+                  <svg width="22" height="22" viewBox="0 0 24 24"><circle cx="12" cy="9" r="4" fill="{{opt.accent}}"></circle><path d="M2 19c3-4 6-4 9 0s7 3 11-1" fill="none" stroke="{{opt.accent}}" stroke-width="2" stroke-linecap="round"></path></svg>
+                </sc-if>
+                <sc-if value="{{opt.isForest}}" hint-placeholder-val="{{false}}">
+                  <svg width="22" height="22" viewBox="0 0 24 24"><polygon points="12,2 17,11 14,11 18,19 6,19 10,11 7,11" fill="{{opt.accent}}"></polygon></svg>
+                </sc-if>
+              </button>
+            </sc-for>
+          </div>
+        </div>
+
+        <div class="wp-field" style="margin-bottom:18px;">
+          <label class="wp-label">Trip name</label>
+          <input type="text" placeholder="Lake Tahoe Crew" class="wp-input" value="{{cg_name}}" onChange="{{onCgName}}">
+        </div>
+
+        <div class="wp-field" style="margin-bottom:18px;">
+          <label class="wp-label">Notes (optional)</label>
+          <textarea placeholder="Cabin weekend, bring hiking boots" class="wp-input" value="{{cg_desc}}" onChange="{{onCgDesc}}" rows="2" style="border:none; border-bottom:1.5px solid oklch(88% 0.003 250); background:transparent; padding:8px 0; font-size:15px; font-family:inherit; color: oklch(18% 0.005 250); resize:none; width:100%; box-sizing:border-box;"></textarea>
+        </div>
+
+        <div style="display:flex; gap:16px;">
+          <div class="wp-field" style="flex-grow:1;">
+            <label class="wp-label">Start date</label>
+            <input type="date" class="wp-input" value="{{cg_startDate}}" onChange="{{onCgStartDate}}">
+          </div>
+          <div class="wp-field" style="flex-grow:1;">
+            <label class="wp-label">End date (optional)</label>
+            <input type="date" class="wp-input" value="{{cg_endDate}}" onChange="{{onCgEndDate}}">
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{isCreateStep1}}" hint-placeholder-val="{{false}}">
+      <div style="padding:0 20px 20px 20px;">
+        <div style="display:flex; border:1.5px solid oklch(88% 0.003 250); border-radius:10px; padding:3px; margin-bottom:20px;">
+          <button type="button" onClick="{{setDestModeArea}}" style="flex:1; border:none; border-radius:7px; background:{{destAreaBtnBg}}; color:{{destAreaBtnColor}}; font-family:inherit; font-weight:700; font-size:13px; padding:9px; box-sizing:border-box;">General area</button>
+          <button type="button" onClick="{{setDestModeExact}}" style="flex:1; border:none; border-radius:7px; background:{{destExactBtnBg}}; color:{{destExactBtnColor}}; font-family:inherit; font-weight:700; font-size:13px; padding:9px; box-sizing:border-box;">Exact address</button>
+        </div>
+
+        <sc-if value="{{isDestExact}}" hint-placeholder-val="{{false}}">
+          <div class="wp-field" style="margin-bottom:16px;">
+            <label class="wp-label">Street address</label>
+            <input type="text" placeholder="1400 Elm Street" class="wp-input" value="{{cg_destStreet}}" onChange="{{onCgStreet}}">
+          </div>
+          <div class="wp-field" style="margin-bottom:16px;">
+            <label class="wp-label">Apt / Unit (optional)</label>
+            <input type="text" placeholder="Apt 4B" class="wp-input" value="{{cg_destApt}}" onChange="{{onCgApt}}">
+          </div>
+        </sc-if>
+
+        <div class="wp-field" style="margin-bottom:16px;">
+          <label class="wp-label">City</label>
+          <input type="text" placeholder="South Lake Tahoe" class="wp-input" value="{{cg_destCity}}" onChange="{{onCgCity}}">
+        </div>
+        <div style="display:flex; gap:16px;">
+          <div class="wp-field" style="flex-grow:1;">
+            <label class="wp-label">State</label>
+            <input type="text" placeholder="CA" class="wp-input" value="{{cg_destState}}" onChange="{{onCgState}}">
+          </div>
+          <div class="wp-field" style="flex-grow:1;">
+            <label class="wp-label">ZIP code (optional)</label>
+            <input type="text" placeholder="96150" class="wp-input" value="{{cg_destZip}}" onChange="{{onCgZip}}">
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{isCreateStep2}}" hint-placeholder-val="{{false}}">
+      <div style="padding:0 20px 20px 20px;">
+        <div style="border:1.5px solid oklch(90% 0.003 250); border-radius:12px; padding:14px; margin-bottom:20px; display:flex; align-items:center; justify-content:space-between;">
+          <div>
+            <span class="wp-label">Invite code</span>
+            <div style="font-size:16px; font-weight:800; color: oklch(18% 0.005 250); letter-spacing:0.03em; margin-top:2px;">{{inviteCode}}</div>
+          </div>
+          <button type="button" onClick="{{copyInviteLink}}" style="border:1.5px solid oklch(88% 0.003 250); border-radius:8px; background:transparent; color: oklch(45% 0.14 260); font-family:inherit; font-weight:700; font-size:12.5px; padding:9px 14px; box-sizing:border-box;">{{linkCopyLabel}}</button>
+        </div>
+
+        <div class="wp-field" style="margin-bottom:10px;">
+          <label class="wp-label">Add by phone or email</label>
+          <div style="display:flex; gap:8px;">
+            <input type="text" placeholder="Phone or email" value="{{cg_inviteInput}}" onChange="{{onInviteInput}}" style="flex-grow:1; border:1.5px solid oklch(88% 0.003 250); background:transparent; border-radius:10px; padding:10px 12px; font-size:14px; font-family:inherit; color: oklch(18% 0.005 250); box-sizing:border-box;">
+            <button type="button" onClick="{{addInvitee}}" style="border:none; border-radius:10px; background: oklch(45% 0.14 260); color:white; font-family:inherit; font-weight:700; font-size:13px; padding:0 16px; box-sizing:border-box;">Add</button>
+          </div>
+        </div>
+
+        <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:20px;">
+          <sc-for list="{{invitees}}" as="inv" hint-placeholder-count="0">
+            <div style="display:flex; align-items:center; gap:6px; background: oklch(95% 0.005 250); border-radius:999px; padding:6px 8px 6px 12px;">
+              <span style="font-size:12.5px; color: oklch(25% 0.005 250); font-weight:600;">{{inv.label}}</span>
+              <button type="button" onClick="{{inv.onRemove}}" style="width:18px; height:18px; border-radius:999px; border:none; background: oklch(85% 0.005 250); display:flex; align-items:center; justify-content:center; padding:0;">
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="oklch(35% 0.005 250)" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6l-12 12"></path></svg>
+              </button>
+            </div>
+          </sc-for>
+        </div>
+
+        <span style="font-size:14px; font-weight:800; color: oklch(18% 0.005 250);">From your contacts</span>
+        <div style="margin-top:10px; display:flex; flex-direction:column;">
+          <sc-for list="{{contacts}}" as="c" hint-placeholder-count="5">
+            <div onClick="{{c.onToggle}}" style="display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid oklch(94% 0.003 250); cursor:pointer;">
+              <div style="width:34px; height:34px; border-radius:999px; background: oklch(90% 0.01 260); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color: oklch(35% 0.01 260); flex-shrink:0;">{{c.initials}}</div>
+              <div style="flex-grow:1;">
+                <div style="font-size:13.5px; font-weight:700; color: oklch(18% 0.005 250);">{{c.name}}</div>
+                <div style="font-size:12px; color: oklch(55% 0.005 250);">{{c.sub}}</div>
+              </div>
+              <div style="width:20px; height:20px; border-radius:999px; background:{{c.checkBg}}; border:1.5px solid {{c.checkBorder}}; flex-shrink:0;"></div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+
+    </div>
+
+    <div style="flex-shrink:0; padding:16px 20px 32px 20px; border-top:1px solid oklch(93% 0.003 250);">
+      <sc-if value="{{isCreateStep2}}" hint-placeholder-val="{{false}}">
+        <button type="button" class="wp-primary" onClick="{{createGroup}}">Create group</button>
+      </sc-if>
+      <sc-if value="{{isCreateStep0}}" hint-placeholder-val="{{true}}">
+        <button type="button" class="wp-primary" onClick="{{createGoNext}}">Continue</button>
+      </sc-if>
+      <sc-if value="{{isCreateStep1}}" hint-placeholder-val="{{false}}">
+        <button type="button" class="wp-primary" onClick="{{createGoNext}}">Continue</button>
+      </sc-if>
+    </div>
+  </div>
+  </sc-if>
+
+</div>
+</sc-if>
+
+</div>
+</x-dc>
+<script data-dc-script data-props='{}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = this.getInitialState();
+
+    this.onFirstName = (e) => this.setState({ firstName: e.target.value });
+    this.onLastName = (e) => this.setState({ lastName: e.target.value });
+    this.onEmail = (e) => this.setState({ email: e.target.value });
+    this.onPhone = (e) => this.setState({ phone: e.target.value });
+    this.onStreet = (e) => this.setState({ street: e.target.value });
+    this.onApt = (e) => this.setState({ apt: e.target.value });
+    this.onCity = (e) => this.setState({ city: e.target.value });
+    this.onState = (e) => this.setState({ stateField: e.target.value });
+    this.onZip = (e) => this.setState({ zip: e.target.value });
+
+    this.goNext = () => this.setState({ step: Math.min(this.state.step + 1, 5) });
+    this.goBack = () => this.setState({ step: Math.max(this.state.step - 1, 0) });
+
+    this.useLocation = () => this.setState({
+      street: '1400 Elm Street', apt: '', city: 'Austin', stateField: 'TX', zip: '78701'
+    });
+
+    this.goToHome = () => this.setState({ activeTab: 'home' });
+    this.goToTrips = () => this.setState({ activeTab: 'trips' });
+    this.goToActivity = () => this.setState({ activeTab: 'activity' });
+    this.goToProfile = () => this.setState({ activeTab: 'profile' });
+
+    this.openTripDetail = () => this.setState({ tripDetailOpen: true });
+    this.closeTripDetail = () => this.setState({ tripDetailOpen: false, chatOpen: false });
+    this.openChat = () => this.setState({ chatOpen: true });
+    this.closeChat = () => this.setState({ chatOpen: false });
+    this.onChatInput = (e) => this.setState({ chatInput: e.target.value });
+    this.onChatKeyDown = (e) => { if (e.key === 'Enter') { this.sendMessage(); } };
+    this.sendMessage = () => {
+      const text = this.state.chatInput.trim();
+      if (!text) { return; }
+      const newMsg = { sender: 'You', text: text, time: 'Now', self: true };
+      this.setState({ chatMessages: this.state.chatMessages.concat([newMsg]), chatInput: '' });
+    };
+
+    this.openCreateFlow = () => this.setState({ createOpen: true, createStep: 0, tripDetailOpen: false, chatOpen: false });
+    this.createGoNext = () => this.setState({ createStep: Math.min(this.state.createStep + 1, 2) });
+    this.createGoBack = () => {
+      if (this.state.createStep === 0) { this.setState({ createOpen: false }); return; }
+      this.setState({ createStep: Math.max(this.state.createStep - 1, 0) });
+    };
+
+    this.onCgName = (e) => this.setState({ cg_name: e.target.value });
+    this.onCgDesc = (e) => this.setState({ cg_desc: e.target.value });
+    this.onCgStartDate = (e) => this.setState({ cg_startDate: e.target.value });
+    this.onCgEndDate = (e) => this.setState({ cg_endDate: e.target.value });
+    this.selectCover = (idx) => this.setState({ cg_cover: idx });
+
+    this.setDestModeExact = () => this.setState({ cg_destMode: 'exact' });
+    this.setDestModeArea = () => this.setState({ cg_destMode: 'area' });
+    this.onCgStreet = (e) => this.setState({ cg_destStreet: e.target.value });
+    this.onCgApt = (e) => this.setState({ cg_destApt: e.target.value });
+    this.onCgCity = (e) => this.setState({ cg_destCity: e.target.value });
+    this.onCgState = (e) => this.setState({ cg_destState: e.target.value });
+    this.onCgZip = (e) => this.setState({ cg_destZip: e.target.value });
+
+    this.onInviteInput = (e) => this.setState({ cg_inviteInput: e.target.value });
+    this.addInvitee = () => {
+      const text = this.state.cg_inviteInput.trim();
+      if (!text) { return; }
+      this.setState({ cg_invitees: this.state.cg_invitees.concat([text]), cg_inviteInput: '' });
+    };
+    this.toggleContact = (id) => {
+      const sel = this.state.cg_selectedContacts;
+      const next = sel.indexOf(id) === -1 ? sel.concat([id]) : sel.filter((x) => x !== id);
+      this.setState({ cg_selectedContacts: next });
+    };
+    this.copyInviteLink = () => {
+      this.setState({ linkCopied: true });
+      setTimeout(() => this.setState({ linkCopied: false }), 1500);
+    };
+
+    this.createGroup = () => {
+      const s = this.state;
+      const contacts = this.getSampleContacts().filter((c) => s.cg_selectedContacts.indexOf(c.id) !== -1)
+        .map((c) => ({ name: c.name, initials: c.initials, status: 'Invited', distance: 'TBD' }));
+      const manual = s.cg_invitees.map((label) => ({ name: label, initials: label.replace(/[^a-zA-Z]/g, '').slice(0, 2).toUpperCase() || '??', status: 'Invited', distance: 'TBD' }));
+
+      const destinationLine = s.cg_destCity && s.cg_destState
+        ? (s.cg_destCity + ', ' + s.cg_destState)
+        : (s.cg_destZip ? ('ZIP ' + s.cg_destZip) : 'Destination TBD');
+
+      let dateLabel = 'Date TBD';
+      let daysLeftLabel = '—';
+      if (s.cg_startDate) {
+        const start = new Date(s.cg_startDate + 'T00:00:00');
+        dateLabel = start.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+        if (s.cg_endDate) {
+          const end = new Date(s.cg_endDate + 'T00:00:00');
+          dateLabel += ' – ' + end.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        }
+        const diffDays = Math.ceil((start - new Date()) / 86400000);
+        daysLeftLabel = String(Math.max(0, diffDays));
+      }
+
+      const newGroup = {
+        name: s.cg_name.trim() || 'My Trip',
+        destinationLine: destinationLine,
+        dateLabel: dateLabel,
+        daysLeftLabel: daysLeftLabel,
+        weatherTemp: '75°F',
+        weatherCondition: 'Forecast pending',
+        coverIndex: s.cg_cover,
+        members: contacts.concat(manual)
+      };
+
+      this.setState({
+        activeGroup: newGroup,
+        chatMessages: [{ sender: 'You', text: "I just created " + newGroup.name + " — let's start planning!", time: 'Just now', self: true }],
+        createOpen: false,
+        createStep: 0,
+        cg_name: '', cg_desc: '', cg_startDate: '', cg_endDate: '', cg_cover: 0,
+        cg_destMode: 'area', cg_destStreet: '', cg_destApt: '', cg_destCity: '', cg_destState: '', cg_destZip: '',
+        cg_inviteInput: '', cg_invitees: [], cg_selectedContacts: [],
+        tripDetailOpen: true,
+        chatOpen: false
+      });
+    };
+
+    this.restart = () => this.setState(this.getInitialState());
+  }
+
+  getInitialState() {
+    return {
+      step: 0,
+      activeTab: 'home',
+      firstName: '', lastName: '', email: '', phone: '',
+      emailCode: ['', '', '', '', '', ''],
+      phoneCode: ['', '', '', '', '', ''],
+      street: '', apt: '', city: '', stateField: '', zip: '',
+      tripDetailOpen: false,
+      chatOpen: false,
+      chatInput: '',
+      chatMessages: [
+        { sender: 'Sam Park', text: 'Just booked the cabin, confirmation is in my email.', time: '10:14 AM', self: false },
+        { sender: 'Alex Kim', text: 'Nice! What time should we leave Saturday?', time: '10:16 AM', self: false },
+        { sender: 'You', text: "Let's aim for 7am to beat traffic.", time: '10:20 AM', self: true },
+        { sender: 'Sam Park', text: 'Works for me.', time: '10:21 AM', self: false }
+      ],
+      activeGroup: {
+        name: 'Lake Tahoe Crew',
+        destinationLine: 'Lake Tahoe, CA',
+        dateLabel: 'This Sat, Sep 6',
+        daysLeftLabel: '12',
+        weatherTemp: '72°F',
+        weatherCondition: 'Sunny, trip day',
+        coverIndex: 0,
+        members: [
+          { name: 'Sam Park', status: 'Member', initials: 'SP', distance: '38 mi' },
+          { name: 'Alex Kim', status: 'Member', initials: 'AK', distance: '210 mi' },
+          { name: 'Priya Nair', status: 'Invited', initials: 'PN', distance: '95 mi' },
+          { name: 'Jordan Lee', status: 'Invited', initials: 'JL', distance: '340 mi' }
+        ]
+      },
+      createOpen: false,
+      createStep: 0,
+      cg_name: '',
+      cg_desc: '',
+      cg_startDate: '',
+      cg_endDate: '',
+      cg_cover: 0,
+      cg_destMode: 'area',
+      cg_destStreet: '', cg_destApt: '', cg_destCity: '', cg_destState: '', cg_destZip: '',
+      cg_inviteInput: '',
+      cg_invitees: [],
+      cg_selectedContacts: [],
+      linkCopied: false
+    };
+  }
+
+  getSampleContacts() {
+    return [
+      { id: 'c1', name: 'Sam Park', sub: '(512) 555-0142', initials: 'SP' },
+      { id: 'c2', name: 'Alex Kim', sub: 'alex.kim@email.com', initials: 'AK' },
+      { id: 'c3', name: 'Priya Nair', sub: '(415) 555-0193', initials: 'PN' },
+      { id: 'c4', name: 'Jordan Lee', sub: 'jordan.lee@email.com', initials: 'JL' },
+      { id: 'c5', name: 'Morgan Diaz', sub: '(303) 555-0177', initials: 'MD' }
+    ];
+  }
+
+  getCoverThemes() {
+    return [
+      { name: 'Mountain Lake', accent: 'oklch(45% 0.14 260)', icon: 'mountain',
+        sky1: 'oklch(72% 0.09 250)', sky2: 'oklch(80% 0.07 60)', sky3: 'oklch(88% 0.05 60)', sun: 'oklch(92% 0.09 70)',
+        mid: 'oklch(40% 0.04 250)', front: 'oklch(32% 0.035 250)', band1: 'oklch(55% 0.08 240)', band2: 'oklch(35% 0.06 250)' },
+      { name: 'Beach', accent: 'oklch(55% 0.12 200)', icon: 'wave',
+        sky1: 'oklch(78% 0.1 30)', sky2: 'oklch(84% 0.09 60)', sky3: 'oklch(90% 0.06 70)', sun: 'oklch(94% 0.1 85)',
+        mid: 'oklch(72% 0.07 55)', front: 'oklch(64% 0.08 45)', band1: 'oklch(70% 0.11 195)', band2: 'oklch(50% 0.09 210)' },
+      { name: 'Desert', accent: 'oklch(55% 0.15 50)', icon: 'desert',
+        sky1: 'oklch(75% 0.09 40)', sky2: 'oklch(82% 0.08 55)', sky3: 'oklch(89% 0.05 65)', sun: 'oklch(90% 0.12 80)',
+        mid: 'oklch(58% 0.09 55)', front: 'oklch(48% 0.08 45)', band1: 'oklch(60% 0.06 50)', band2: 'oklch(42% 0.05 45)' },
+      { name: 'Forest', accent: 'oklch(42% 0.11 150)', icon: 'forest',
+        sky1: 'oklch(55% 0.07 240)', sky2: 'oklch(62% 0.08 260)', sky3: 'oklch(72% 0.06 270)', sun: 'oklch(88% 0.03 90)',
+        mid: 'oklch(35% 0.05 150)', front: 'oklch(26% 0.045 150)', band1: 'oklch(38% 0.05 220)', band2: 'oklch(22% 0.04 230)' }
+    ];
+  }
+
+  badgeForStatus(status) {
+    if (status === 'Admin') { return { bg: 'oklch(45% 0.14 260 / 14%)', color: 'oklch(45% 0.14 260)' }; }
+    if (status === 'Member') { return { bg: 'oklch(92% 0.09 150)', color: 'oklch(38% 0.1 150)' }; }
+    return { bg: 'oklch(93% 0.005 250)', color: 'oklch(50% 0.005 250)' };
+  }
+
+  updateCode(field, idx, raw) {
+    const val = (raw || '').replace(/[^0-9]/g, '').slice(-1);
+    const codes = this.state[field].slice();
+    codes[idx] = val;
+    this.setState({ [field]: codes });
+  }
+
+  resendCode(field) {
+    this.setState({ [field]: ['', '', '', '', '', ''] });
+  }
+
+  renderVals() {
+    const s = this.state;
+    const emailCodeCells = s.emailCode.map((value, i) => ({
+      value: value,
+      onChange: (e) => this.updateCode('emailCode', i, e.target.value)
+    }));
+    const phoneCodeCells = s.phoneCode.map((value, i) => ({
+      value: value,
+      onChange: (e) => this.updateCode('phoneCode', i, e.target.value)
+    }));
+
+    const initials = ((s.firstName || '').charAt(0) + (s.lastName || '').charAt(0)).toUpperCase() || 'JR';
+    const fullName = (s.firstName + ' ' + s.lastName).trim() || 'Jamie Rivera';
+    const addressParts = [s.street, s.apt, s.city, [s.stateField, s.zip].filter(Boolean).join(' ')].filter(Boolean);
+    const addressDisplay = addressParts.length ? addressParts.join(', ') : 'Not added yet';
+    const activeColor = 'oklch(45% 0.14 260)';
+    const inactiveColor = 'oklch(65% 0.005 250)';
+    const activityItems = [
+      { text: 'Sam invited you to Weekend at the Cabin', time: '2h ago' },
+      { text: 'Priya added an expense in Lake Tahoe Crew', time: '1d ago' },
+      { text: 'Alex sent a message in Lake Tahoe Crew', time: '2d ago' }
+    ];
+
+    const group = s.activeGroup;
+    const adminBadge = this.badgeForStatus('Admin');
+    const members = [
+      { name: fullName + ' (You)', status: 'Admin', initials: initials, distance: '612 mi', badgeBg: adminBadge.bg, badgeColor: adminBadge.color }
+    ].concat(group.members.map((m) => {
+      const badge = this.badgeForStatus(m.status);
+      return { name: m.name, status: m.status, initials: m.initials, distance: m.distance, badgeBg: badge.bg, badgeColor: badge.color };
+    }));
+    const memberCountLabel = members.length + ' total';
+
+    const nonAdminMembers = group.members;
+    const cardAvatars = members.slice(0, 2).map((m, i) => ({ initials: m.initials, marginLeft: i === 0 ? '0' : '-8px' }));
+    const cardOverflowCount = Math.max(0, members.length - 2);
+    const hasCardOverflow = cardOverflowCount > 0;
+    const cardOverflowLabel = '+' + cardOverflowCount;
+
+    const acceptedNames = ['You'].concat(nonAdminMembers.filter((m) => m.status === 'Member').map((m) => m.name));
+    let chatSubtitle;
+    if (acceptedNames.length === 1) {
+      chatSubtitle = acceptedNames[0];
+    } else {
+      chatSubtitle = acceptedNames.slice(0, -1).join(', ') + ' & ' + acceptedNames[acceptedNames.length - 1];
+    }
+
+    const palette = this.getCoverThemes()[group.coverIndex] || this.getCoverThemes()[0];
+
+    const chatMessagesView = s.chatMessages.map((m) => ({
+      sender: m.sender,
+      text: m.text,
+      time: m.time,
+      align: m.self ? 'flex-end' : 'flex-start',
+      bg: m.self ? 'oklch(45% 0.14 260)' : 'oklch(95% 0.005 250)',
+      color: m.self ? 'white' : 'oklch(20% 0.005 250)',
+      showName: !m.self
+    }));
+
+    const coverThemes = this.getCoverThemes();
+    const coverOptions = coverThemes.map((c, i) => {
+      const selected = s.cg_cover === i;
+      return {
+        name: c.name,
+        accent: c.accent,
+        tint: c.accent.slice(0, -1) + ' / 16%)',
+        selected: selected,
+        ringStyle: selected ? ('2.5px solid ' + c.accent) : '2.5px solid transparent',
+        isMountain: c.icon === 'mountain',
+        isWave: c.icon === 'wave',
+        isDesert: c.icon === 'desert',
+        isForest: c.icon === 'forest',
+        onSelect: () => this.selectCover(i)
+      };
+    });
+
+    const contacts = this.getSampleContacts().map((c) => {
+      const selected = s.cg_selectedContacts.indexOf(c.id) !== -1;
+      return {
+        id: c.id, name: c.name, sub: c.sub, initials: c.initials, selected: selected,
+        checkBg: selected ? 'oklch(45% 0.14 260)' : 'transparent',
+        checkBorder: selected ? 'oklch(45% 0.14 260)' : 'oklch(85% 0.005 250)',
+        onToggle: () => this.toggleContact(c.id)
+      };
+    });
+
+    const invitees = s.cg_invitees.map((label, i) => ({
+      label: label,
+      onRemove: () => this.setState({ cg_invitees: s.cg_invitees.filter((_, idx) => idx !== i) })
+    }));
+
+    const inviteCodeRaw = (s.cg_name || 'TRIP').replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 6);
+    const inviteCode = (inviteCodeRaw || 'TRIP') + '-482';
+
+    return {
+      isStep0: s.step === 0,
+      isStep1: s.step === 1,
+      isStep2: s.step === 2,
+      isStep3: s.step === 3,
+      isStep4: s.step === 4,
+      isStep5: s.step === 5,
+      isTabHome: s.activeTab === 'home',
+      isTabTrips: s.activeTab === 'trips',
+      isTabActivity: s.activeTab === 'activity',
+      isTabProfile: s.activeTab === 'profile',
+      isTripDetailVisible: s.tripDetailOpen && !s.chatOpen,
+      isChatVisible: s.chatOpen,
+      members: members,
+      memberCountLabel: memberCountLabel,
+      chatMessages: chatMessagesView,
+      chatInput: s.chatInput,
+      chatSubtitle: chatSubtitle,
+      groupName: group.name,
+      groupDestinationDate: group.destinationLine + ' · ' + group.dateLabel,
+      groupDestination: group.destinationLine,
+      daysLeftLabel: group.daysLeftLabel,
+      weatherTemp: group.weatherTemp,
+      weatherCondition: group.weatherCondition,
+      coverSky1: palette.sky1, coverSky2: palette.sky2, coverSky3: palette.sky3, coverSun: palette.sun,
+      coverMid: palette.mid, coverFront: palette.front, coverBand1: palette.band1, coverBand2: palette.band2,
+      cardAvatars: cardAvatars,
+      hasCardOverflow: hasCardOverflow,
+      cardOverflowLabel: cardOverflowLabel,
+      isCreateVisible: s.createOpen,
+      isCreateStep0: s.createStep === 0,
+      isCreateStep1: s.createStep === 1,
+      isCreateStep2: s.createStep === 2,
+      createStepLabel: (s.createStep + 1) + ' / 3',
+      cg_name: s.cg_name,
+      cg_desc: s.cg_desc,
+      cg_startDate: s.cg_startDate,
+      cg_endDate: s.cg_endDate,
+      coverOptions: coverOptions,
+      isDestExact: s.cg_destMode === 'exact',
+      destExactBtnBg: s.cg_destMode === 'exact' ? 'oklch(45% 0.14 260)' : 'transparent',
+      destExactBtnColor: s.cg_destMode === 'exact' ? 'white' : 'oklch(18% 0.005 250)',
+      destAreaBtnBg: s.cg_destMode === 'area' ? 'oklch(45% 0.14 260)' : 'transparent',
+      destAreaBtnColor: s.cg_destMode === 'area' ? 'white' : 'oklch(18% 0.005 250)',
+      cg_destStreet: s.cg_destStreet,
+      cg_destApt: s.cg_destApt,
+      cg_destCity: s.cg_destCity,
+      cg_destState: s.cg_destState,
+      cg_destZip: s.cg_destZip,
+      cg_inviteInput: s.cg_inviteInput,
+      invitees: invitees,
+      contacts: contacts,
+      inviteCode: inviteCode,
+      linkCopyLabel: s.linkCopied ? 'Copied!' : 'Copy',
+      homeColor: s.activeTab === 'home' ? activeColor : inactiveColor,
+      tripsColor: s.activeTab === 'trips' ? activeColor : inactiveColor,
+      activityColor: s.activeTab === 'activity' ? activeColor : inactiveColor,
+      profileColor: s.activeTab === 'profile' ? activeColor : inactiveColor,
+      initials: initials,
+      fullName: fullName,
+      addressDisplay: addressDisplay,
+      activityItems: activityItems,
+      stepLabel: (s.step + 1) + ' / 4',
+      firstName: s.firstName,
+      lastName: s.lastName,
+      email: s.email,
+      phone: s.phone,
+      emailDisplay: s.email || 'your email',
+      phoneDisplay: s.phone || 'your phone',
+      firstNameDisplay: s.firstName || 'there',
+      street: s.street,
+      apt: s.apt,
+      city: s.city,
+      stateField: s.stateField,
+      zip: s.zip,
+      emailCodeCells: emailCodeCells,
+      phoneCodeCells: phoneCodeCells,
+      onFirstName: this.onFirstName,
+      onLastName: this.onLastName,
+      onEmail: this.onEmail,
+      onPhone: this.onPhone,
+      onStreet: this.onStreet,
+      onApt: this.onApt,
+      onCity: this.onCity,
+      onState: this.onState,
+      onZip: this.onZip,
+      goNext: this.goNext,
+      goBack: this.goBack,
+      restart: this.restart,
+      useLocation: this.useLocation,
+      goToHome: this.goToHome,
+      goToTrips: this.goToTrips,
+      goToActivity: this.goToActivity,
+      goToProfile: this.goToProfile,
+      openTripDetail: this.openTripDetail,
+      closeTripDetail: this.closeTripDetail,
+      openChat: this.openChat,
+      closeChat: this.closeChat,
+      onChatInput: this.onChatInput,
+      onChatKeyDown: this.onChatKeyDown,
+      sendMessage: this.sendMessage,
+      openCreateFlow: this.openCreateFlow,
+      createGoNext: this.createGoNext,
+      createGoBack: this.createGoBack,
+      onCgName: this.onCgName,
+      onCgDesc: this.onCgDesc,
+      onCgStartDate: this.onCgStartDate,
+      onCgEndDate: this.onCgEndDate,
+      setDestModeExact: this.setDestModeExact,
+      setDestModeArea: this.setDestModeArea,
+      onCgStreet: this.onCgStreet,
+      onCgApt: this.onCgApt,
+      onCgCity: this.onCgCity,
+      onCgState: this.onCgState,
+      onCgZip: this.onCgZip,
+      onInviteInput: this.onInviteInput,
+      addInvitee: this.addInvitee,
+      copyInviteLink: this.copyInviteLink,
+      createGroup: this.createGroup,
+      resendEmail: () => this.resendCode('emailCode'),
+      resendPhone: () => this.resendCode('phoneCode')
+    };
+  }
+}
+</script>
+</body>
+</html>

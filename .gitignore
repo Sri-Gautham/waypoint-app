@@ -1,0 +1,31 @@
+# macOS
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
+
+# Flutter/Dart
+app/.dart_tool/
+app/.flutter-plugin-dependencies
+app/build/
+app/.packages
+app/.pub-cache/
+app/.pub/
+app/pubspec.lock
+
+# Android
+app/android/.gradle/
+app/android/captures/
+app/android/gradlew
+app/android/gradlew.bat
+app/android/local.properties
+app/android/**/GeneratedPluginRegistrant.java
+
+# iOS
+app/ios/Flutter/.last_build_id
+app/ios/Flutter/Generated.xcconfig
+app/ios/Flutter/flutter_export_environment.sh
+app/ios/Pods/
+app/ios/.symlinks/
+app/ios/Runner.xcworkspace/xcuserdata/
