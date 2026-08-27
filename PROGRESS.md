@@ -52,14 +52,32 @@ Local path: `/Users/srigautham/Documents/My Projects/Personal Projects/travel-co
   open — a second call would stack a second sheet on top of the first,
   which fits the symptom (topmost sheet's valid submit succeeds, an
   older untouched sheet is left stuck underneath). Added an
-  `_addingExpense` reentry guard. **Not yet re-verified by QA as of this
-  writing** — if it's STILL not fixed after this, the text-ambiguity
-  angle is worth double-checking from QA's side too (a finder like
-  `find.text('Add expense').last` could resolve differently than
-  intended depending on tree-walk order — worth trying a scoped finder,
-  e.g. `find.descendant(of: find.byType(AddExpenseSheet), matching:
-  find.widgetWithText(ElevatedButton, 'Add expense'))`, to rule out
-  finder targeting as a variable entirely).
+  `_addingExpense` reentry guard. QA re-verified `a7c2b20`: **still
+  reproduces, and definitively ruled out the reentry theory** —
+  `find.byType(AddExpenseSheet).evaluate().length == 1` at the stuck
+  point (one sheet instance, not stacked), and a clever 4th-tap check
+  proved `Navigator.pop(charge)` fires exactly once, its Future resolves,
+  and the charge reaches AppData — yet the route's widgets/barrier are
+  never actually torn down, with `pumpAndSettle()` returning clean (no
+  animation left pending). That signature — logical pop succeeds, visual
+  teardown doesn't, only after 2 rejected attempts precede the real one —
+  is deep Flutter route-lifecycle territory neither of us can fully
+  confirm without a debugger. Round 3 (`325215a`), two independent
+  candidate fixes shipped together since both are safe regardless of
+  which (if either) is the real mechanism: (1) `FocusManager.instance
+  .primaryFocus?.unfocus()` right before the pop — a focused field's
+  keyboard-dismiss animation racing the sheet's own closing transition
+  is a known cause of exactly this symptom; (2) deferred the
+  `AppData.addCharge` call (which synchronously rebuilds the whole
+  `BalancesTab` ancestor via `notifyListeners()`) to a
+  `WidgetsBinding.instance.addPostFrameCallback`, so it can't interleave
+  with the route's own teardown in the same frame. **Unconfirmed as of
+  this writing** — if QA reports this still doesn't fix it, next step is
+  probably temporary debugPrint instrumentation around the pop/route
+  lifecycle (QA has execution access to actually run and observe this;
+  I don't), or checking `WidgetsBinding.instance.focusManager
+  .primaryFocus` at the stuck point to see if a field is still holding
+  focus (would confirm/deny the unfocus theory directly).
 - **Pinged with `da35c61`** (group creation + shared state) — explicitly
   flagged that I couldn't verify the actual Create-group button-tap flow
   myself (no OS-level tap automation on my side) and asked it to
