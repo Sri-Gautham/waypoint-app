@@ -35,7 +35,30 @@ Local path: `/Users/srigautham/Documents/My Projects/Personal Projects/travel-co
 
 ## QA agent communication log (most recent first)
 
-- **Add Expense stuck-sheet bug, 2 rounds so far**: QA found it on
+- **Add Expense stuck-sheet bug, round 4 (`08d3e1e`)**: round 3
+  (`325215a`, unfocus-before-pop + defer-addCharge-a-frame) did NOT fix
+  it either — QA re-verified, still reproduces. But QA wired a
+  `NavigatorObserver` directly into their test harness and got the most
+  decisive evidence yet: **`didPop` never fires** for the bottom sheet's
+  route during the reject/reject/succeed sequence — not once — despite
+  `_submit()`'s own logic completing normally (charge reaches AppData,
+  the `_submitted` guard engages so a 4th tap is confirmed a no-op).
+  Also flagged (but couldn't confirm significance of): `warnIfMissed`
+  hit-test warnings mentioning a `RenderAbsorbPointer` in the hit-test
+  chain, on the taps *after* text entry only (not the first, empty-field
+  reject tap). QA has hit the ceiling of black-box diagnosis (no
+  print/breakpoint access into app code from their side) and asked for
+  debugPrint instrumentation to check whether the Navigator at the push
+  site (`_addExpense`) and the pop site (`_submit()`) are really the same
+  instance. Shipped that instrumentation (`08d3e1e`) — logs
+  Navigator/route hashCode + `isCurrent`/`isActive` on every `_submit()`
+  call (all 3, not just the successful one) and around the `pop()` call
+  itself, plus the push site. **Awaiting QA running their exact repro
+  against this build and reporting the console output back.** This is
+  temporary debug-only instrumentation, meant to be removed once
+  root-caused — don't mistake the debugPrint calls for permanent code if
+  picking this up cold.
+- **Add Expense stuck-sheet bug, rounds 1-3**: QA found it on
   `3fe793f`/`fb51af5`/`64d28ea` pass — reject empty, reject amount=0, then
   a valid submit leaves the sheet's widgets + an extra ModalBarrier stuck
   in the tree (charge does get added to AppData though). Round 1 fix
