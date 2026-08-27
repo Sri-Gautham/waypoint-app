@@ -6,6 +6,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../config/google_auth_config.dart';
 import '../models/onboarding_data.dart';
 
 /// The identity fields an OAuth provider hands back on sign-in — only
@@ -69,7 +70,13 @@ class AuthService {
   }
 
   Future<AuthResult> signInWithGoogle() async {
-    final googleSignIn = GoogleSignIn(scopes: ['email', 'profile']);
+    final googleSignIn = GoogleSignIn(
+      scopes: ['email', 'profile'],
+      // Requests an ID token audienced to the Web client instead of
+      // whatever platform client (iOS/Android) ran the flow — that's
+      // the audience Supabase's Google provider is configured to accept.
+      serverClientId: GoogleAuthConfig.webClientId.isEmpty ? null : GoogleAuthConfig.webClientId,
+    );
     final googleUser = await googleSignIn.signIn();
     if (googleUser == null) {
       throw const AuthException('Google sign-in was cancelled.');
