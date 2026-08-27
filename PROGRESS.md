@@ -33,6 +33,43 @@ Local path: `/Users/srigautham/Documents/My Projects/Personal Projects/travel-co
      conversation's history (search for "You're the QA/build-validation
      agent" if it needs to be reconstituted for a fresh session).
 
+## QA agent communication log (most recent first)
+
+- **Pinged with `da35c61`** (group creation + shared state) — explicitly
+  flagged that I couldn't verify the actual Create-group button-tap flow
+  myself (no OS-level tap automation on my side) and asked it to
+  prioritize that. Awaiting response.
+- **Full pass on `7fae736` reported clean** — 48/48 of its own unit tests
+  passing, walked the whole `QA_CHECKLIST.md` manually + via
+  `integration_test` (run from an isolated git worktree so it never
+  touched my live working tree), **zero confirmed app bugs**. It also
+  triaged 3 things that looked like bugs but weren't (all details in
+  conversation history if needed, short version: two were its own
+  test-harness flakiness under a long automated action sequence,
+  re-confirmed clean on isolated repro; one was — surprise — *another*
+  manifestation of the `simctl io screenshot` unreliability, this time
+  serving a stale/duplicate frame rather than a stretched one, confirmed
+  via direct widget-tree color inspection). Noted gaps it couldn't cover
+  yet: the photo-picker add flow and slideshow (both need a real OS photo
+  picker interaction it can't automate) — these remain unverified by
+  either of us via live UI, though the code path was reviewed and
+  `flutter analyze`/unit-testable logic checks out.
+- **Open question, not yet resolved**: most of its `app/test/*` files
+  (models, widgets, utils, screens, e2e, helpers) are untracked in git.
+  It flagged this as "not my call" whether to commit them. **I told it
+  I'd ask the user and report back — this hasn't been asked/decided yet
+  as of this writing.** If picking this back up, either ask the user or
+  raise it explicitly next time you're talking with them.
+- Fixed its own stale test files early on (`widget_test.dart`,
+  `e2e_flow_test.dart` were asserting the app launches on
+  `BalancesByPersonScreen`, a holdover from my temporary debug wiring at
+  the time) — this was its own initiative on its own files, not something
+  I did or needed to review.
+- It's set up a separate git worktree at a pinned commit for driving real
+  taps/typing via Flutter's `integration_test` package, kept isolated
+  from my live working tree — that's how it plans to do interactive
+  verification going forward without colliding with my in-progress edits.
+
 ## Environment setup (already done, don't redo)
 
 - Node.js, GitHub CLI (`gh`, authed as Sri-Gautham) installed via
@@ -133,59 +170,73 @@ change to the entry point was intended.
   Tahoe Crew, t2 Weekend at the Cabin, t3 Napa Wine Tour — same 3 sample
   trips as the design prototype).
 
-## IN PROGRESS RIGHT NOW — do not lose this
+## Group creation + shared app state — DONE (commit `da35c61`)
 
-Refactoring from static `Trip.all` (a const list) to a shared, mutable
-app-wide state object, because **group creation** (the next feature) needs
-to be able to add a new trip that shows up everywhere (Home, Trips tab,
-Balances tab) — static data can't support that.
+Moved off static `Trip.all` (a const list) onto a shared, mutable app-wide
+state object, because group creation needs to add a new trip that shows up
+everywhere (Home, Trips tab, Balances tab) — static data can't support
+that. All of the following is complete, committed, and pushed:
 
-- **Created** `lib/state/app_data.dart`: `AppData extends ChangeNotifier`
-  (holds `trips`, `chargesByTrip`, `payments`; methods `addTrip`,
-  `addCharge`, `addPayment`, all calling `notifyListeners()`) +
-  `AppDataScope extends InheritedNotifier<AppData>` with a static `.of(context)`.
-  **Important**: `AppDataScope` is wired in `main.dart` ABOVE
-  `MaterialApp` (wrapping it, not inside a route) — this is deliberate,
-  because an `InheritedWidget` placed inside one route's subtree does NOT
-  propagate to sibling routes pushed via the same `Navigator`. It must sit
-  above the `Navigator` (i.e. above `MaterialApp`) so every pushed screen
-  can reach it.
-- **Done**: `main.dart` now a `StatefulWidget` (`_WaypointAppState`)
-  holding one `AppData` instance, wraps `MaterialApp` in `AppDataScope`.
-- **Done**: `HomeTab` now reads `AppDataScope.of(context).nextTrip`
-  instead of the old `Trip.sampleNextTrip`; "Create a group" button now
-  navigates to `CreateGroupFlow` (not yet created — see below).
-- **Done**: `TripsTab` now reads `appData.upcoming` / `appData.past`
-  instead of static `Trip.upcoming` / `Trip.past`.
-- **Done**: `BalancesTab` migrated off local `_chargesByTrip`/`_payments`
-  State fields onto `AppDataScope.of(context)` — `_addExpense` now calls
-  `appData.addCharge(...)` instead of local `setState`; `_openBalancesByPerson`
-  no longer passes data via constructor (just pushes the route).
-- **IN PROGRESS, NOT YET DONE**: `balances_by_person_screen.dart` still
-  has the OLD constructor signature (`chargesByTrip`, `payments`,
-  `tripNames` as required params) and reads `widget.chargesByTrip` /
-  `widget.payments` / `widget.tripNames` throughout. **Next action**:
-  rewrite it to take NO constructor params, read
-  `AppDataScope.of(context)` directly in `build()`, and derive
-  `tripNames` from `appData.trips` instead of a passed-in map. The call
-  site in `balances_tab.dart` (`_openBalancesByPerson`) has ALREADY been
-  updated to call `const BalancesByPersonScreen()` with no args, so this
-  file is currently broken/non-compiling until the rewrite is finished.
-
-### Not started yet (planned)
-
+- `lib/state/app_data.dart`: `AppData extends ChangeNotifier` (holds
+  `trips`, `chargesByTrip`, `payments`; methods `addTrip`, `addCharge`,
+  `addPayment`, all calling `notifyListeners()`) + `AppDataScope extends
+  InheritedNotifier<AppData>` with a static `.of(context)`. **Important**:
+  wired in `main.dart` ABOVE `MaterialApp` (wrapping it, not inside a
+  route) — deliberate, since an `InheritedWidget` placed inside one
+  route's subtree does NOT propagate to sibling routes pushed via the
+  same `Navigator`; it must sit above the `Navigator` so every pushed
+  screen can reach it.
+- `HomeTab`, `TripsTab`, `BalancesTab`, `BalancesByPersonScreen` all read
+  from `AppDataScope.of(context)` now (no more static `Trip.all` reads or
+  screen-local charges/payments state).
 - `lib/screens/group/create_group_flow.dart` + `lib/screens/group/steps/`
-  (basics/destination/invite, 3-step wizard) + a `GroupDraft` model +
-  `lib/data/sample_contacts.dart` — matching the design prototype's group
-  creation flow. On completion: build a new `Trip`, call
-  `AppDataScope.of(context).addTrip(...)`, navigate into its
-  `TripDetailScreen`.
-- After that: run `flutter analyze lib`, verify on simulator (temporary
-  main.dart swap + video capture method), revert main.dart, commit only
-  `app/lib/` files (never sweep in the other agent's `app/test/` files
-  with a broad `git add app/`), push.
-- Update `docs/QA_CHECKLIST.md` with a new "Group creation" section once
-  built.
+  (`group_basics_step.dart`, `group_destination_step.dart`,
+  `group_invite_step.dart`) — 3-step wizard, `GroupDraft` model
+  (`lib/models/group_draft.dart`), `lib/data/sample_contacts.dart` (5
+  sample contacts for the invite step). On "Create group": builds a new
+  `Trip`, calls `AppDataScope.of(context).addTrip(...)` (inserted at
+  index 0, so it becomes the new `nextTrip`/Home hero card immediately),
+  `pushReplacement`s into that trip's `TripDetailScreen`.
+- Generalized `lib/widgets/step_header.dart` to take a `total` param
+  (default 4, for onboarding) instead of hardcoding "/4" — reused for
+  this 3-step wizard with `total: 3`. (Caught and fixed a real bug here
+  before it ever ran: my first draft nested a hardcoded `StepHeader` +
+  redundant title Row, which would've shown the wrong step total — fixed
+  by generalizing the shared widget properly instead of patching around
+  it.)
+- Verified each step's static rendering via the video-capture method (not
+  `simctl io screenshot`) — no exceptions, correct step counters ("1 / 3"
+  etc.), correct cover swatch selection, correct destination-mode field
+  toggling, correct invite code/contacts/chips rendering. **Not
+  verified by me**: the actual button-tap interaction flow (filling all 3
+  steps, tapping through, confirming the created trip lands correctly on
+  Trip Detail and shows up on Home/Trips/Balances) — I have no OS-level
+  tap automation in this environment. Explicitly handed this to the QA
+  agent as the priority item for its next pass (see below).
+- `docs/QA_CHECKLIST.md` updated with a full "Group creation" section
+  (including edge cases: empty name → "My Trip", no destination →
+  "Destination TBD", no start date → "Date TBD", zero invitees → just you
+  as a member) and a "Shared state" note under Cross-cutting explaining
+  `AppData`/`AppDataScope` for whoever's debugging a stale-data-looking
+  bug.
+- Pinged `personal-projects-8e` (QA agent) with commit hash `da35c61` and
+  flagged the untested tap-flow explicitly. Awaiting its next report.
+
+### Not started yet (planned, no other big design-prototype gaps remain)
+
+- "Join with code" on Home is still a disabled stub (never built — this
+  wasn't in the original design prototype's scope either, it was always
+  a secondary/deferred entry point next to "Create a group").
+- No real navigation deep-link from Trip Detail's "Start" button (shows a
+  snackbar placeholder) — matches the design prototype's own scope (it
+  was explicitly a visual stand-in there too).
+- Everything else from the original design canvas prototype (onboarding,
+  Home, Trip Detail, Chat, Trips tab incl. real photos, Balances tab incl.
+  Add Expense, and now group creation) has a real Flutter implementation.
+  Next open-ended work is either: (a) responding to whatever the QA agent
+  reports, or (b) whatever new feature/polish the user asks for next —
+  check the live conversation for the most recent ask rather than assuming
+  this file's "planned" section is exhaustive.
 
 ## Git hygiene reminder
 
