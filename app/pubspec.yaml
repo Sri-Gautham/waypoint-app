@@ -38,6 +38,9 @@ dependencies:
   # Manrope, the typeface used throughout the design.
   google_fonts: ^6.2.1
 
+  # Picking real photos for a trip's gallery.
+  image_picker: ^1.1.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
