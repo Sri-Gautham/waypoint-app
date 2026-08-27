@@ -19,20 +19,34 @@ class _BalancesTabState extends State<BalancesTab> {
   final Set<String> _expandedTripIds = {};
   TripStatus _filter = TripStatus.upcoming;
 
+  // The trip card's own "Add expense" trigger shares its label text with
+  // the sheet's title AND its submit button — three "Add expense" text
+  // widgets can be live in the tree at once while a sheet is open. This
+  // guard makes a second _addExpense call (whatever triggers it — a fast
+  // double-tap before the sheet's barrier engages, or a mistargeted tap)
+  // a no-op instead of stacking a second sheet on top of the first.
+  bool _addingExpense = false;
+
   double _paidSoFar(AppData appData, String memberName) {
     return appData.payments.where((p) => p.memberName == memberName).fold(0.0, (sum, p) => sum + p.amount);
   }
 
   Future<void> _addExpense(Trip trip) async {
-    final participants = ['You', ...trip.members.map((m) => m.name)];
-    final charge = await showModalBottomSheet<Charge>(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
-      builder: (_) => AddExpenseSheet(tripId: trip.id, participants: participants),
-    );
-    if (charge == null || !mounted) return;
-    AppDataScope.of(context).addCharge(trip.id, charge);
+    if (_addingExpense) return;
+    _addingExpense = true;
+    try {
+      final participants = ['You', ...trip.members.map((m) => m.name)];
+      final charge = await showModalBottomSheet<Charge>(
+        context: context,
+        isScrollControlled: true,
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+        builder: (_) => AddExpenseSheet(tripId: trip.id, participants: participants),
+      );
+      if (charge == null || !mounted) return;
+      AppDataScope.of(context).addCharge(trip.id, charge);
+    } finally {
+      _addingExpense = false;
+    }
   }
 
   void _openBalancesByPerson() {
