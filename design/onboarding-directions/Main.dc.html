@@ -269,10 +269,39 @@
   </sc-if>
 
   <sc-if value="{{isTabTrips}}" hint-placeholder-val="{{false}}">
-  <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:80px 32px 0 32px;">
-    <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="oklch(70% 0.005 250)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 3"></path></svg>
-    <h2 style="margin:16px 0 6px 0; font-size:17px; font-weight:800; color: oklch(18% 0.005 250);">Trips &amp; Balances</h2>
-    <p style="margin:0; font-size:13px; line-height:1.5; color: oklch(55% 0.005 250);">Your full trip list and who-owes-who balances will live here.</p>
+  <div>
+    <h1 style="margin:0; padding:24px 24px 0 24px; font-size:20px; font-weight:800; color: oklch(18% 0.005 250);">Trips &amp; Balances</h1>
+
+    <div style="margin:16px 24px 0 24px; border-radius:14px; padding:16px; background:{{netBg}};">
+      <span style="font-size:11px; font-weight:700; letter-spacing:0.05em; color:{{netColor}}; text-transform:uppercase;">Overall balance</span>
+      <div style="font-size:24px; font-weight:800; color:{{netColor}}; margin:4px 0 6px 0;">{{netAmountLabel}}</div>
+      <span style="font-size:12.5px; color:{{netColor}};">You owe {{totalOweLabel}} &middot; You're owed {{totalOwedLabel}}</span>
+    </div>
+
+    <div style="display:flex; border:1.5px solid oklch(88% 0.003 250); border-radius:10px; padding:3px; margin:16px 24px 0 24px;">
+      <button type="button" onClick="{{setFilterUpcoming}}" style="flex:1; border:none; border-radius:7px; background:{{upcomingFilterBg}}; color:{{upcomingFilterColor}}; font-family:inherit; font-weight:700; font-size:13px; padding:9px; box-sizing:border-box;">Upcoming</button>
+      <button type="button" onClick="{{setFilterPast}}" style="flex:1; border:none; border-radius:7px; background:{{pastFilterBg}}; color:{{pastFilterColor}}; font-family:inherit; font-weight:700; font-size:13px; padding:9px; box-sizing:border-box;">Past</button>
+    </div>
+
+    <div style="margin:14px 24px 20px 24px; display:flex; flex-direction:column; gap:12px;">
+      <sc-for list="{{trips}}" as="trip" hint-placeholder-count="2">
+        <div style="border:1.5px solid oklch(90% 0.003 250); border-radius:14px; padding:14px;">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <div style="width:36px; height:36px; border-radius:10px; background:{{trip.coverAccent}}; flex-shrink:0;"></div>
+            <div style="flex-grow:1;">
+              <div style="font-size:14px; font-weight:700; color: oklch(18% 0.005 250);">{{trip.name}}</div>
+              <div style="font-size:12px; color: oklch(55% 0.005 250);">{{trip.destination}} &middot; {{trip.dateLabel}}</div>
+            </div>
+          </div>
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-top:12px; padding-top:12px; border-top:1px solid oklch(94% 0.003 250);">
+            <span style="font-size:13px; font-weight:700; color:{{trip.balanceColor}};">{{trip.balanceLabel}}</span>
+            <sc-if value="{{trip.hasSettle}}" hint-placeholder-val="{{false}}">
+              <button type="button" onClick="{{trip.onOpenSettle}}" style="border:1.5px solid oklch(88% 0.003 250); border-radius:8px; background:transparent; color: oklch(45% 0.14 260); font-family:inherit; font-weight:700; font-size:12px; padding:7px 12px; box-sizing:border-box;">Settle up</button>
+            </sc-if>
+          </div>
+        </div>
+      </sc-for>
+    </div>
   </div>
   </sc-if>
 
@@ -599,6 +628,38 @@
   </div>
   </sc-if>
 
+  <sc-if value="{{isSettleVisible}}" hint-placeholder-val="{{false}}">
+  <div style="position:absolute; inset:0; background: oklch(99% 0.002 250); display:flex; flex-direction:column; z-index:25;">
+    <div style="display:flex; align-items:center; justify-content:space-between; padding:20px 20px 0 20px; flex-shrink:0;">
+      <button type="button" class="wp-back" onClick="{{closeSettle}}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="oklch(18% 0.005 250)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"></path></svg>
+      </button>
+      <span style="font-size:15px; font-weight:800; color: oklch(18% 0.005 250);">{{settleTripName}}</span>
+      <span style="width:36px;"></span>
+    </div>
+
+    <div style="flex-grow:1; overflow:auto; padding:20px;">
+      <div style="text-align:center; padding:10px 0 24px 0;">
+        <span style="font-size:12px; font-weight:700; letter-spacing:0.05em; color: oklch(55% 0.005 250); text-transform:uppercase;">Your balance in this trip</span>
+        <div style="font-size:26px; font-weight:800; color:{{settleNetColor}}; margin-top:4px;">{{settleNetLabel}}</div>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <sc-for list="{{settleBreakdown}}" as="p" hint-placeholder-count="2">
+          <div style="display:flex; align-items:center; gap:10px; border:1.5px solid oklch(90% 0.003 250); border-radius:14px; padding:12px;">
+            <div style="width:34px; height:34px; border-radius:999px; background: oklch(90% 0.01 260); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color: oklch(35% 0.01 260); flex-shrink:0;">{{p.initials}}</div>
+            <div style="flex-grow:1;">
+              <div style="font-size:13.5px; font-weight:700; color: oklch(18% 0.005 250);">{{p.name}}</div>
+              <div style="font-size:12.5px; color:{{p.amountColor}};">{{p.amountLabel}}</div>
+            </div>
+            <button type="button" onClick="{{p.onToggleSettled}}" style="border:1.5px solid {{p.btnBorder}}; border-radius:8px; background:{{p.btnBg}}; color:{{p.btnColor}}; font-family:inherit; font-weight:700; font-size:12px; padding:8px 12px; box-sizing:border-box; flex-shrink:0;">{{p.btnLabel}}</button>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
 </div>
 </sc-if>
 
@@ -729,6 +790,16 @@ class Component extends DCLogic {
       });
     };
 
+    this.setFilterUpcoming = () => this.setState({ tripsFilter: 'upcoming' });
+    this.setFilterPast = () => this.setState({ tripsFilter: 'past' });
+    this.openSettle = (tripId) => this.setState({ settleOpenTripId: tripId });
+    this.closeSettle = () => this.setState({ settleOpenTripId: null });
+    this.toggleSettled = (personId) => {
+      const ids = this.state.settledIds;
+      const next = ids.indexOf(personId) === -1 ? ids.concat([personId]) : ids.filter((x) => x !== personId);
+      this.setState({ settledIds: next });
+    };
+
     this.restart = () => this.setState(this.getInitialState());
   }
 
@@ -776,8 +847,27 @@ class Component extends DCLogic {
       cg_inviteInput: '',
       cg_invitees: [],
       cg_selectedContacts: [],
-      linkCopied: false
+      linkCopied: false,
+      tripsFilter: 'upcoming',
+      settleOpenTripId: null,
+      settledIds: []
     };
+  }
+
+  getSampleTrips() {
+    return [
+      { id: 't1', name: 'Lake Tahoe Crew', destination: 'Lake Tahoe, CA', dateLabel: 'Sep 6 – Sep 8', status: 'upcoming', coverIndex: 0,
+        breakdown: [
+          { id: 'p1', name: 'Sam Park', initials: 'SP', amount: -28 },
+          { id: 'p2', name: 'Alex Kim', initials: 'AK', amount: -14 }
+        ] },
+      { id: 't2', name: 'Weekend at the Cabin', destination: 'Big Bear, CA', dateLabel: 'Oct 18 – Oct 20', status: 'upcoming', coverIndex: 3,
+        breakdown: [
+          { id: 'p3', name: 'Priya Nair', initials: 'PN', amount: 10 },
+          { id: 'p4', name: 'Jordan Lee', initials: 'JL', amount: 8 }
+        ] },
+      { id: 't3', name: 'Napa Wine Tour', destination: 'Napa, CA', dateLabel: 'Jun 12 – Jun 13', status: 'past', coverIndex: 1, breakdown: [] }
+    ];
   }
 
   getSampleContacts() {
@@ -918,6 +1008,66 @@ class Component extends DCLogic {
     const inviteCodeRaw = (s.cg_name || 'TRIP').replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 6);
     const inviteCode = (inviteCodeRaw || 'TRIP') + '-482';
 
+    const moneyOwe = 'oklch(50% 0.15 30)';
+    const moneyOwed = 'oklch(38% 0.1 150)';
+    const moneyNeutral = 'oklch(50% 0.005 250)';
+    const tint = (color) => color.slice(0, -1) + ' / 10%)';
+
+    const rawTrips = this.getSampleTrips();
+    const trips = rawTrips.filter((t) => t.status === s.tripsFilter).map((t) => {
+      const balance = t.breakdown.reduce((sum, p) => sum + p.amount, 0);
+      const theme = coverThemes[t.coverIndex] || coverThemes[0];
+      let balanceLabel, balanceColor;
+      if (balance < 0) { balanceLabel = 'You owe $' + Math.abs(balance); balanceColor = moneyOwe; }
+      else if (balance > 0) { balanceLabel = "You're owed $" + balance; balanceColor = moneyOwed; }
+      else { balanceLabel = 'Settled up'; balanceColor = moneyNeutral; }
+      return {
+        id: t.id, name: t.name, destination: t.destination, dateLabel: t.dateLabel,
+        coverAccent: theme.accent, balanceLabel: balanceLabel, balanceColor: balanceColor,
+        hasSettle: t.breakdown.length > 0,
+        onOpenSettle: () => this.openSettle(t.id)
+      };
+    });
+
+    const totalOwe = rawTrips.reduce((sum, t) => sum + t.breakdown.filter((p) => p.amount < 0).reduce((s2, p) => s2 + Math.abs(p.amount), 0), 0);
+    const totalOwed = rawTrips.reduce((sum, t) => sum + t.breakdown.filter((p) => p.amount > 0).reduce((s2, p) => s2 + p.amount, 0), 0);
+    const net = totalOwed - totalOwe;
+    let netAmountLabel, netColor, netBg;
+    if (net < 0) { netAmountLabel = 'You owe $' + Math.abs(net); netColor = moneyOwe; netBg = tint(moneyOwe); }
+    else if (net > 0) { netAmountLabel = "You're owed $" + net; netColor = moneyOwed; netBg = tint(moneyOwed); }
+    else { netAmountLabel = 'All settled up'; netColor = moneyNeutral; netBg = 'oklch(95% 0.003 250)'; }
+
+    const upcomingSelected = s.tripsFilter === 'upcoming';
+
+    const settleTripRaw = rawTrips.find((t) => t.id === s.settleOpenTripId);
+    let settleTripName = '', settleNetLabel = '', settleNetColor = moneyNeutral, settleBreakdown = [];
+    if (settleTripRaw) {
+      settleTripName = settleTripRaw.name;
+      const tripNet = settleTripRaw.breakdown.reduce((sum, p) => sum + p.amount, 0);
+      if (tripNet < 0) { settleNetLabel = 'You owe $' + Math.abs(tripNet); settleNetColor = moneyOwe; }
+      else if (tripNet > 0) { settleNetLabel = "You're owed $" + tripNet; settleNetColor = moneyOwed; }
+      else { settleNetLabel = 'All settled'; settleNetColor = moneyNeutral; }
+
+      settleBreakdown = settleTripRaw.breakdown.map((p) => {
+        const settled = s.settledIds.indexOf(p.id) !== -1;
+        const owesThem = p.amount < 0;
+        let amountLabel, amountColor;
+        if (owesThem) { amountLabel = 'You owe $' + Math.abs(p.amount); amountColor = moneyOwe; }
+        else { amountLabel = 'Owes you $' + p.amount; amountColor = moneyOwed; }
+        return {
+          id: p.id, name: p.name, initials: p.initials,
+          amountLabel: settled ? 'Settled' : amountLabel,
+          amountColor: settled ? moneyNeutral : amountColor,
+          btnLabel: settled ? 'Undo' : (owesThem ? 'Mark as paid' : 'Send reminder'),
+          btnBg: settled ? 'transparent' : (owesThem ? 'oklch(45% 0.14 260)' : 'transparent'),
+          btnColor: settled ? 'oklch(55% 0.005 250)' : (owesThem ? 'white' : 'oklch(45% 0.14 260)'),
+          btnBorder: settled ? 'oklch(88% 0.003 250)' : 'oklch(45% 0.14 260)',
+          onToggleSettled: () => this.toggleSettled(p.id)
+        };
+      });
+    }
+    const isSettleVisible = !!settleTripRaw;
+
     return {
       isStep0: s.step === 0,
       isStep1: s.step === 1,
@@ -947,6 +1097,21 @@ class Component extends DCLogic {
       cardAvatars: cardAvatars,
       hasCardOverflow: hasCardOverflow,
       cardOverflowLabel: cardOverflowLabel,
+      trips: trips,
+      netAmountLabel: netAmountLabel,
+      netColor: netColor,
+      netBg: netBg,
+      totalOweLabel: '$' + totalOwe,
+      totalOwedLabel: '$' + totalOwed,
+      upcomingFilterBg: upcomingSelected ? 'oklch(45% 0.14 260)' : 'transparent',
+      upcomingFilterColor: upcomingSelected ? 'white' : 'oklch(18% 0.005 250)',
+      pastFilterBg: !upcomingSelected ? 'oklch(45% 0.14 260)' : 'transparent',
+      pastFilterColor: !upcomingSelected ? 'white' : 'oklch(18% 0.005 250)',
+      isSettleVisible: isSettleVisible,
+      settleTripName: settleTripName,
+      settleNetLabel: settleNetLabel,
+      settleNetColor: settleNetColor,
+      settleBreakdown: settleBreakdown,
       isCreateVisible: s.createOpen,
       isCreateStep0: s.createStep === 0,
       isCreateStep1: s.createStep === 1,
@@ -1019,6 +1184,9 @@ class Component extends DCLogic {
       onChatInput: this.onChatInput,
       onChatKeyDown: this.onChatKeyDown,
       sendMessage: this.sendMessage,
+      setFilterUpcoming: this.setFilterUpcoming,
+      setFilterPast: this.setFilterPast,
+      closeSettle: this.closeSettle,
       openCreateFlow: this.openCreateFlow,
       createGoNext: this.createGoNext,
       createGoBack: this.createGoBack,
