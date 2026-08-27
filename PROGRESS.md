@@ -35,6 +35,31 @@ Local path: `/Users/srigautham/Documents/My Projects/Personal Projects/travel-co
 
 ## QA agent communication log (most recent first)
 
+- **Add Expense stuck-sheet bug, 2 rounds so far**: QA found it on
+  `3fe793f`/`fb51af5`/`64d28ea` pass — reject empty, reject amount=0, then
+  a valid submit leaves the sheet's widgets + an extra ModalBarrier stuck
+  in the tree (charge does get added to AppData though). Round 1 fix
+  (`3fcbc97`): added a `_submitted` guard in `AddExpenseSheet._submit()`
+  against a second `Navigator.pop()`. QA re-verified: **fixed the
+  rapid-double/triple-tap case, but NOT their original exact repro**
+  (deliberate single taps, full `pumpAndSettle` between each — genuinely a
+  different bug, `_submitted` never even reaches true on that path). Round
+  2 (`a7c2b20`): found the trip card's own "Add expense" trigger button
+  shares its label text with both the sheet's title and its submit
+  button (three "Add expense" text widgets live in the tree once the
+  sheet's open) AND `_addExpense` in `balances_tab.dart` had **no guard
+  against being called again** while a sheet from a prior call was still
+  open — a second call would stack a second sheet on top of the first,
+  which fits the symptom (topmost sheet's valid submit succeeds, an
+  older untouched sheet is left stuck underneath). Added an
+  `_addingExpense` reentry guard. **Not yet re-verified by QA as of this
+  writing** — if it's STILL not fixed after this, the text-ambiguity
+  angle is worth double-checking from QA's side too (a finder like
+  `find.text('Add expense').last` could resolve differently than
+  intended depending on tree-walk order — worth trying a scoped finder,
+  e.g. `find.descendant(of: find.byType(AddExpenseSheet), matching:
+  find.widgetWithText(ElevatedButton, 'Add expense'))`, to rule out
+  finder targeting as a variable entirely).
 - **Pinged with `da35c61`** (group creation + shared state) — explicitly
   flagged that I couldn't verify the actual Create-group button-tap flow
   myself (no OS-level tap automation on my side) and asked it to
@@ -362,11 +387,11 @@ billing account, and over sticking with presets).
    browser sheet), which QA's `integration_test` automation can't drive,
    so "no crash, correct buttons" is still the practical ceiling on
    automated verification here.
-4. **Unsplash API key** (Android covers) — register a free app at
-   https://unsplash.com/oauth/applications, paste the Access Key into
-   `lib/config/unsplash_config.dart` (currently empty — Android cover
-   generation silently falls back to presets until this is filled in).
-   **The only remaining open setup item.**
+4. ~~**Unsplash API key**~~ **DONE** (commit `a7c2b20`) — user registered a
+   free app, key is live in `lib/config/unsplash_config.dart`. Android
+   cover generation is now fully functional (Demo tier, 50 req/hour — fine
+   for testing, would need Unsplash's free "Production" approval before
+   real-user launch). **All setup items from this section are now done.**
 5. ~~**Bundle ID rename**~~ **DONE**, including the user-side Google Cloud
    Console edit (iOS OAuth client's Bundle ID field updated to
    `com.srigautham.waypoint`, confirmed by user).
