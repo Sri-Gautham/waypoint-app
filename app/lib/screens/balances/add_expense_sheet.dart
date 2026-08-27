@@ -51,6 +51,14 @@ class _AddExpenseSheetState extends State<AddExpenseSheet> {
     if (description.isEmpty || amount == null || amount <= 0 || _splitWith.isEmpty) return;
 
     _submitted = true;
+    // Unfocus before popping: if a text field is still focused (likely,
+    // since the amount field was just edited), letting the keyboard's own
+    // dismiss animation run concurrently with the sheet's closing
+    // transition is a known source of the route never fully tearing
+    // down — the pop's Future resolves and the caller's continuation
+    // runs, but the sheet's widgets/barrier are left behind with no
+    // animation left for pumpAndSettle to wait out.
+    FocusManager.instance.primaryFocus?.unfocus();
     final split = {_payer, ..._splitWith}.toList();
     final charge = Charge(
       id: 'c-${DateTime.now().microsecondsSinceEpoch}',

@@ -43,7 +43,16 @@ class _BalancesTabState extends State<BalancesTab> {
         builder: (_) => AddExpenseSheet(tripId: trip.id, participants: participants),
       );
       if (charge == null || !mounted) return;
-      AppDataScope.of(context).addCharge(trip.id, charge);
+      // Deferred a frame: this triggers AppData's notifyListeners(), which
+      // synchronously rebuilds this whole ancestor subtree. Doing that in
+      // the same microtask the sheet's route is still tearing down in is
+      // a plausible way to leave the closing route's widgets/barrier
+      // stranded — pushing it past the current frame gives the route's
+      // own teardown a clear turn first.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        AppDataScope.of(context).addCharge(trip.id, charge);
+      });
     } finally {
       _addingExpense = false;
     }
