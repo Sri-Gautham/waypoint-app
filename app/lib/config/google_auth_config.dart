@@ -7,5 +7,10 @@
 ///
 /// Google Sign-In stays a no-op (silently fails) while this is empty.
 class GoogleAuthConfig {
-  static const webClientId = '';
+  static const webClientId = '439878795614-fj0gd1d8rjer0cfsb5caloo2tb67tvb8.apps.googleusercontent.com';
+
+  /// The iOS OAuth client — passed explicitly to GoogleSignIn() instead of
+  /// relying on a GoogleService-Info.plist / Info.plist GIDClientID key
+  /// (this app has neither).
+  static const iosClientId = '439878795614-7aemcbk0tg0nv0nvkcmqv1qgmsuj0lcs.apps.googleusercontent.com';
 }

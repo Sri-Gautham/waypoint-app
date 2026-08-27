@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:math';
 
 import 'package:crypto/crypto.dart';
@@ -72,6 +73,7 @@ class AuthService {
   Future<AuthResult> signInWithGoogle() async {
     final googleSignIn = GoogleSignIn(
       scopes: ['email', 'profile'],
+      clientId: Platform.isIOS ? GoogleAuthConfig.iosClientId : null,
       // Requests an ID token audienced to the Web client instead of
       // whatever platform client (iOS/Android) ran the flow — that's
       // the audience Supabase's Google provider is configured to accept.

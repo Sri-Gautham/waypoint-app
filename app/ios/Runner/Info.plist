@@ -32,22 +32,16 @@
 	<string>Waypoint needs camera access so you can take a photo to add to a trip.</string>
 	<key>NSFaceIDUsageDescription</key>
 	<string>Waypoint uses Face ID to confirm it's you before signing back in.</string>
-	<!--
-	  Google Sign-In: replace with the REVERSED client ID of the iOS OAuth
-	  client from Google Cloud Console (Console > APIs & Services >
-	  Credentials > iOS client for com.waypoint.waypoint). It's the iOS
-	  client ID with the dot-separated segments reversed, prefixed with
-	  "com.googleusercontent.apps." e.g. client ID
-	  1234-abc.apps.googleusercontent.com becomes
-	  com.googleusercontent.apps.1234-abc. Sign-in will fail with this
-	  placeholder still in place.
-	-->
+	<!-- Google Sign-In redirect: reversed form of the iOS OAuth client ID
+	     (Cloud Console > APIs & Services > Credentials > iOS client for
+	     com.waypoint.waypoint), matching lib/config/google_auth_config.dart's
+	     iosClientId. -->
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>com.googleusercontent.apps.REPLACE_WITH_IOS_CLIENT_ID</string>
+				<string>com.googleusercontent.apps.439878795614-7aemcbk0tg0nv0nvkcmqv1qgmsuj0lcs</string>
 			</array>
 		</dict>
 	</array>
