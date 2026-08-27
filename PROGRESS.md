@@ -344,44 +344,39 @@ billing account, and over sticking with presets).
    `integration_test` tap automation can't drive that (it's outside
    Flutter's own widget tree), so its check is still just "no crash, right
    buttons show/hide," not a full successful sign-in.
-2. ~~**Supabase dashboard** (Google)~~ **DONE**, see above. **Apple still
-   needs its own dashboard entry** (Authentication > Providers > Apple) —
-   not yet done as of this writing.
-3. **Apple Developer portal** — the `DEVELOPMENT_TEAM` (C8M2XYZHB3) is
-   already set in the project, and the entitlement is wired. **App ID
-   didn't exist there at all yet** (only ever built for Simulator, which
-   doesn't need one) — user tried creating it manually with the old bundle
-   ID and hit "not available" (already taken by someone else's app on a
-   different account, `com.waypoint.waypoint` being generic enough to
-   collide) — resolved by the bundle ID rename, item 5. Still needs: create
-   the App ID fresh under the NEW bundle id with "Sign In with Apple"
-   capability checked, then the Apple-side Service ID / key for Supabase's
-   Apple provider config (item 2).
+2. ~~**Supabase dashboard** (Google + Apple)~~ **DONE.** Apple provider
+   enabled with Client IDs = `com.srigautham.waypoint`, **no Secret Key
+   needed** — confirmed Supabase saved it blank, since the app only uses
+   the native ID-token flow (audience = Bundle ID), never the web OAuth
+   redirect that the key/Team ID/Services ID song-and-dance is actually
+   for. Worth remembering if this ever needs revisiting: that whole
+   fallback path (Keys > Sign In with Apple > associate with App ID >
+   download .p8 > Team ID from Membership details) turned out to be
+   unnecessary for us.
+3. ~~**Apple Developer portal**~~ **DONE.** App ID `com.srigautham.waypoint`
+   created fresh (didn't exist before — only ever built for Simulator,
+   which doesn't need one) with "Sign In with Apple" capability checked.
+   **Both Apple and Google Sign-In should now be fully configured
+   end-to-end** — same caveat as Google though: real completion needs a
+   human tapping through native system UI (Face ID/Apple ID prompt or a
+   browser sheet), which QA's `integration_test` automation can't drive,
+   so "no crash, correct buttons" is still the practical ceiling on
+   automated verification here.
 4. **Unsplash API key** (Android covers) — register a free app at
    https://unsplash.com/oauth/applications, paste the Access Key into
    `lib/config/unsplash_config.dart` (currently empty — Android cover
    generation silently falls back to presets until this is filled in).
-5. **Bundle ID rename**: `com.waypoint.waypoint` -> `com.srigautham.waypoint`
-   (user's choice, prompted by the Apple identifier collision in item 3).
-   Done on my end: `PRODUCT_BUNDLE_IDENTIFIER` in `project.pbxproj` (all 6
-   Runner/RunnerTests config entries), Android `namespace`/`applicationId`
-   in `build.gradle.kts`, `MainActivity.kt`'s package + its directory moved
-   to match (`android/.../kotlin/com/srigautham/waypoint/`), both
-   MethodChannel name strings (Dart + Swift, must match each other exactly
-   — arbitrary string, didn't strictly need to change, renamed for
-   consistency), and this file's own references. **Still needs, user-side**:
-   edit the existing iOS OAuth client in Google Cloud Console (Credentials
-   > that iOS client > Bundle ID field) from the old value to
-   `com.srigautham.waypoint` — Google's iOS SDK checks this at sign-in time,
-   so leaving it stale would break Google Sign-In on iOS again.
+   **The only remaining open setup item.**
+5. ~~**Bundle ID rename**~~ **DONE**, including the user-side Google Cloud
+   Console edit (iOS OAuth client's Bundle ID field updated to
+   `com.srigautham.waypoint`, confirmed by user).
 
-None of the above block iOS Simulator testing of the rest of the app —
-the Apple button will fail to complete sign-in until steps 2-3 are done
-(existing account UX degrades to "sign-in failed, try again", no crash),
-and Android cover generation will fall back to presets until step 4 is
-done (iOS cover generation is separately gated on real Apple Intelligence
+Apple and Google Sign-In are both fully configured now (steps 1-3, 5 all
+done) — only step 4 (Unsplash) remains, and it doesn't block anything
+except Android cover photos, which just fall back to presets without it.
+iOS cover generation is separately gated on real Apple Intelligence
 hardware, unrelated to any of these steps — Simulator can't satisfy that
-regardless).
+regardless.
 
 ## Git hygiene reminder
 
