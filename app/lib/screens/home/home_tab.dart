@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../models/activity_item.dart';
 import '../../models/onboarding_data.dart';
-import '../../models/trip.dart';
+import '../../state/app_data.dart';
 import '../../theme/app_colors.dart';
 import '../../widgets/trip_hero_card.dart';
+import '../group/create_group_flow.dart';
 import '../trip/trip_detail_screen.dart';
 
 class HomeTab extends StatelessWidget {
@@ -14,7 +15,8 @@ class HomeTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final trip = Trip.sampleNextTrip;
+    final appData = AppDataScope.of(context);
+    final trip = appData.nextTrip;
     final firstName = data.firstName.isEmpty ? 'there' : data.firstName;
 
     return SingleChildScrollView(
@@ -61,7 +63,9 @@ class HomeTab extends StatelessWidget {
             children: [
               Expanded(
                 child: ElevatedButton(
-                  onPressed: null,
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const CreateGroupFlow()),
+                  ),
                   style: ElevatedButton.styleFrom(minimumSize: const Size.fromHeight(44)),
                   child: const Text('Create a group', style: TextStyle(fontSize: 13)),
                 ),

@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
 
-/// Back button + "N / 4" step counter shared by the onboarding steps.
+/// Back button + "N / total" step counter shared by multi-step flows
+/// (defaults to a 4-step flow to match onboarding's original steps).
 class StepHeader extends StatelessWidget {
-  const StepHeader({super.key, required this.step, required this.onBack});
+  const StepHeader({super.key, required this.step, required this.onBack, this.total = 4});
 
   final int step;
+  final int total;
   final VoidCallback? onBack;
 
   @override
@@ -19,7 +21,7 @@ class StepHeader extends StatelessWidget {
         else
           const SizedBox(width: 36, height: 36),
         Text(
-          '$step / 4',
+          '$step / $total',
           style: const TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,

@@ -1,18 +1,12 @@
 import 'package:flutter/material.dart';
 
-import '../../models/charge.dart';
 import '../../models/payment.dart';
+import '../../state/app_data.dart';
 import '../../theme/app_colors.dart';
 import '../../utils/balance_calculator.dart';
 
 class BalancesByPersonScreen extends StatefulWidget {
-  const BalancesByPersonScreen({super.key, required this.chargesByTrip, required this.payments, required this.tripNames});
-
-  /// Shared references with the Balances tab — mutated in place so changes
-  /// are visible after this screen is popped.
-  final Map<String, List<Charge>> chargesByTrip;
-  final List<Payment> payments;
-  final Map<String, String> tripNames;
+  const BalancesByPersonScreen({super.key});
 
   @override
   State<BalancesByPersonScreen> createState() => _BalancesByPersonScreenState();
@@ -29,13 +23,13 @@ class _BalancesByPersonScreenState extends State<BalancesByPersonScreen> {
     super.dispose();
   }
 
-  double _paidSoFar(String memberName) {
-    return widget.payments.where((p) => p.memberName == memberName).fold(0.0, (sum, p) => sum + p.amount);
+  double _paidSoFar(AppData appData, String memberName) {
+    return appData.payments.where((p) => p.memberName == memberName).fold(0.0, (sum, p) => sum + p.amount);
   }
 
-  Map<String, Map<String, double>> _netByTripByMember() {
+  Map<String, Map<String, double>> _netByTripByMember(AppData appData) {
     final result = <String, Map<String, double>>{};
-    widget.chargesByTrip.forEach((tripId, charges) {
+    appData.chargesByTrip.forEach((tripId, charges) {
       result[tripId] = netBalancesByMember(charges);
     });
     return result;
@@ -52,32 +46,33 @@ class _BalancesByPersonScreenState extends State<BalancesByPersonScreen> {
     });
   }
 
-  void _confirmPayment(String member, double owed) {
+  void _confirmPayment(AppData appData, String member, double owed) {
     final raw = double.tryParse(_draftController.text.trim());
     if (raw == null || raw <= 0) return;
     final amount = raw > owed ? owed : raw;
-    setState(() {
-      widget.payments.add(Payment(memberName: member, amount: amount));
-      _settleOpenMember = null;
-    });
+    appData.addPayment(Payment(memberName: member, amount: amount));
+    setState(() => _settleOpenMember = null);
   }
 
   @override
   Widget build(BuildContext context) {
-    final netByTrip = _netByTripByMember();
+    final appData = AppDataScope.of(context);
+    final tripNames = {for (final t in appData.trips) t.id: t.name};
+
+    final netByTrip = _netByTripByMember(appData);
     final rawNetByMember = <String, double>{};
     final tripsByMember = <String, List<(String tripName, double amount)>>{};
     netByTrip.forEach((tripId, netMap) {
       netMap.forEach((member, amount) {
         rawNetByMember[member] = (rawNetByMember[member] ?? 0) + amount;
-        (tripsByMember[member] ??= []).add((widget.tripNames[tripId] ?? tripId, amount));
+        (tripsByMember[member] ??= []).add((tripNames[tripId] ?? tripId, amount));
       });
     });
 
     final members = rawNetByMember.keys.toList();
     double totalOwe = 0, totalOwed = 0;
     for (final m in members) {
-      final adjusted = rawNetByMember[m]! + _paidSoFar(m);
+      final adjusted = rawNetByMember[m]! + _paidSoFar(appData, m);
       if (adjusted < 0) {
         totalOwe += -adjusted;
       } else {
@@ -111,7 +106,7 @@ class _BalancesByPersonScreenState extends State<BalancesByPersonScreen> {
             ),
             const SizedBox(height: 24),
             for (final member in members) ...[
-              _buildMemberCard(member, rawNetByMember[member]!, tripsByMember[member] ?? []),
+              _buildMemberCard(appData, member, rawNetByMember[member]!, tripsByMember[member] ?? []),
               const SizedBox(height: 10),
             ],
           ],
@@ -120,8 +115,8 @@ class _BalancesByPersonScreenState extends State<BalancesByPersonScreen> {
     );
   }
 
-  Widget _buildMemberCard(String member, double rawNet, List<(String, double)> trips) {
-    final paid = _paidSoFar(member);
+  Widget _buildMemberCard(AppData appData, String member, double rawNet, List<(String, double)> trips) {
+    final paid = _paidSoFar(appData, member);
     final adjusted = rawNet + paid;
     final owesThem = adjusted < 0;
     final owed = adjusted.abs();
@@ -209,7 +204,7 @@ class _BalancesByPersonScreenState extends State<BalancesByPersonScreen> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: () => _confirmPayment(member, owed),
+                    onPressed: () => _confirmPayment(appData, member, owed),
                     child: const Text('Record payment'),
                   ),
                 ),

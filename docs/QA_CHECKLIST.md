@@ -5,12 +5,16 @@ whenever new screens/flows land; treat it as the source of truth for what
 "done" means functionally, alongside `test_report.json`'s automated results.
 
 Known tooling gotcha: `xcrun simctl io screenshot` has produced misleading
-captures in this environment — a correctly-sized, fixed-size widget rendered
-as a wildly stretched rectangle in the screenshot while the actual on-screen
-content (confirmed via `simctl io recordVideo` + a QuickLook thumbnail) was
-correct. If a screenshot shows a widget stretched/distorted in a way that
-seems physically implausible given the code, cross-check with a video-frame
-capture or the live simulator before filing it as a bug.
+captures in this environment in (at least) two distinct ways: (1) a
+correctly-sized, fixed-size widget rendered as a wildly stretched rectangle
+in the screenshot while the actual on-screen content (confirmed via
+`simctl io recordVideo` + a QuickLook thumbnail) was correct, and (2) under
+rapid successive calls, it can serve stale/byte-identical duplicate frames
+rather than the current screen. If a screenshot shows something that seems
+physically implausible given the code, or two screenshots taken moments
+apart look suspiciously identical despite navigating, cross-check with a
+video-frame capture or direct widget-tree inspection before filing it as a
+bug.
 
 ## Onboarding (`OnboardingFlow`)
 
@@ -33,9 +37,15 @@ capture or the live simulator before filing it as a bug.
   trip name/destination/date, avatar stack caps at 2 visible + a "+N"
   overflow badge matching the actual remaining member count.
 - Tapping the hero card opens Trip Detail for that trip.
-- "Create a group" / "Join with code" are visibly disabled — confirm they
-  don't crash or silently no-op with a stray console error.
+- "Create a group" now opens the real `CreateGroupFlow` wizard (see new
+  section below) — no longer disabled. "Join with code" is still visibly
+  disabled — confirm it doesn't crash or silently no-op with a stray
+  console error.
 - Recent activity list renders all sample items.
+- After creating a group (see below), Home's hero card should immediately
+  show the NEW trip, not the old default (Lake Tahoe Crew) — `AppData`'s
+  `nextTrip` is the first `upcoming` trip and newly created trips are
+  inserted at the front.
 
 ## Trip Detail (`TripDetailScreen`)
 
@@ -112,7 +122,57 @@ capture or the live simulator before filing it as a bug.
   balance, flips their row to "Settled up" once fully paid, and the
   Balances tab's overall card reflects the change after returning to it.
 
+## Group creation (`CreateGroupFlow`)
+
+Reached via Home's "Create a group" button. 3 steps, back-button behavior:
+tapping back on step 1 pops the whole flow (returns to Home); on steps 2/3
+it goes to the previous step without losing entered data.
+
+- **Step 1 (Basics)**: header shows "1 / 3". 4 cover swatches (Mountain
+  Lake / Beach / Desert / Forest), each a distinct icon+color; tapping one
+  selects it (ring border) and deselects the others — exactly one selected
+  at a time. Trip name and Notes fields accept input. Start/End date
+  fields open a native date picker on tap and display the picked date
+  (format "Sat, Sep 6"); End date is optional.
+- **Step 2 (Destination)**: header shows "2 / 3". General area/Exact
+  address toggle — General area is selected by default. Switching to
+  Exact address reveals Street address + Apt/Unit fields above City;
+  switching back to General area hides them again (and their entered
+  values, if any, shouldn't cause a crash when hidden then re-shown).
+  City/State fields always visible; ZIP is optional in both modes.
+- **Step 3 (Invite)**: header shows "3 / 3". Invite code display derives
+  from the trip name typed in step 1 (falls back to "TRIP-482" if no name
+  was entered) — check it updates if you go back and change the name.
+  "Copy" copies the code to the clipboard and shows "Copied!" briefly,
+  then reverts to "Copy". Adding a phone/email via the text field creates
+  a removable chip below it (tap the chip's X to remove); the input clears
+  after adding. All 5 sample contacts are listed with checkboxes;
+  selecting/deselecting them doesn't affect the manual-invite chips or
+  vice versa. "Create group" is always enabled (no required fields on
+  this step).
+- **On "Create group"**: navigates to that new trip's Trip Detail screen
+  (not back to Home) — the back button from there should return to Home,
+  not back into the wizard. The new trip should immediately be visible on:
+  Home's hero card (see note in Home section above), Trips tab's Upcoming
+  list, and Balances tab's Upcoming list (with $0 balance / "Settled up"
+  and an empty Activity list, since it starts with no charges — "Add
+  expense" should still work against it like any other trip).
+- **Edge cases worth checking**: creating a group with an empty trip name
+  (should fall back to "My Trip"), with no destination fields filled
+  (should show "Destination TBD"), with no start date (should show "Date
+  TBD" and not crash computing days-left), and with zero invitees selected
+  (should create successfully with just you as a member, "1 total" on its
+  Trip Detail).
+
 ## Cross-cutting
+
+- **Shared state**: `AppData` (in `lib/state/app_data.dart`) is the one
+  source of truth for trips/charges/payments now, provided app-wide via
+  `AppDataScope` above `MaterialApp` in `main.dart`. If a value changes on
+  one screen (e.g. a payment recorded on Balances-by-person) but doesn't
+  seem to reflect on another screen after navigating back to it, that's
+  worth flagging — it likely means somewhere is still reading stale local
+  state instead of `AppDataScope.of(context)`.
 
 - No uncaught exceptions/red screens in the console across the full flow:
   cold launch → onboarding → Home → Trip Detail → Chat → back → Trips tab →

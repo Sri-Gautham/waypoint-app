@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../models/activity_log_entry.dart';
 import '../../models/trip.dart';
 import '../../models/trip_photo.dart';
+import '../../state/app_data.dart';
 import '../../theme/app_colors.dart';
 import '../../widgets/trip_hero_card.dart';
 import '../trip/trip_detail_screen.dart';
@@ -81,6 +82,7 @@ class _TripsTabState extends State<TripsTab> {
 
   @override
   Widget build(BuildContext context) {
+    final appData = AppDataScope.of(context);
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
       child: Column(
@@ -90,7 +92,7 @@ class _TripsTabState extends State<TripsTab> {
           const SizedBox(height: 20),
           const _SectionLabel('Upcoming'),
           const SizedBox(height: 10),
-          for (final trip in Trip.upcoming) ...[
+          for (final trip in appData.upcoming) ...[
             SizedBox(
               height: 120,
               child: TripHeroCard(
@@ -105,7 +107,7 @@ class _TripsTabState extends State<TripsTab> {
           const SizedBox(height: 12),
           const _SectionLabel('Past'),
           const SizedBox(height: 10),
-          for (final trip in Trip.past)
+          for (final trip in appData.past)
             Padding(
               padding: const EdgeInsets.only(bottom: 12),
               child: _PastTripCard(

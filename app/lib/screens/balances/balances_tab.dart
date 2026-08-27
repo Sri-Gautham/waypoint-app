@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../data/sample_charges.dart';
 import '../../models/charge.dart';
-import '../../models/payment.dart';
 import '../../models/trip.dart';
+import '../../state/app_data.dart';
 import '../../theme/app_colors.dart';
 import '../../utils/balance_calculator.dart';
 import 'add_expense_sheet.dart';
@@ -17,13 +16,11 @@ class BalancesTab extends StatefulWidget {
 }
 
 class _BalancesTabState extends State<BalancesTab> {
-  final Map<String, List<Charge>> _chargesByTrip = seedCharges();
-  final List<Payment> _payments = [];
   final Set<String> _expandedTripIds = {};
   TripStatus _filter = TripStatus.upcoming;
 
-  double _paidSoFar(String memberName) {
-    return _payments.where((p) => p.memberName == memberName).fold(0.0, (sum, p) => sum + p.amount);
+  double _paidSoFar(AppData appData, String memberName) {
+    return appData.payments.where((p) => p.memberName == memberName).fold(0.0, (sum, p) => sum + p.amount);
   }
 
   Future<void> _addExpense(Trip trip) async {
@@ -34,34 +31,30 @@ class _BalancesTabState extends State<BalancesTab> {
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
       builder: (_) => AddExpenseSheet(tripId: trip.id, participants: participants),
     );
-    if (charge == null) return;
-    setState(() {
-      (_chargesByTrip[trip.id] ??= []).add(charge);
-    });
+    if (charge == null || !mounted) return;
+    AppDataScope.of(context).addCharge(trip.id, charge);
   }
 
-  Future<void> _openBalancesByPerson() async {
-    final tripNames = {for (final t in Trip.all) t.id: t.name};
-    await Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => BalancesByPersonScreen(chargesByTrip: _chargesByTrip, payments: _payments, tripNames: tripNames),
-      ),
+  void _openBalancesByPerson() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const BalancesByPersonScreen()),
     );
-    setState(() {}); // reflect any payments recorded on the pushed screen
   }
 
   @override
   Widget build(BuildContext context) {
+    final appData = AppDataScope.of(context);
+
     // Overall balance, adjusted for payments, across every trip.
     final aggregateNet = <String, double>{};
-    _chargesByTrip.forEach((tripId, charges) {
+    appData.chargesByTrip.forEach((tripId, charges) {
       netBalancesByMember(charges).forEach((member, amount) {
         aggregateNet[member] = (aggregateNet[member] ?? 0) + amount;
       });
     });
     double totalOwe = 0, totalOwed = 0;
     for (final member in aggregateNet.keys) {
-      final adjusted = aggregateNet[member]! + _paidSoFar(member);
+      final adjusted = aggregateNet[member]! + _paidSoFar(appData, member);
       if (adjusted < 0) {
         totalOwe += -adjusted;
       } else {
@@ -73,7 +66,7 @@ class _BalancesTabState extends State<BalancesTab> {
     final netBg = net == 0 ? AppColors.divider : (net < 0 ? const Color(0x1AA8372A) : const Color(0x1A085023));
     final netLabel = net == 0 ? 'All settled up' : (net < 0 ? 'You owe \$${(-net).toStringAsFixed(2)}' : "You're owed \$${net.toStringAsFixed(2)}");
 
-    final trips = Trip.all.where((t) => t.status == _filter).toList();
+    final trips = appData.trips.where((t) => t.status == _filter).toList();
 
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
@@ -131,7 +124,7 @@ class _BalancesTabState extends State<BalancesTab> {
           for (final trip in trips) ...[
             _TripBalanceCard(
               trip: trip,
-              charges: _chargesByTrip[trip.id] ?? const [],
+              charges: appData.chargesByTrip[trip.id] ?? const [],
               expanded: _expandedTripIds.contains(trip.id),
               onToggle: () => setState(() {
                 if (!_expandedTripIds.add(trip.id)) _expandedTripIds.remove(trip.id);
