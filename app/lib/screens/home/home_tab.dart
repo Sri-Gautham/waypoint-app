@@ -5,12 +5,12 @@ import '../../models/onboarding_data.dart';
 import '../../models/trip.dart';
 import '../../theme/app_colors.dart';
 import '../../widgets/trip_landscape.dart';
+import '../trip/trip_detail_screen.dart';
 
 class HomeTab extends StatelessWidget {
-  const HomeTab({super.key, required this.data, required this.onOpenTrip});
+  const HomeTab({super.key, required this.data});
 
   final OnboardingData data;
-  final VoidCallback onOpenTrip;
 
   @override
   Widget build(BuildContext context) {
@@ -49,7 +49,12 @@ class HomeTab extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 24),
-          _NextTripCard(trip: trip, onTap: onOpenTrip),
+          _NextTripCard(
+            trip: trip,
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => TripDetailScreen(trip: trip)),
+            ),
+          ),
           const SizedBox(height: 20),
           Row(
             children: [
@@ -168,7 +173,7 @@ class _NextTripCard extends StatelessWidget {
                   const SizedBox(height: 10),
                   Row(
                     children: [
-                      for (final (i, member) in trip.members.indexed)
+                      for (final (i, member) in trip.members.take(2).indexed)
                         Transform.translate(
                           offset: Offset(i == 0 ? 0 : -8.0 * i, 0),
                           child: Container(
@@ -183,6 +188,24 @@ class _NextTripCard extends StatelessWidget {
                             child: Text(
                               member.initials,
                               style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700),
+                            ),
+                          ),
+                        ),
+                      if (trip.members.length > 2)
+                        Transform.translate(
+                          offset: const Offset(-16, 0),
+                          child: Container(
+                            width: 26,
+                            height: 26,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: Colors.white24,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white, width: 1.5),
+                            ),
+                            child: Text(
+                              '+${trip.members.length - 2}',
+                              style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w700),
                             ),
                           ),
                         ),

@@ -21,16 +21,10 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> {
   int _tabIndex = 0;
 
-  void _showComingSoon(String feature) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$feature is coming soon.')),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final tabs = [
-      HomeTab(data: widget.data, onOpenTrip: () => _showComingSoon('Trip detail')),
+      HomeTab(data: widget.data),
       const PlaceholderTab(
         icon: Icons.luggage_outlined,
         title: 'Trips',
