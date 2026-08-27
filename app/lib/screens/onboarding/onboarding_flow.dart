@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../models/onboarding_data.dart';
-import '../home/home_placeholder_screen.dart';
+import '../home/main_shell.dart';
 import 'steps/all_set_step.dart';
 import 'steps/create_account_step.dart';
 import 'steps/home_address_step.dart';
@@ -47,7 +47,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
               firstName: _data.firstName.isEmpty ? 'there' : _data.firstName,
               onGetStarted: () {
                 Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(builder: (_) => const HomePlaceholderScreen()),
+                  MaterialPageRoute(builder: (_) => MainShell(data: _data)),
                 );
               },
             ),
