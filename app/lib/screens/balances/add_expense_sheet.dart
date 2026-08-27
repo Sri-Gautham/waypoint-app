@@ -45,30 +45,12 @@ class _AddExpenseSheetState extends State<AddExpenseSheet> {
   }
 
   void _submit() {
-    // TEMPORARY diagnostic instrumentation — remove once the stuck-sheet
-    // bug (QA report, reject/reject/succeed sequence) is root-caused.
-    final route = ModalRoute.of(context);
-    debugPrint(
-      '[AddExpenseSheet._submit] submitted=$_submitted navigator=${Navigator.of(context).hashCode} '
-      'route=${route.hashCode} isCurrent=${route?.isCurrent} isActive=${route?.isActive}',
-    );
     if (_submitted) return;
     final description = _descriptionController.text.trim();
     final amount = double.tryParse(_amountController.text.trim());
-    if (description.isEmpty || amount == null || amount <= 0 || _splitWith.isEmpty) {
-      debugPrint('[AddExpenseSheet._submit] rejected: desc="$description" amount=$amount splitWith=${_splitWith.length}');
-      return;
-    }
+    if (description.isEmpty || amount == null || amount <= 0 || _splitWith.isEmpty) return;
 
     _submitted = true;
-    // Unfocus before popping: if a text field is still focused (likely,
-    // since the amount field was just edited), letting the keyboard's own
-    // dismiss animation run concurrently with the sheet's closing
-    // transition is a known source of the route never fully tearing
-    // down — the pop's Future resolves and the caller's continuation
-    // runs, but the sheet's widgets/barrier are left behind with no
-    // animation left for pumpAndSettle to wait out.
-    FocusManager.instance.primaryFocus?.unfocus();
     final split = {_payer, ..._splitWith}.toList();
     final charge = Charge(
       id: 'c-${DateTime.now().microsecondsSinceEpoch}',
@@ -80,13 +62,7 @@ class _AddExpenseSheetState extends State<AddExpenseSheet> {
       date: 'Just now',
       splitWith: split,
     );
-    final navigatorBeforePop = Navigator.of(context);
-    debugPrint(
-      '[AddExpenseSheet._submit] about to pop: navigator=${navigatorBeforePop.hashCode} '
-      'route=${ModalRoute.of(context).hashCode} isCurrent=${ModalRoute.of(context)?.isCurrent} mounted=$mounted',
-    );
-    navigatorBeforePop.pop(charge);
-    debugPrint('[AddExpenseSheet._submit] pop() call returned, mounted=$mounted');
+    Navigator.of(context).pop(charge);
   }
 
   Widget _categoryChip(ChargeCategory category, IconData icon, String label) {

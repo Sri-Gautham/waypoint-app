@@ -36,27 +36,14 @@ class _BalancesTabState extends State<BalancesTab> {
     _addingExpense = true;
     try {
       final participants = ['You', ...trip.members.map((m) => m.name)];
-      // TEMPORARY diagnostic instrumentation — remove once the stuck-sheet
-      // bug (QA report, reject/reject/succeed sequence) is root-caused.
-      debugPrint('[BalancesTab._addExpense] pushing sheet, navigator=${Navigator.of(context).hashCode}');
       final charge = await showModalBottomSheet<Charge>(
         context: context,
         isScrollControlled: true,
         shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
         builder: (_) => AddExpenseSheet(tripId: trip.id, participants: participants),
       );
-      debugPrint('[BalancesTab._addExpense] showModalBottomSheet resolved, charge=${charge?.description}');
       if (charge == null || !mounted) return;
-      // Deferred a frame: this triggers AppData's notifyListeners(), which
-      // synchronously rebuilds this whole ancestor subtree. Doing that in
-      // the same microtask the sheet's route is still tearing down in is
-      // a plausible way to leave the closing route's widgets/barrier
-      // stranded — pushing it past the current frame gives the route's
-      // own teardown a clear turn first.
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        AppDataScope.of(context).addCharge(trip.id, charge);
-      });
+      AppDataScope.of(context).addCharge(trip.id, charge);
     } finally {
       _addingExpense = false;
     }
