@@ -272,11 +272,14 @@
   <div>
     <h1 style="margin:0; padding:24px 24px 0 24px; font-size:20px; font-weight:800; color: oklch(18% 0.005 250);">Trips &amp; Balances</h1>
 
-    <div style="margin:16px 24px 0 24px; border-radius:14px; padding:16px; background:{{netBg}};">
-      <span style="font-size:11px; font-weight:700; letter-spacing:0.05em; color:{{netColor}}; text-transform:uppercase;">Overall balance</span>
+    <button type="button" onClick="{{openMemberBalances}}" style="display:block; width:calc(100% - 48px); text-align:left; border:none; margin:16px 24px 0 24px; border-radius:14px; padding:16px; background:{{netBg}}; font-family:inherit; box-sizing:border-box;">
+      <div style="display:flex; align-items:center; justify-content:space-between;">
+        <span style="font-size:11px; font-weight:700; letter-spacing:0.05em; color:{{netColor}}; text-transform:uppercase;">Overall balance</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="{{netColor}}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"></path></svg>
+      </div>
       <div style="font-size:24px; font-weight:800; color:{{netColor}}; margin:4px 0 6px 0;">{{netAmountLabel}}</div>
       <span style="font-size:12.5px; color:{{netColor}};">You owe {{totalOweLabel}} &middot; You're owed {{totalOwedLabel}}</span>
-    </div>
+    </button>
 
     <div style="display:flex; border:1.5px solid oklch(88% 0.003 250); border-radius:10px; padding:3px; margin:16px 24px 0 24px;">
       <button type="button" onClick="{{setFilterUpcoming}}" style="flex:1; border:none; border-radius:7px; background:{{upcomingFilterBg}}; color:{{upcomingFilterColor}}; font-family:inherit; font-weight:700; font-size:13px; padding:9px; box-sizing:border-box;">Upcoming</button>
@@ -295,10 +298,56 @@
           </div>
           <div style="display:flex; align-items:center; justify-content:space-between; margin-top:12px; padding-top:12px; border-top:1px solid oklch(94% 0.003 250);">
             <span style="font-size:13px; font-weight:700; color:{{trip.balanceColor}};">{{trip.balanceLabel}}</span>
-            <sc-if value="{{trip.hasSettle}}" hint-placeholder-val="{{false}}">
-              <button type="button" onClick="{{trip.onOpenSettle}}" style="border:1.5px solid oklch(88% 0.003 250); border-radius:8px; background:transparent; color: oklch(45% 0.14 260); font-family:inherit; font-weight:700; font-size:12px; padding:7px 12px; box-sizing:border-box;">Settle up</button>
-            </sc-if>
+            <button type="button" onClick="{{trip.onToggleDetails}}" style="border:1.5px solid oklch(88% 0.003 250); border-radius:8px; background:transparent; color: oklch(45% 0.14 260); font-family:inherit; font-weight:700; font-size:12px; padding:7px 12px; box-sizing:border-box;">{{trip.detailsLabel}}</button>
           </div>
+
+          <sc-if value="{{trip.expanded}}" hint-placeholder-val="{{false}}">
+            <div style="margin-top:14px; padding-top:14px; border-top:1px solid oklch(94% 0.003 250);">
+
+              <sc-if value="{{trip.hasBreakdown}}" hint-placeholder-val="{{false}}">
+                <span style="font-size:12px; font-weight:800; color: oklch(18% 0.005 250); text-transform:uppercase; letter-spacing:0.04em;">Who owes whom</span>
+                <div style="margin-top:8px; display:flex; flex-direction:column; gap:8px;">
+                  <sc-for list="{{trip.breakdownView}}" as="b" hint-placeholder-count="2">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                      <div style="width:24px; height:24px; border-radius:999px; background: oklch(90% 0.01 260); display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; color: oklch(35% 0.01 260); flex-shrink:0;">{{b.initials}}</div>
+                      <span style="font-size:12.5px; color: oklch(25% 0.005 250); flex-grow:1;">{{b.name}}</span>
+                      <span style="font-size:12.5px; font-weight:700; color:{{b.amountColor}};">{{b.amountLabel}}</span>
+                    </div>
+                  </sc-for>
+                </div>
+              </sc-if>
+
+              <span style="display:block; margin-top:16px; font-size:12px; font-weight:800; color: oklch(18% 0.005 250); text-transform:uppercase; letter-spacing:0.04em;">Activity</span>
+              <div style="margin-top:8px; display:flex; flex-direction:column; gap:12px;">
+                <sc-for list="{{trip.charges}}" as="charge" hint-placeholder-count="2">
+                  <div style="display:flex; gap:10px;">
+                    <div style="width:30px; height:30px; border-radius:999px; background: oklch(95% 0.003 250); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                      <sc-if value="{{charge.isFood}}" hint-placeholder-val="{{true}}">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="oklch(45% 0.005 250)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 2v8a2 2 0 0 0 4 0V2"></path><path d="M9 10v12"></path><path d="M17 2c-2 0-3 2-3 5s1 5 3 5v10"></path></svg>
+                      </sc-if>
+                      <sc-if value="{{charge.isTransport}}" hint-placeholder-val="{{false}}">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="oklch(45% 0.005 250)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="10" width="20" height="7" rx="2"></rect><circle cx="7" cy="19" r="1.5"></circle><circle cx="17" cy="19" r="1.5"></circle><path d="M4 10l2-5h12l2 5"></path></svg>
+                      </sc-if>
+                      <sc-if value="{{charge.isLodging}}" hint-placeholder-val="{{false}}">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="oklch(45% 0.005 250)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"></path><path d="M5 10v10h14V10"></path></svg>
+                      </sc-if>
+                      <sc-if value="{{charge.isActivity}}" hint-placeholder-val="{{false}}">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="oklch(45% 0.005 250)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.6 6.6L21 9.3l-5 4.5 1.4 6.7L12 17l-5.4 3.5L8 13.8 3 9.3l6.4-.7z"></path></svg>
+                      </sc-if>
+                    </div>
+                    <div style="flex-grow:1;">
+                      <div style="display:flex; align-items:baseline; justify-content:space-between;">
+                        <span style="font-size:13px; font-weight:700; color: oklch(18% 0.005 250);">{{charge.desc}}</span>
+                        <span style="font-size:13px; font-weight:700; color: oklch(18% 0.005 250);">{{charge.amountLabel}}</span>
+                      </div>
+                      <span style="font-size:12px; color: oklch(55% 0.005 250);">{{charge.payerLabel}} &middot; {{charge.date}}</span>
+                      <div style="font-size:11.5px; color: oklch(60% 0.005 250); margin-top:2px;">Split: {{charge.splitWithLabel}}</div>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
         </div>
       </sc-for>
     </div>
@@ -628,31 +677,42 @@
   </div>
   </sc-if>
 
-  <sc-if value="{{isSettleVisible}}" hint-placeholder-val="{{false}}">
+  <sc-if value="{{isMemberBalancesVisible}}" hint-placeholder-val="{{false}}">
   <div style="position:absolute; inset:0; background: oklch(99% 0.002 250); display:flex; flex-direction:column; z-index:25;">
     <div style="display:flex; align-items:center; justify-content:space-between; padding:20px 20px 0 20px; flex-shrink:0;">
-      <button type="button" class="wp-back" onClick="{{closeSettle}}">
+      <button type="button" class="wp-back" onClick="{{closeMemberBalances}}">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="oklch(18% 0.005 250)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"></path></svg>
       </button>
-      <span style="font-size:15px; font-weight:800; color: oklch(18% 0.005 250);">{{settleTripName}}</span>
+      <span style="font-size:15px; font-weight:800; color: oklch(18% 0.005 250);">Balances by person</span>
       <span style="width:36px;"></span>
     </div>
 
     <div style="flex-grow:1; overflow:auto; padding:20px;">
       <div style="text-align:center; padding:10px 0 24px 0;">
-        <span style="font-size:12px; font-weight:700; letter-spacing:0.05em; color: oklch(55% 0.005 250); text-transform:uppercase;">Your balance in this trip</span>
-        <div style="font-size:26px; font-weight:800; color:{{settleNetColor}}; margin-top:4px;">{{settleNetLabel}}</div>
+        <span style="font-size:12px; font-weight:700; letter-spacing:0.05em; color: oklch(55% 0.005 250); text-transform:uppercase;">Overall</span>
+        <div style="font-size:26px; font-weight:800; color:{{netColor}}; margin-top:4px;">{{netAmountLabel}}</div>
+        <span style="font-size:12.5px; color: oklch(55% 0.005 250);">You owe {{totalOweLabel}} &middot; You're owed {{totalOwedLabel}}</span>
       </div>
 
       <div style="display:flex; flex-direction:column; gap:10px;">
-        <sc-for list="{{settleBreakdown}}" as="p" hint-placeholder-count="2">
-          <div style="display:flex; align-items:center; gap:10px; border:1.5px solid oklch(90% 0.003 250); border-radius:14px; padding:12px;">
-            <div style="width:34px; height:34px; border-radius:999px; background: oklch(90% 0.01 260); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color: oklch(35% 0.01 260); flex-shrink:0;">{{p.initials}}</div>
-            <div style="flex-grow:1;">
-              <div style="font-size:13.5px; font-weight:700; color: oklch(18% 0.005 250);">{{p.name}}</div>
-              <div style="font-size:12.5px; color:{{p.amountColor}};">{{p.amountLabel}}</div>
-            </div>
-            <button type="button" onClick="{{p.onToggleSettled}}" style="border:1.5px solid {{p.btnBorder}}; border-radius:8px; background:{{p.btnBg}}; color:{{p.btnColor}}; font-family:inherit; font-weight:700; font-size:12px; padding:8px 12px; box-sizing:border-box; flex-shrink:0;">{{p.btnLabel}}</button>
+        <sc-for list="{{memberBalances}}" as="m" hint-placeholder-count="3">
+          <div style="border:1.5px solid oklch(90% 0.003 250); border-radius:14px; padding:12px;">
+            <button type="button" onClick="{{m.onToggle}}" style="width:100%; display:flex; align-items:center; gap:10px; border:none; background:transparent; padding:0; font-family:inherit; text-align:left;">
+              <div style="width:34px; height:34px; border-radius:999px; background: oklch(90% 0.01 260); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color: oklch(35% 0.01 260); flex-shrink:0;">{{m.initials}}</div>
+              <span style="font-size:13.5px; font-weight:700; color: oklch(18% 0.005 250); flex-grow:1;">{{m.name}}</span>
+              <span style="font-size:13px; font-weight:700; color:{{m.netColor}};">{{m.netLabel}}</span>
+            </button>
+
+            <sc-if value="{{m.expanded}}" hint-placeholder-val="{{false}}">
+              <div style="margin-top:12px; padding-top:12px; border-top:1px solid oklch(94% 0.003 250); display:flex; flex-direction:column; gap:8px;">
+                <sc-for list="{{m.trips}}" as="t" hint-placeholder-count="1">
+                  <div style="display:flex; align-items:center; justify-content:space-between;">
+                    <span style="font-size:12.5px; color: oklch(45% 0.005 250);">{{t.tripName}}</span>
+                    <span style="font-size:12.5px; font-weight:700; color:{{t.amountColor}};">{{t.amountLabel}}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
           </div>
         </sc-for>
       </div>
@@ -792,12 +852,13 @@ class Component extends DCLogic {
 
     this.setFilterUpcoming = () => this.setState({ tripsFilter: 'upcoming' });
     this.setFilterPast = () => this.setState({ tripsFilter: 'past' });
-    this.openSettle = (tripId) => this.setState({ settleOpenTripId: tripId });
-    this.closeSettle = () => this.setState({ settleOpenTripId: null });
-    this.toggleSettled = (personId) => {
-      const ids = this.state.settledIds;
-      const next = ids.indexOf(personId) === -1 ? ids.concat([personId]) : ids.filter((x) => x !== personId);
-      this.setState({ settledIds: next });
+    this.toggleTripDetails = (tripId) => {
+      this.setState({ expandedTripId: this.state.expandedTripId === tripId ? null : tripId });
+    };
+    this.openMemberBalances = () => this.setState({ memberBalancesOpen: true });
+    this.closeMemberBalances = () => this.setState({ memberBalancesOpen: false, expandedMemberName: null });
+    this.toggleMemberExpand = (name) => {
+      this.setState({ expandedMemberName: this.state.expandedMemberName === name ? null : name });
     };
 
     this.restart = () => this.setState(this.getInitialState());
@@ -849,8 +910,9 @@ class Component extends DCLogic {
       cg_selectedContacts: [],
       linkCopied: false,
       tripsFilter: 'upcoming',
-      settleOpenTripId: null,
-      settledIds: []
+      expandedTripId: null,
+      memberBalancesOpen: false,
+      expandedMemberName: null
     };
   }
 
@@ -860,13 +922,27 @@ class Component extends DCLogic {
         breakdown: [
           { id: 'p1', name: 'Sam Park', initials: 'SP', amount: -28 },
           { id: 'p2', name: 'Alex Kim', initials: 'AK', amount: -14 }
+        ],
+        charges: [
+          { id: 'c1', payer: 'Sam Park', amount: 84, desc: 'Groceries', date: 'Aug 20', category: 'food', splitWith: ['You', 'Sam Park', 'Alex Kim'] },
+          { id: 'c2', payer: 'Alex Kim', amount: 42, desc: 'Firewood & ice', date: 'Aug 21', category: 'activity', splitWith: ['You', 'Sam Park', 'Alex Kim'] }
         ] },
       { id: 't2', name: 'Weekend at the Cabin', destination: 'Big Bear, CA', dateLabel: 'Oct 18 – Oct 20', status: 'upcoming', coverIndex: 3,
         breakdown: [
           { id: 'p3', name: 'Priya Nair', initials: 'PN', amount: 10 },
-          { id: 'p4', name: 'Jordan Lee', initials: 'JL', amount: 8 }
+          { id: 'p4', name: 'Jordan Lee', initials: 'JL', amount: 8 },
+          { id: 'p5', name: 'Sam Park', initials: 'SP', amount: 5 }
+        ],
+        charges: [
+          { id: 'c3', payer: 'You', amount: 20, desc: 'Cabin deposit split', date: 'Oct 18', category: 'lodging', splitWith: ['You', 'Priya Nair'] },
+          { id: 'c4', payer: 'You', amount: 16, desc: 'Gas for the drive', date: 'Oct 19', category: 'transport', splitWith: ['You', 'Jordan Lee'] },
+          { id: 'c5', payer: 'You', amount: 10, desc: 'Snacks & drinks', date: 'Oct 19', category: 'food', splitWith: ['You', 'Sam Park'] }
         ] },
-      { id: 't3', name: 'Napa Wine Tour', destination: 'Napa, CA', dateLabel: 'Jun 12 – Jun 13', status: 'past', coverIndex: 1, breakdown: [] }
+      { id: 't3', name: 'Napa Wine Tour', destination: 'Napa, CA', dateLabel: 'Jun 12 – Jun 13', status: 'past', coverIndex: 1, breakdown: [],
+        charges: [
+          { id: 'c6', payer: 'You', amount: 150, desc: 'Winery tour tickets', date: 'Jun 12', category: 'activity', splitWith: ['You', 'Sam Park', 'Alex Kim', 'Morgan Diaz'] },
+          { id: 'c7', payer: 'Morgan Diaz', amount: 60, desc: 'Lunch', date: 'Jun 12', category: 'food', splitWith: ['You', 'Sam Park', 'Alex Kim', 'Morgan Diaz'] }
+        ] }
     ];
   }
 
@@ -1013,6 +1089,13 @@ class Component extends DCLogic {
     const moneyNeutral = 'oklch(50% 0.005 250)';
     const tint = (color) => color.slice(0, -1) + ' / 10%)';
 
+    const categoryFlags = (category) => ({
+      isFood: category === 'food',
+      isTransport: category === 'transport',
+      isLodging: category === 'lodging',
+      isActivity: category === 'activity'
+    });
+
     const rawTrips = this.getSampleTrips();
     const trips = rawTrips.filter((t) => t.status === s.tripsFilter).map((t) => {
       const balance = t.breakdown.reduce((sum, p) => sum + p.amount, 0);
@@ -1021,11 +1104,34 @@ class Component extends DCLogic {
       if (balance < 0) { balanceLabel = 'You owe $' + Math.abs(balance); balanceColor = moneyOwe; }
       else if (balance > 0) { balanceLabel = "You're owed $" + balance; balanceColor = moneyOwed; }
       else { balanceLabel = 'Settled up'; balanceColor = moneyNeutral; }
+
+      const breakdownView = t.breakdown.map((p) => {
+        const owesThem = p.amount < 0;
+        return {
+          id: p.id, name: p.name, initials: p.initials,
+          amountLabel: owesThem ? ('You owe $' + Math.abs(p.amount)) : ('Owes you $' + p.amount),
+          amountColor: owesThem ? moneyOwe : moneyOwed
+        };
+      });
+
+      const charges = t.charges.map((c) => Object.assign({
+        id: c.id,
+        desc: c.desc,
+        date: c.date,
+        amountLabel: '$' + c.amount.toFixed(2),
+        payerLabel: c.payer === 'You' ? 'You paid' : (c.payer + ' paid'),
+        splitWithLabel: c.splitWith.join(', ')
+      }, categoryFlags(c.category)));
+
       return {
         id: t.id, name: t.name, destination: t.destination, dateLabel: t.dateLabel,
         coverAccent: theme.accent, balanceLabel: balanceLabel, balanceColor: balanceColor,
-        hasSettle: t.breakdown.length > 0,
-        onOpenSettle: () => this.openSettle(t.id)
+        expanded: s.expandedTripId === t.id,
+        detailsLabel: s.expandedTripId === t.id ? 'Hide' : 'Details',
+        hasBreakdown: t.breakdown.length > 0,
+        breakdownView: breakdownView,
+        charges: charges,
+        onToggleDetails: () => this.toggleTripDetails(t.id)
       };
     });
 
@@ -1039,34 +1145,35 @@ class Component extends DCLogic {
 
     const upcomingSelected = s.tripsFilter === 'upcoming';
 
-    const settleTripRaw = rawTrips.find((t) => t.id === s.settleOpenTripId);
-    let settleTripName = '', settleNetLabel = '', settleNetColor = moneyNeutral, settleBreakdown = [];
-    if (settleTripRaw) {
-      settleTripName = settleTripRaw.name;
-      const tripNet = settleTripRaw.breakdown.reduce((sum, p) => sum + p.amount, 0);
-      if (tripNet < 0) { settleNetLabel = 'You owe $' + Math.abs(tripNet); settleNetColor = moneyOwe; }
-      else if (tripNet > 0) { settleNetLabel = "You're owed $" + tripNet; settleNetColor = moneyOwed; }
-      else { settleNetLabel = 'All settled'; settleNetColor = moneyNeutral; }
-
-      settleBreakdown = settleTripRaw.breakdown.map((p) => {
-        const settled = s.settledIds.indexOf(p.id) !== -1;
-        const owesThem = p.amount < 0;
-        let amountLabel, amountColor;
-        if (owesThem) { amountLabel = 'You owe $' + Math.abs(p.amount); amountColor = moneyOwe; }
-        else { amountLabel = 'Owes you $' + p.amount; amountColor = moneyOwed; }
-        return {
-          id: p.id, name: p.name, initials: p.initials,
-          amountLabel: settled ? 'Settled' : amountLabel,
-          amountColor: settled ? moneyNeutral : amountColor,
-          btnLabel: settled ? 'Undo' : (owesThem ? 'Mark as paid' : 'Send reminder'),
-          btnBg: settled ? 'transparent' : (owesThem ? 'oklch(45% 0.14 260)' : 'transparent'),
-          btnColor: settled ? 'oklch(55% 0.005 250)' : (owesThem ? 'white' : 'oklch(45% 0.14 260)'),
-          btnBorder: settled ? 'oklch(88% 0.003 250)' : 'oklch(45% 0.14 260)',
-          onToggleSettled: () => this.toggleSettled(p.id)
-        };
+    const memberMap = {};
+    const memberOrder = [];
+    rawTrips.forEach((t) => {
+      t.breakdown.forEach((p) => {
+        if (!memberMap[p.name]) {
+          memberMap[p.name] = { name: p.name, initials: p.initials, net: 0, trips: [] };
+          memberOrder.push(p.name);
+        }
+        memberMap[p.name].net += p.amount;
+        memberMap[p.name].trips.push({ tripName: t.name, amount: p.amount });
       });
-    }
-    const isSettleVisible = !!settleTripRaw;
+    });
+    const memberBalances = memberOrder.map((name) => {
+      const m = memberMap[name];
+      const owesThem = m.net < 0;
+      const expanded = s.expandedMemberName === name;
+      return {
+        name: m.name, initials: m.initials,
+        netLabel: owesThem ? ('You owe $' + Math.abs(m.net)) : ("Owes you $" + m.net),
+        netColor: owesThem ? moneyOwe : moneyOwed,
+        expanded: expanded,
+        onToggle: () => this.toggleMemberExpand(name),
+        trips: m.trips.map((tr) => ({
+          tripName: tr.tripName,
+          amountLabel: tr.amount < 0 ? ('You owe $' + Math.abs(tr.amount)) : ('Owes you $' + tr.amount),
+          amountColor: tr.amount < 0 ? moneyOwe : moneyOwed
+        }))
+      };
+    });
 
     return {
       isStep0: s.step === 0,
@@ -1107,11 +1214,8 @@ class Component extends DCLogic {
       upcomingFilterColor: upcomingSelected ? 'white' : 'oklch(18% 0.005 250)',
       pastFilterBg: !upcomingSelected ? 'oklch(45% 0.14 260)' : 'transparent',
       pastFilterColor: !upcomingSelected ? 'white' : 'oklch(18% 0.005 250)',
-      isSettleVisible: isSettleVisible,
-      settleTripName: settleTripName,
-      settleNetLabel: settleNetLabel,
-      settleNetColor: settleNetColor,
-      settleBreakdown: settleBreakdown,
+      isMemberBalancesVisible: s.memberBalancesOpen,
+      memberBalances: memberBalances,
       isCreateVisible: s.createOpen,
       isCreateStep0: s.createStep === 0,
       isCreateStep1: s.createStep === 1,
@@ -1186,7 +1290,8 @@ class Component extends DCLogic {
       sendMessage: this.sendMessage,
       setFilterUpcoming: this.setFilterUpcoming,
       setFilterPast: this.setFilterPast,
-      closeSettle: this.closeSettle,
+      openMemberBalances: this.openMemberBalances,
+      closeMemberBalances: this.closeMemberBalances,
       openCreateFlow: this.openCreateFlow,
       createGoNext: this.createGoNext,
       createGoBack: this.createGoBack,
