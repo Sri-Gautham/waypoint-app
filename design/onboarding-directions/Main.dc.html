@@ -272,14 +272,14 @@
   <div>
     <h1 style="margin:0; padding:24px 24px 0 24px; font-size:20px; font-weight:800; color: oklch(18% 0.005 250);">Trips &amp; Balances</h1>
 
-    <button type="button" onClick="{{openMemberBalances}}" style="display:block; width:calc(100% - 48px); text-align:left; border:none; margin:16px 24px 0 24px; border-radius:14px; padding:16px; background:{{netBg}}; font-family:inherit; box-sizing:border-box;">
-      <div style="display:flex; align-items:center; justify-content:space-between;">
-        <span style="font-size:11px; font-weight:700; letter-spacing:0.05em; color:{{netColor}}; text-transform:uppercase;">Overall balance</span>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="{{netColor}}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"></path></svg>
-      </div>
+    <div style="margin:16px 24px 0 24px; border-radius:14px; padding:16px; background:{{netBg}};">
+      <span style="font-size:11px; font-weight:700; letter-spacing:0.05em; color:{{netColor}}; text-transform:uppercase;">Overall balance</span>
       <div style="font-size:24px; font-weight:800; color:{{netColor}}; margin:4px 0 6px 0;">{{netAmountLabel}}</div>
-      <span style="font-size:12.5px; color:{{netColor}};">You owe {{totalOweLabel}} &middot; You're owed {{totalOwedLabel}}</span>
-    </button>
+      <div style="display:flex; align-items:center; justify-content:space-between;">
+        <span style="font-size:12.5px; color:{{netColor}};">You owe {{totalOweLabel}} &middot; You're owed {{totalOwedLabel}}</span>
+        <button type="button" onClick="{{openMemberBalances}}" style="border:none; border-radius:8px; background:{{netColor}}; color:white; font-family:inherit; font-weight:700; font-size:12px; padding:8px 14px; box-sizing:border-box; flex-shrink:0;">Settle Now</button>
+      </div>
+    </div>
 
     <div style="display:flex; border:1.5px solid oklch(88% 0.003 250); border-radius:10px; padding:3px; margin:16px 24px 0 24px;">
       <button type="button" onClick="{{setFilterUpcoming}}" style="flex:1; border:none; border-radius:7px; background:{{upcomingFilterBg}}; color:{{upcomingFilterColor}}; font-family:inherit; font-weight:700; font-size:13px; padding:9px; box-sizing:border-box;">Upcoming</button>
@@ -697,11 +697,29 @@
       <div style="display:flex; flex-direction:column; gap:10px;">
         <sc-for list="{{memberBalances}}" as="m" hint-placeholder-count="3">
           <div style="border:1.5px solid oklch(90% 0.003 250); border-radius:14px; padding:12px;">
-            <button type="button" onClick="{{m.onToggle}}" style="width:100%; display:flex; align-items:center; gap:10px; border:none; background:transparent; padding:0; font-family:inherit; text-align:left;">
+            <div onClick="{{m.onToggle}}" style="width:100%; display:flex; align-items:center; gap:10px; cursor:pointer;">
               <div style="width:34px; height:34px; border-radius:999px; background: oklch(90% 0.01 260); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color: oklch(35% 0.01 260); flex-shrink:0;">{{m.initials}}</div>
               <span style="font-size:13.5px; font-weight:700; color: oklch(18% 0.005 250); flex-grow:1;">{{m.name}}</span>
               <span style="font-size:13px; font-weight:700; color:{{m.netColor}};">{{m.netLabel}}</span>
-            </button>
+              <sc-if value="{{m.owesThem}}" hint-placeholder-val="{{false}}">
+                <button type="button" onClick="{{m.onSettleClick}}" style="border:1.5px solid oklch(45% 0.14 260); border-radius:8px; background:transparent; color: oklch(45% 0.14 260); font-family:inherit; font-weight:700; font-size:11.5px; padding:6px 10px; box-sizing:border-box; flex-shrink:0;">Settle up</button>
+              </sc-if>
+            </div>
+
+            <sc-if value="{{m.settleOpen}}" hint-placeholder-val="{{false}}">
+              <div style="margin-top:12px; padding-top:12px; border-top:1px solid oklch(94% 0.003 250);">
+                <span style="font-size:12px; font-weight:700; color: oklch(45% 0.005 250);">Record a payment to {{m.name}}</span>
+                <div style="display:flex; align-items:center; gap:8px; margin-top:8px;">
+                  <span style="font-size:15px; font-weight:700; color: oklch(18% 0.005 250);">$</span>
+                  <input type="number" value="{{m.paymentDraft}}" onChange="{{m.onPaymentInput}}" style="flex-grow:1; border:1.5px solid oklch(88% 0.003 250); border-radius:8px; padding:9px 10px; font-size:15px; font-family:inherit; color: oklch(18% 0.005 250); box-sizing:border-box;">
+                </div>
+                <span style="display:block; font-size:11px; color: oklch(60% 0.005 250); margin-top:6px;">Up to {{m.owedLabel}}, the full amount owed.</span>
+                <div style="display:flex; gap:8px; margin-top:12px;">
+                  <button type="button" onClick="{{m.onCancelPayment}}" style="flex:1; border:1.5px solid oklch(88% 0.003 250); border-radius:8px; background:transparent; color: oklch(18% 0.005 250); font-family:inherit; font-weight:700; font-size:13px; padding:10px; box-sizing:border-box;">Cancel</button>
+                  <button type="button" onClick="{{m.onConfirmPayment}}" style="flex:1; border:none; border-radius:8px; background: oklch(45% 0.14 260); color:white; font-family:inherit; font-weight:700; font-size:13px; padding:10px; box-sizing:border-box;">Record payment</button>
+                </div>
+              </div>
+            </sc-if>
 
             <sc-if value="{{m.expanded}}" hint-placeholder-val="{{false}}">
               <div style="margin-top:12px; padding-top:12px; border-top:1px solid oklch(94% 0.003 250); display:flex; flex-direction:column; gap:8px;">
@@ -861,6 +879,26 @@ class Component extends DCLogic {
       this.setState({ expandedMemberName: this.state.expandedMemberName === name ? null : name });
     };
 
+    this.openSettlePrompt = (name, owedAmount) => {
+      const isOpen = this.state.settleOpenMemberName === name;
+      this.setState({
+        settleOpenMemberName: isOpen ? null : name,
+        paymentDraft: isOpen ? '' : String(owedAmount)
+      });
+    };
+    this.onPaymentInput = (e) => this.setState({ paymentDraft: e.target.value });
+    this.cancelPayment = () => this.setState({ settleOpenMemberName: null, paymentDraft: '' });
+    this.confirmPayment = (name, owedAmount) => {
+      const raw = parseFloat(this.state.paymentDraft);
+      if (!raw || raw <= 0) { return; }
+      const amount = Math.min(raw, owedAmount);
+      this.setState({
+        payments: this.state.payments.concat([{ memberName: name, amount: amount }]),
+        settleOpenMemberName: null,
+        paymentDraft: ''
+      });
+    };
+
     this.restart = () => this.setState(this.getInitialState());
   }
 
@@ -912,7 +950,10 @@ class Component extends DCLogic {
       tripsFilter: 'upcoming',
       expandedTripId: null,
       memberBalancesOpen: false,
-      expandedMemberName: null
+      expandedMemberName: null,
+      settleOpenMemberName: null,
+      paymentDraft: '',
+      payments: []
     };
   }
 
@@ -1135,14 +1176,6 @@ class Component extends DCLogic {
       };
     });
 
-    const totalOwe = rawTrips.reduce((sum, t) => sum + t.breakdown.filter((p) => p.amount < 0).reduce((s2, p) => s2 + Math.abs(p.amount), 0), 0);
-    const totalOwed = rawTrips.reduce((sum, t) => sum + t.breakdown.filter((p) => p.amount > 0).reduce((s2, p) => s2 + p.amount, 0), 0);
-    const net = totalOwed - totalOwe;
-    let netAmountLabel, netColor, netBg;
-    if (net < 0) { netAmountLabel = 'You owe $' + Math.abs(net); netColor = moneyOwe; netBg = tint(moneyOwe); }
-    else if (net > 0) { netAmountLabel = "You're owed $" + net; netColor = moneyOwed; netBg = tint(moneyOwed); }
-    else { netAmountLabel = 'All settled up'; netColor = moneyNeutral; netBg = 'oklch(95% 0.003 250)'; }
-
     const upcomingSelected = s.tripsFilter === 'upcoming';
 
     const memberMap = {};
@@ -1150,30 +1183,68 @@ class Component extends DCLogic {
     rawTrips.forEach((t) => {
       t.breakdown.forEach((p) => {
         if (!memberMap[p.name]) {
-          memberMap[p.name] = { name: p.name, initials: p.initials, net: 0, trips: [] };
+          memberMap[p.name] = { name: p.name, initials: p.initials, rawNet: 0, trips: [] };
           memberOrder.push(p.name);
         }
-        memberMap[p.name].net += p.amount;
+        memberMap[p.name].rawNet += p.amount;
         memberMap[p.name].trips.push({ tripName: t.name, amount: p.amount });
       });
     });
+
+    const paymentsByMember = {};
+    s.payments.forEach((pmt) => {
+      paymentsByMember[pmt.memberName] = (paymentsByMember[pmt.memberName] || 0) + pmt.amount;
+    });
+
     const memberBalances = memberOrder.map((name) => {
       const m = memberMap[name];
-      const owesThem = m.net < 0;
+      const paidSoFar = paymentsByMember[name] || 0;
+      const adjustedNet = m.rawNet + paidSoFar;
+      const owesThem = adjustedNet < 0;
+      const owedAmount = Math.abs(adjustedNet);
       const expanded = s.expandedMemberName === name;
+      const settleOpen = s.settleOpenMemberName === name;
+
+      const tripLines = m.trips.map((tr) => ({
+        tripName: tr.tripName,
+        amountLabel: tr.amount < 0 ? ('You owe $' + Math.abs(tr.amount)) : ('Owes you $' + tr.amount),
+        amountColor: tr.amount < 0 ? moneyOwe : moneyOwed
+      }));
+      if (paidSoFar > 0) {
+        tripLines.push({ tripName: 'Payment sent', amountLabel: 'You paid $' + paidSoFar, amountColor: moneyOwed });
+      }
+
       return {
         name: m.name, initials: m.initials,
-        netLabel: owesThem ? ('You owe $' + Math.abs(m.net)) : ("Owes you $" + m.net),
-        netColor: owesThem ? moneyOwe : moneyOwed,
+        owesThem: owesThem,
+        netLabel: adjustedNet === 0 ? 'Settled up' : (owesThem ? ('You owe $' + owedAmount) : ("Owes you $" + owedAmount)),
+        netColor: adjustedNet === 0 ? moneyNeutral : (owesThem ? moneyOwe : moneyOwed),
+        owedLabel: '$' + owedAmount,
         expanded: expanded,
+        settleOpen: settleOpen,
+        paymentDraft: s.paymentDraft,
         onToggle: () => this.toggleMemberExpand(name),
-        trips: m.trips.map((tr) => ({
-          tripName: tr.tripName,
-          amountLabel: tr.amount < 0 ? ('You owe $' + Math.abs(tr.amount)) : ('Owes you $' + tr.amount),
-          amountColor: tr.amount < 0 ? moneyOwe : moneyOwed
-        }))
+        onSettleClick: (e) => { e.stopPropagation(); this.openSettlePrompt(name, owedAmount); },
+        onPaymentInput: this.onPaymentInput,
+        onCancelPayment: this.cancelPayment,
+        onConfirmPayment: () => this.confirmPayment(name, owedAmount),
+        trips: tripLines
       };
     });
+
+    const totalOwe = memberOrder.reduce((sum, name) => {
+      const adjustedNet = memberMap[name].rawNet + (paymentsByMember[name] || 0);
+      return sum + (adjustedNet < 0 ? Math.abs(adjustedNet) : 0);
+    }, 0);
+    const totalOwed = memberOrder.reduce((sum, name) => {
+      const adjustedNet = memberMap[name].rawNet + (paymentsByMember[name] || 0);
+      return sum + (adjustedNet > 0 ? adjustedNet : 0);
+    }, 0);
+    const net = totalOwed - totalOwe;
+    let netAmountLabel, netColor, netBg;
+    if (net < 0) { netAmountLabel = 'You owe $' + Math.abs(net); netColor = moneyOwe; netBg = tint(moneyOwe); }
+    else if (net > 0) { netAmountLabel = "You're owed $" + net; netColor = moneyOwed; netBg = tint(moneyOwed); }
+    else { netAmountLabel = 'All settled up'; netColor = moneyNeutral; netBg = 'oklch(95% 0.003 250)'; }
 
     return {
       isStep0: s.step === 0,
