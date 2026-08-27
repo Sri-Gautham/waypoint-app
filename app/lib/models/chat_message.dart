@@ -1,15 +1,23 @@
+import 'poll.dart';
+
 class ChatMessage {
   const ChatMessage({
     required this.sender,
     required this.text,
     required this.time,
     required this.isSelf,
+    this.poll,
   });
 
   final String sender;
   final String text;
   final String time;
   final bool isSelf;
+
+  /// Non-null for a poll message — see [Poll]. [text] still holds a
+  /// human-readable summary ("Poll: ...") for contexts that just want a
+  /// line of text (e.g. a future "last message" preview).
+  final Poll? poll;
 
   static const sampleThread = [
     ChatMessage(sender: 'Sam Park', text: 'Just booked the cabin, confirmation is in my email.', time: '10:14 AM', isSelf: false),

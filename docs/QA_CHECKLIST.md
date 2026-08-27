@@ -76,6 +76,29 @@ not a bug to report. What IS testable now:
   right-aligned bubble, clears the input, and scrolls to the new message.
 - Back returns to Trip Detail.
 
+### Polls (new)
+
+- The bar-chart icon next to the message input opens a "New poll" sheet.
+- Starts with 2 empty option fields; "Add option" adds more (up to 6, then
+  the button disappears); each option beyond the first 2 has an "X" to
+  remove it (never below 2 remaining).
+- "Create poll" is a no-op (doesn't close the sheet) if the question is
+  empty or fewer than 2 options have non-empty text — blank options should
+  just be dropped, not block creation, if at least 2 have text.
+- On success: sheet closes, a poll card appears as a message bubble (from
+  "You", right-aligned like a sent text message) showing the question and
+  every non-empty option, starting at 0 votes each ("No votes yet").
+- Tapping an option: fills its progress bar proportionally, shows the
+  correct percentage, marks it with a filled checkmark, and updates the
+  "N votes" footer. Tapping a *different* option moves your vote (the
+  previously-selected option's bar/checkmark clears) — you can never be
+  counted for two options at once. Tapping your *current* selection again
+  doesn't remove your vote (single-choice, not toggle-off).
+- Poll state persists across scrolling away and back (it's held in the
+  screen's message list, same as regular chat messages) but — like the
+  rest of chat — is NOT synced across devices/sessions; only expect it to
+  persist for the lifetime of that ChatScreen instance.
+
 ## Trips tab (`TripsTab`)
 
 - Upcoming section: one hero card per upcoming `Trip`, correct cover art per
