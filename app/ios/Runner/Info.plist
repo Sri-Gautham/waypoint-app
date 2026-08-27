@@ -34,7 +34,7 @@
 	<string>Waypoint uses Face ID to confirm it's you before signing back in.</string>
 	<!-- Google Sign-In redirect: reversed form of the iOS OAuth client ID
 	     (Cloud Console > APIs & Services > Credentials > iOS client for
-	     com.waypoint.waypoint), matching lib/config/google_auth_config.dart's
+	     com.srigautham.waypoint), matching lib/config/google_auth_config.dart's
 	     iosClientId. -->
 	<key>CFBundleURLTypes</key>
 	<array>

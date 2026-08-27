@@ -36,7 +36,7 @@ class CoverGenerationService {
   CoverGenerationService._();
   static final instance = CoverGenerationService._();
 
-  static const _channel = MethodChannel('com.waypoint.waypoint/image_playground');
+  static const _channel = MethodChannel('com.srigautham.waypoint/image_playground');
 
   Future<bool> isIOSGenerationAvailable() async {
     if (!Platform.isIOS) return false;

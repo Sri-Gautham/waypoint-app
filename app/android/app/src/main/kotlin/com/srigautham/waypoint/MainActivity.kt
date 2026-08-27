@@ -1,4 +1,4 @@
-package com.waypoint.waypoint
+package com.srigautham.waypoint
 
 import io.flutter.embedding.android.FlutterFragmentActivity
 

@@ -87,7 +87,7 @@ Local path: `/Users/srigautham/Documents/My Projects/Personal Projects/travel-co
 - iOS Simulator device used throughout: iPhone 17, UDID
   `607D6413-7714-4C48-9EDE-979E0E97D7F3`. Boot with
   `xcrun simctl boot 607D6413-7714-4C48-9EDE-979E0E97D7F3` if shut down.
-- Bundle id: `com.waypoint.waypoint`.
+- Bundle id: `com.srigautham.waypoint`.
 
 ## IMPORTANT known tooling bug
 
@@ -282,7 +282,7 @@ billing account, and over sticking with presets).
   biometric_service.dart` (wraps `local_auth`).
 - **Cover generation** (`lib/services/cover_generation_service.dart`):
   `generate(destination)` branches on platform. iOS calls a native
-  MethodChannel (`com.waypoint.waypoint/image_playground`) implemented in
+  MethodChannel (`com.srigautham.waypoint/image_playground`) implemented in
   **`ios/Runner/ImagePlaygroundBridge.swift`** (new file — presents
   `ImagePlaygroundViewController`, iOS 18.1+, Apple-Intelligence-capable
   devices only; gracefully reports unavailable otherwise). Android calls
@@ -330,7 +330,8 @@ billing account, and over sticking with presets).
 1. ~~**Google Cloud Console**~~ **DONE** (commit `fb51af5`) — user created the
    Web app OAuth client (redirect URI
    `https://eywyttdqpqfctkruczhb.supabase.co/auth/v1/callback`) and the iOS
-   OAuth client (bundle id `com.waypoint.waypoint`), enabled the Google
+   OAuth client (bundle id was `com.waypoint.waypoint` at the time — **now
+   stale, see item 5, the bundle ID rename**), enabled the Google
    provider in Supabase's dashboard with the Web client's ID/secret. I wired
    the Web client ID into `lib/config/google_auth_config.dart` (feeds
    `serverClientId`, matching what Supabase's provider expects as the ID
@@ -347,16 +348,32 @@ billing account, and over sticking with presets).
    needs its own dashboard entry** (Authentication > Providers > Apple) —
    not yet done as of this writing.
 3. **Apple Developer portal** — the `DEVELOPMENT_TEAM` (C8M2XYZHB3) is
-   already set in the project, and the entitlement is wired, so Xcode
-   *should* auto-register the "Sign In with Apple" capability on the
-   `com.waypoint.waypoint` App ID on next signed build — but if a real-
-   device/TestFlight build ever rejects it, check developer.apple.com >
-   Identifiers > that App ID > capabilities. Also still need the Apple-side
-   Service ID / key for Supabase's Apple provider config (item 2).
+   already set in the project, and the entitlement is wired. **App ID
+   didn't exist there at all yet** (only ever built for Simulator, which
+   doesn't need one) — user tried creating it manually with the old bundle
+   ID and hit "not available" (already taken by someone else's app on a
+   different account, `com.waypoint.waypoint` being generic enough to
+   collide) — resolved by the bundle ID rename, item 5. Still needs: create
+   the App ID fresh under the NEW bundle id with "Sign In with Apple"
+   capability checked, then the Apple-side Service ID / key for Supabase's
+   Apple provider config (item 2).
 4. **Unsplash API key** (Android covers) — register a free app at
    https://unsplash.com/oauth/applications, paste the Access Key into
    `lib/config/unsplash_config.dart` (currently empty — Android cover
    generation silently falls back to presets until this is filled in).
+5. **Bundle ID rename**: `com.waypoint.waypoint` -> `com.srigautham.waypoint`
+   (user's choice, prompted by the Apple identifier collision in item 3).
+   Done on my end: `PRODUCT_BUNDLE_IDENTIFIER` in `project.pbxproj` (all 6
+   Runner/RunnerTests config entries), Android `namespace`/`applicationId`
+   in `build.gradle.kts`, `MainActivity.kt`'s package + its directory moved
+   to match (`android/.../kotlin/com/srigautham/waypoint/`), both
+   MethodChannel name strings (Dart + Swift, must match each other exactly
+   — arbitrary string, didn't strictly need to change, renamed for
+   consistency), and this file's own references. **Still needs, user-side**:
+   edit the existing iOS OAuth client in Google Cloud Console (Credentials
+   > that iOS client > Bundle ID field) from the old value to
+   `com.srigautham.waypoint` — Google's iOS SDK checks this at sign-in time,
+   so leaving it stale would break Google Sign-In on iOS again.
 
 None of the above block iOS Simulator testing of the rest of the app —
 the Apple button will fail to complete sign-in until steps 2-3 are done

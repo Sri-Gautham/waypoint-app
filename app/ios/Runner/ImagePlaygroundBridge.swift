@@ -10,7 +10,7 @@ import ImagePlayground
 /// for it. See lib/services/cover_generation_service.dart for the Dart side.
 @available(iOS 18.1, *)
 final class ImagePlaygroundBridge: NSObject {
-  static let channelName = "com.waypoint.waypoint/image_playground"
+  static let channelName = "com.srigautham.waypoint/image_playground"
 
   static func register(with messenger: FlutterBinaryMessenger) {
     let channel = FlutterMethodChannel(name: channelName, binaryMessenger: messenger)
