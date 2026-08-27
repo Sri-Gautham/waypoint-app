@@ -327,33 +327,44 @@ billing account, and over sticking with presets).
 
 ### User setup steps still needed (I can't do these — external accounts)
 
-1. **Google Cloud Console** (user asked for help with this specifically —
-   offer to walk through it interactively next time it comes up): create an
-   OAuth consent screen, then an OAuth client of type "iOS" (bundle id
-   `com.waypoint.waypoint`) and one of type "Web application" (this is the
-   one whose Client ID goes into Supabase's Google provider config, below).
-   Then: paste the iOS client's *reversed* client ID into the placeholder
-   `CFBundleURLTypes` entry in `ios/Runner/Info.plist` (clearly commented
-   where).
-2. **Supabase dashboard** (Authentication > Providers) — enable Apple and
-   Google, paste in the credentials from steps above / the Apple Developer
-   portal. No MCP tool exposes this config, it's dashboard-only.
+1. ~~**Google Cloud Console**~~ **DONE** (commit `fb51af5`) — user created the
+   Web app OAuth client (redirect URI
+   `https://eywyttdqpqfctkruczhb.supabase.co/auth/v1/callback`) and the iOS
+   OAuth client (bundle id `com.waypoint.waypoint`), enabled the Google
+   provider in Supabase's dashboard with the Web client's ID/secret. I wired
+   the Web client ID into `lib/config/google_auth_config.dart` (feeds
+   `serverClientId`, matching what Supabase's provider expects as the ID
+   token audience) and the iOS client ID both into that same config file
+   (passed explicitly as `GoogleSignIn(clientId: ...)`, since there's no
+   `GoogleService-Info.plist`) and, reversed, into `ios/Runner/Info.plist`'s
+   `CFBundleURLTypes`. **Google Sign-In should now be end-to-end
+   functional** — but note real completion needs a human tapping through an
+   actual Google account login in a system browser sheet; the QA agent's
+   `integration_test` tap automation can't drive that (it's outside
+   Flutter's own widget tree), so its check is still just "no crash, right
+   buttons show/hide," not a full successful sign-in.
+2. ~~**Supabase dashboard** (Google)~~ **DONE**, see above. **Apple still
+   needs its own dashboard entry** (Authentication > Providers > Apple) —
+   not yet done as of this writing.
 3. **Apple Developer portal** — the `DEVELOPMENT_TEAM` (C8M2XYZHB3) is
    already set in the project, and the entitlement is wired, so Xcode
    *should* auto-register the "Sign In with Apple" capability on the
    `com.waypoint.waypoint` App ID on next signed build — but if a real-
    device/TestFlight build ever rejects it, check developer.apple.com >
-   Identifiers > that App ID > capabilities.
+   Identifiers > that App ID > capabilities. Also still need the Apple-side
+   Service ID / key for Supabase's Apple provider config (item 2).
 4. **Unsplash API key** (Android covers) — register a free app at
    https://unsplash.com/oauth/applications, paste the Access Key into
    `lib/config/unsplash_config.dart` (currently empty — Android cover
    generation silently falls back to presets until this is filled in).
 
 None of the above block iOS Simulator testing of the rest of the app —
-Apple/Google buttons will just fail to complete sign-in until steps 1-2 are
-done (existing account UX degrades to "sign-in failed, try again", no
-crash), and cover generation will fall back to presets until step 4 (and
-step 1's device-capability gate) are satisfied.
+the Apple button will fail to complete sign-in until steps 2-3 are done
+(existing account UX degrades to "sign-in failed, try again", no crash),
+and Android cover generation will fall back to presets until step 4 is
+done (iOS cover generation is separately gated on real Apple Intelligence
+hardware, unrelated to any of these steps — Simulator can't satisfy that
+regardless).
 
 ## Git hygiene reminder
 
