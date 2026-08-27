@@ -1,0 +1,251 @@
+import 'package:flutter/material.dart';
+
+import '../../models/charge.dart';
+import '../../models/payment.dart';
+import '../../theme/app_colors.dart';
+import '../../utils/balance_calculator.dart';
+
+class BalancesByPersonScreen extends StatefulWidget {
+  const BalancesByPersonScreen({super.key, required this.chargesByTrip, required this.payments, required this.tripNames});
+
+  /// Shared references with the Balances tab — mutated in place so changes
+  /// are visible after this screen is popped.
+  final Map<String, List<Charge>> chargesByTrip;
+  final List<Payment> payments;
+  final Map<String, String> tripNames;
+
+  @override
+  State<BalancesByPersonScreen> createState() => _BalancesByPersonScreenState();
+}
+
+class _BalancesByPersonScreenState extends State<BalancesByPersonScreen> {
+  String? _expandedMember;
+  String? _settleOpenMember;
+  final _draftController = TextEditingController();
+
+  @override
+  void dispose() {
+    _draftController.dispose();
+    super.dispose();
+  }
+
+  double _paidSoFar(String memberName) {
+    return widget.payments.where((p) => p.memberName == memberName).fold(0.0, (sum, p) => sum + p.amount);
+  }
+
+  Map<String, Map<String, double>> _netByTripByMember() {
+    final result = <String, Map<String, double>>{};
+    widget.chargesByTrip.forEach((tripId, charges) {
+      result[tripId] = netBalancesByMember(charges);
+    });
+    return result;
+  }
+
+  void _openSettle(String member, double owed) {
+    setState(() {
+      if (_settleOpenMember == member) {
+        _settleOpenMember = null;
+      } else {
+        _settleOpenMember = member;
+        _draftController.text = owed.toStringAsFixed(owed.truncateToDouble() == owed ? 0 : 2);
+      }
+    });
+  }
+
+  void _confirmPayment(String member, double owed) {
+    final raw = double.tryParse(_draftController.text.trim());
+    if (raw == null || raw <= 0) return;
+    final amount = raw > owed ? owed : raw;
+    setState(() {
+      widget.payments.add(Payment(memberName: member, amount: amount));
+      _settleOpenMember = null;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final netByTrip = _netByTripByMember();
+    final rawNetByMember = <String, double>{};
+    final tripsByMember = <String, List<(String tripName, double amount)>>{};
+    netByTrip.forEach((tripId, netMap) {
+      netMap.forEach((member, amount) {
+        rawNetByMember[member] = (rawNetByMember[member] ?? 0) + amount;
+        (tripsByMember[member] ??= []).add((widget.tripNames[tripId] ?? tripId, amount));
+      });
+    });
+
+    final members = rawNetByMember.keys.toList();
+    double totalOwe = 0, totalOwed = 0;
+    for (final m in members) {
+      final adjusted = rawNetByMember[m]! + _paidSoFar(m);
+      if (adjusted < 0) {
+        totalOwe += -adjusted;
+      } else {
+        totalOwed += adjusted;
+      }
+    }
+    final net = totalOwed - totalOwe;
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Balances by person', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800))),
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.all(20),
+          children: [
+            Center(
+              child: Column(
+                children: [
+                  const Text('OVERALL', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textSecondary, letterSpacing: 0.5)),
+                  const SizedBox(height: 4),
+                  Text(
+                    net == 0 ? 'All settled up' : (net < 0 ? 'You owe \$${(-net).toStringAsFixed(2)}' : "You're owed \$${net.toStringAsFixed(2)}"),
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: net == 0 ? AppColors.textSecondary : (net < 0 ? AppColors.moneyOwe : AppColors.moneyOwed)),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'You owe \$${totalOwe.toStringAsFixed(2)} · You\'re owed \$${totalOwed.toStringAsFixed(2)}',
+                    style: const TextStyle(fontSize: 12.5, color: AppColors.textSecondary),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            for (final member in members) ...[
+              _buildMemberCard(member, rawNetByMember[member]!, tripsByMember[member] ?? []),
+              const SizedBox(height: 10),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMemberCard(String member, double rawNet, List<(String, double)> trips) {
+    final paid = _paidSoFar(member);
+    final adjusted = rawNet + paid;
+    final owesThem = adjusted < 0;
+    final owed = adjusted.abs();
+    final expanded = _expandedMember == member;
+    final settleOpen = _settleOpenMember == member;
+    final initials = member.split(' ').where((s) => s.isNotEmpty).map((s) => s[0]).take(2).join().toUpperCase();
+
+    final netColor = adjusted == 0 ? AppColors.textSecondary : (owesThem ? AppColors.moneyOwe : AppColors.moneyOwed);
+    final netLabel = adjusted == 0 ? 'Settled up' : (owesThem ? 'You owe \$${owed.toStringAsFixed(2)}' : "Owes you \$${owed.toStringAsFixed(2)}");
+
+    return Container(
+      decoration: BoxDecoration(border: Border.all(color: AppColors.border, width: 1.5), borderRadius: BorderRadius.circular(14)),
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: InkWell(
+                  onTap: () => setState(() => _expandedMember = expanded ? null : member),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 34,
+                        height: 34,
+                        alignment: Alignment.center,
+                        decoration: const BoxDecoration(color: AppColors.accentTint, shape: BoxShape.circle),
+                        child: Text(initials, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(child: Text(member, style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: AppColors.textPrimary))),
+                    ],
+                  ),
+                ),
+              ),
+              Text(netLabel, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: netColor)),
+              if (owesThem) ...[
+                const SizedBox(width: 8),
+                OutlinedButton(
+                  onPressed: () => _openSettle(member, owed),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: Size.zero,
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    side: const BorderSide(color: AppColors.accent, width: 1.5),
+                    foregroundColor: AppColors.accent,
+                    textStyle: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700),
+                  ),
+                  child: const Text('Settle up'),
+                ),
+              ],
+            ],
+          ),
+          if (settleOpen) ...[
+            const Padding(padding: EdgeInsets.symmetric(vertical: 12), child: Divider(height: 1, color: AppColors.divider)),
+            Text('Record a payment to $member', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textSecondary)),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const Text('\$', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: TextField(
+                    controller: _draftController,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    style: const TextStyle(fontSize: 15),
+                    decoration: const InputDecoration(isDense: true),
+                  ),
+                ),
+              ],
+            ),
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Text('Up to \$${owed.toStringAsFixed(2)}, the full amount owed.', style: const TextStyle(fontSize: 11, color: AppColors.textTertiary)),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => setState(() => _settleOpenMember = null),
+                    child: const Text('Cancel'),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => _confirmPayment(member, owed),
+                    child: const Text('Record payment'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+          if (expanded) ...[
+            const Padding(padding: EdgeInsets.symmetric(vertical: 12), child: Divider(height: 1, color: AppColors.divider)),
+            for (final (tripName, amount) in trips)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(tripName, style: const TextStyle(fontSize: 12.5, color: AppColors.textSecondary)),
+                    Text(
+                      amount < 0 ? 'You owe \$${(-amount).toStringAsFixed(2)}' : 'Owes you \$${amount.toStringAsFixed(2)}',
+                      style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: amount < 0 ? AppColors.moneyOwe : AppColors.moneyOwed),
+                    ),
+                  ],
+                ),
+              ),
+            if (paid > 0)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Payment sent', style: TextStyle(fontSize: 12.5, color: AppColors.textSecondary)),
+                    Text('You paid \$${paid.toStringAsFixed(2)}', style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppColors.moneyOwed)),
+                  ],
+                ),
+              ),
+          ],
+        ],
+      ),
+    );
+  }
+}

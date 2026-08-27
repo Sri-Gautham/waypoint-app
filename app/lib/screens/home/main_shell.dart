@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../models/onboarding_data.dart';
-import '../placeholder_tab.dart';
 import '../../widgets/app_bottom_nav.dart';
+import '../balances/balances_tab.dart';
 import '../trips/trips_tab.dart';
 import 'activity_tab.dart';
 import 'home_tab.dart';
@@ -27,11 +27,7 @@ class _MainShellState extends State<MainShell> {
     final tabs = [
       HomeTab(data: widget.data),
       const TripsTab(),
-      const PlaceholderTab(
-        icon: Icons.account_balance_wallet_outlined,
-        title: 'Balances',
-        subtitle: 'Who owes who, and settling up, will live here.',
-      ),
+      const BalancesTab(),
       const ActivityTab(),
       ProfileTab(data: widget.data),
     ];
