@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../models/trip.dart';
 import '../../theme/app_colors.dart';
-import '../../widgets/trip_landscape.dart';
+import '../../widgets/trip_cover_art.dart';
 import 'chat_screen.dart';
 
 class TripDetailScreen extends StatelessWidget {
@@ -53,7 +53,7 @@ class TripDetailScreen extends StatelessWidget {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  TripLandscape(theme: trip.cover),
+                  TripCoverArt(trip: trip),
                   DecoratedBox(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(16),

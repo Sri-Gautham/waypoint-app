@@ -11,6 +11,8 @@ class OnboardingData {
   String state = '';
   String zip = '';
 
+  bool faceIdEnabled = false;
+
   String get fullName => '$firstName $lastName'.trim();
 
   String get initials {

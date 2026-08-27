@@ -1,15 +1,57 @@
 import 'package:flutter/material.dart';
 
 import '../../models/onboarding_data.dart';
+import '../../services/auth_service.dart';
+import '../../services/biometric_service.dart';
 import '../../theme/app_colors.dart';
+import '../onboarding/onboarding_flow.dart';
 
-class ProfileTab extends StatelessWidget {
+class ProfileTab extends StatefulWidget {
   const ProfileTab({super.key, required this.data});
 
   final OnboardingData data;
 
   @override
+  State<ProfileTab> createState() => _ProfileTabState();
+}
+
+class _ProfileTabState extends State<ProfileTab> {
+  bool _faceIdBusy = false;
+
+  Future<void> _toggleFaceId(bool enable) async {
+    if (enable) {
+      final available = await BiometricService.instance.isAvailable();
+      if (!available) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Face ID isn\'t set up on this device.')),
+        );
+        return;
+      }
+      final confirmed = await BiometricService.instance.authenticate(reason: 'Enable Face ID for Waypoint');
+      if (!confirmed) return;
+    }
+    setState(() => _faceIdBusy = true);
+    try {
+      await AuthService.instance.setFaceIdEnabled(enable);
+      setState(() => widget.data.faceIdEnabled = enable);
+    } finally {
+      if (mounted) setState(() => _faceIdBusy = false);
+    }
+  }
+
+  Future<void> _signOut() async {
+    await AuthService.instance.signOut();
+    if (!mounted) return;
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const OnboardingFlow()),
+      (route) => false,
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final data = widget.data;
     final address = [
       data.street,
       data.apt,
@@ -46,7 +88,45 @@ class ProfileTab extends StatelessWidget {
           const SizedBox(height: 28),
           _InfoRow(label: 'Email', value: data.email.isEmpty ? 'Not added yet' : data.email),
           _InfoRow(label: 'Phone', value: data.phone.isEmpty ? 'Not added yet' : data.phone),
-          _InfoRow(label: 'Home address', value: address.isEmpty ? 'Not added yet' : address, showDivider: false),
+          _InfoRow(label: 'Home address', value: address.isEmpty ? 'Not added yet' : address),
+          Container(
+            padding: const EdgeInsets.only(bottom: 14),
+            margin: const EdgeInsets.only(bottom: 14),
+            decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: AppColors.divider))),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'FACE ID'.toUpperCase(),
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary, letterSpacing: 0.4),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text('Skip sign-in on relaunch', style: TextStyle(fontSize: 14, color: AppColors.textPrimary)),
+                    ],
+                  ),
+                ),
+                _faceIdBusy
+                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                    : Switch(
+                        value: data.faceIdEnabled,
+                        activeThumbColor: AppColors.accent,
+                        onChanged: _toggleFaceId,
+                      ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton(
+              onPressed: _signOut,
+              style: OutlinedButton.styleFrom(foregroundColor: Colors.red, side: const BorderSide(color: Colors.red)),
+              child: const Text('Sign out'),
+            ),
+          ),
         ],
       ),
     );
@@ -54,20 +134,17 @@ class ProfileTab extends StatelessWidget {
 }
 
 class _InfoRow extends StatelessWidget {
-  const _InfoRow({required this.label, required this.value, this.showDivider = true});
+  const _InfoRow({required this.label, required this.value});
 
   final String label;
   final String value;
-  final bool showDivider;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.only(bottom: 14),
       margin: const EdgeInsets.only(bottom: 14),
-      decoration: showDivider
-          ? const BoxDecoration(border: Border(bottom: BorderSide(color: AppColors.divider)))
-          : null,
+      decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: AppColors.divider))),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

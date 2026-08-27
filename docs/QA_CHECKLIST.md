@@ -16,19 +16,27 @@ apart look suspiciously identical despite navigating, cross-check with a
 video-frame capture or direct widget-tree inspection before filing it as a
 bug.
 
-## Onboarding (`OnboardingFlow`)
+## Onboarding (`OnboardingFlow`) — real auth now, not fake forms
 
-- Create account: first/last name, email, phone accept input; "Continue"
-  advances to Verify Email.
-- Verify Email / Verify Phone (shared `VerifyCodeStep`): the 6 OTP boxes
-  auto-advance focus as digits are typed; "Continue" is disabled until all 6
-  digits are filled; back button returns to the previous step without losing
-  entered data.
-- Home Address: "Use current location" instantly fills street/city/state/zip;
-  "Finish" advances to All Set.
-- All Set: shows the entered first name (or "there" if blank); "Get started"
-  navigates to the Home dashboard (`MainShell`) and the back stack is cleared
-  (no way to swipe back into onboarding).
+**Apple/Google sign-in will not complete in this environment yet** —
+Google Cloud Console OAuth clients and the Supabase dashboard's
+Apple/Google provider config are pending user setup (see `PROGRESS.md`'s
+"User setup steps still needed"). Expect the buttons to show a "Sign-in
+failed" message rather than crash; that's the current known-good state,
+not a bug to report. What IS testable now:
+
+- Sign-in screen (`SignInStep`): Apple button only shows on iOS; Google
+  button on both; tapping either shows a loading spinner and doesn't crash
+  even though the sign-in itself can't complete yet; a cancelled Apple
+  sheet doesn't show a spurious error.
+- Profile Details step: phone + address fields behave like the old Home
+  Address step did (same fields, "Use current location" fills them);
+  "Finish" doesn't crash even if `saveProfile` fails (no session yet).
+- All Set -> Enable Face ID step (only reachable in code review right now
+  since sign-in can't complete to trigger `isNewUser`) — "Enable Face ID"
+  and "Not now" both should be tappable without crashing once reachable.
+- Cold launch with no session still lands on the sign-in screen (no
+  crash from `_StartupGate`'s `AuthService.instance.isSignedIn` check).
 
 ## Home tab (`HomeTab`)
 
@@ -134,8 +142,20 @@ it goes to the previous step without losing entered data.
   at a time. Trip name and Notes fields accept input. Start/End date
   fields open a native date picker on tap and display the picked date
   (format "Sat, Sep 6"); End date is optional.
-- **Step 2 (Destination)**: header shows "2 / 3". General area/Exact
-  address toggle — General area is selected by default. Switching to
+- **Step 2 (Destination)**: has a new "Generate cover" card below the
+  address fields. Tapping "Generate" with no city/trip name entered shows
+  an inline error instead of crashing. On iOS Simulator, generation will
+  report unavailable (Image Playground needs a real Apple-Intelligence-
+  capable device) — expect a "This device can't generate covers" message,
+  not a crash; this is expected in Simulator, not a bug. On Android it
+  needs an Unsplash API key that isn't configured yet (see `PROGRESS.md`)
+  — expect "Cover photos aren't set up on Android yet", also expected.
+  Either way, the 4 preset swatches in Step 1 still work as the fallback
+  cover, and picking one after a (hypothetical) successful generation
+  should clear the generated cover per the UI's own wording.
+
+  Separately, the General area/Exact address toggle — General area is
+  selected by default. Switching to
   Exact address reveals Street address + Apt/Unit fields above City;
   switching back to General area hides them again (and their entered
   values, if any, shouldn't cause a crash when hidden then re-shown).

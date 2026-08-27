@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../models/group_draft.dart';
+import '../../../services/cover_generation_service.dart';
 import '../../../theme/app_colors.dart';
 import '../../../widgets/labeled_field.dart';
 import '../../../widgets/step_header.dart';
@@ -17,6 +18,44 @@ class GroupDestinationStep extends StatefulWidget {
 }
 
 class _GroupDestinationStepState extends State<GroupDestinationStep> {
+  bool _generating = false;
+  String? _error;
+
+  String get _destinationQuery {
+    final draft = widget.draft;
+    final parts = [draft.city.trim(), draft.state.trim()].where((s) => s.isNotEmpty);
+    return parts.isNotEmpty ? parts.join(', ') : draft.name.trim();
+  }
+
+  Future<void> _generateCover() async {
+    final query = _destinationQuery;
+    if (query.isEmpty) {
+      setState(() => _error = 'Add a city (or trip name) first.');
+      return;
+    }
+    setState(() {
+      _generating = true;
+      _error = null;
+    });
+    final result = await CoverGenerationService.instance.generate(query);
+    if (!mounted) return;
+    setState(() {
+      _generating = false;
+      if (result.succeeded) {
+        widget.draft.generatedCoverBytes = result.imageBytes;
+      } else {
+        _error = switch (result.reason!) {
+          CoverGenerationUnavailableReason.deviceNotCapable =>
+            "This device can't generate covers — using the presets instead.",
+          CoverGenerationUnavailableReason.noApiKey => 'Cover photos aren\'t set up on Android yet.',
+          CoverGenerationUnavailableReason.cancelled => null,
+          CoverGenerationUnavailableReason.unsupportedPlatform => "Cover generation isn't available on this platform.",
+          CoverGenerationUnavailableReason.requestFailed => "Couldn't generate a cover — try again.",
+        };
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final draft = widget.draft;
@@ -52,15 +91,74 @@ class _GroupDestinationStepState extends State<GroupDestinationStep> {
                     LabeledField(label: 'Apt / Unit (optional)', hint: 'Apt 4B', onChanged: (v) => draft.apt = v),
                     const SizedBox(height: 16),
                   ],
-                  LabeledField(label: 'City', hint: 'South Lake Tahoe', onChanged: (v) => draft.city = v),
+                  LabeledField(label: 'City', hint: 'South Lake Tahoe', onChanged: (v) => setState(() => draft.city = v)),
                   const SizedBox(height: 16),
                   Row(
                     children: [
-                      Expanded(child: LabeledField(label: 'State', hint: 'CA', onChanged: (v) => draft.state = v)),
+                      Expanded(child: LabeledField(label: 'State', hint: 'CA', onChanged: (v) => setState(() => draft.state = v))),
                       const SizedBox(width: 16),
                       Expanded(child: LabeledField(label: 'ZIP code (optional)', hint: '96150', onChanged: (v) => draft.zip = v)),
                     ],
                   ),
+                  const SizedBox(height: 24),
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: AppColors.accentTint,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        if (draft.generatedCoverBytes != null)
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.memory(draft.generatedCoverBytes!, width: 44, height: 44, fit: BoxFit.cover),
+                          )
+                        else
+                          const Icon(Icons.auto_awesome_rounded, color: AppColors.accent, size: 22),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                draft.generatedCoverBytes != null ? 'Generated cover ready' : 'Generate a cover',
+                                style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                              ),
+                              const SizedBox(height: 2),
+                              const Text(
+                                'Based on this destination, on-device.',
+                                style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        OutlinedButton(
+                          onPressed: _generating ? null : _generateCover,
+                          style: OutlinedButton.styleFrom(
+                            minimumSize: Size.zero,
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                            foregroundColor: AppColors.accent,
+                            side: BorderSide.none,
+                            backgroundColor: Colors.white,
+                            textStyle: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700),
+                          ),
+                          child: _generating
+                              ? const SizedBox(
+                                  width: 14,
+                                  height: 14,
+                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                )
+                              : Text(draft.generatedCoverBytes != null ? 'Regenerate' : 'Generate'),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (_error != null) ...[
+                    const SizedBox(height: 8),
+                    Text(_error!, style: const TextStyle(fontSize: 12, color: Colors.red)),
+                  ],
                 ],
               ),
             ),

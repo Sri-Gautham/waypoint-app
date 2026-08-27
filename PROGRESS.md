@@ -54,12 +54,9 @@ Local path: `/Users/srigautham/Documents/My Projects/Personal Projects/travel-co
   picker interaction it can't automate) — these remain unverified by
   either of us via live UI, though the code path was reviewed and
   `flutter analyze`/unit-testable logic checks out.
-- **Open question, not yet resolved**: most of its `app/test/*` files
-  (models, widgets, utils, screens, e2e, helpers) are untracked in git.
-  It flagged this as "not my call" whether to commit them. **I told it
-  I'd ask the user and report back — this hasn't been asked/decided yet
-  as of this writing.** If picking this back up, either ask the user or
-  raise it explicitly next time you're talking with them.
+- **Resolved**: user said not to commit test files, only the app codebase.
+  `app/test/*`, `app/test_report.json`, `app/run_tests_and_report.sh` stay
+  untracked (the QA agent's own territory) — never `git add` them.
 - Fixed its own stale test files early on (`widget_test.dart`,
   `e2e_flow_test.dart` were asserting the app launches on
   `BalancesByPersonScreen`, a holdover from my temporary debug wiring at
@@ -127,10 +124,10 @@ change to the entry point was intended.
   from the design converted to hex via a manual OKLab conversion script
   (not a package). `lib/theme/cover_theme.dart` — 4 trip cover palettes
   (Mountain Lake / Beach / Desert / Forest), also oklch→hex converted.
-- **Onboarding** (`lib/screens/onboarding/`): 5 steps (Create account,
-  Verify email, Verify phone, Home address, All set) as real Flutter
-  widgets. `OnboardingData` model holds the form state, passed through to
-  `MainShell` on "Get started".
+- **Onboarding** (`lib/screens/onboarding/`): originally 5 fake-form/fake-
+  OTP steps — **superseded**, see "Backend + auth + Face ID + generated
+  covers" below for the current real-auth flow. `OnboardingData` model
+  still holds the profile form state, passed through to `MainShell`.
 - **Home dashboard** (`lib/screens/home/home_tab.dart`): greeting, hero
   trip card (via shared `TripHeroCard` widget), quick actions, recent
   activity. Trip landscape art is a custom `CustomPainter`
@@ -237,6 +234,126 @@ that. All of the following is complete, committed, and pushed:
   reports, or (b) whatever new feature/polish the user asks for next —
   check the live conversation for the most recent ask rather than assuming
   this file's "planned" section is exhaustive.
+
+## Backend + auth + Face ID + generated covers — DONE, pending user setup steps
+
+User asked for: real backend (chose **Supabase**), Sign in with Apple/Google,
+optional Face ID after first sign-up (session persistence + biometric gate),
+and AI-generated trip covers from the destination instead of the 4 static
+presets (iOS via Apple's **Image Playground** framework; Android has no
+on-device equivalent, so it searches **Unsplash** for a real destination
+photo instead — user picked this over Google Places Photos, which needs a
+billing account, and over sticking with presets).
+
+- **Supabase project**: created via the `mcp__claude_ai_Supabase__*` tools
+  (org "Sri Gautham", project `waypoint`, id `eywyttdqpqfctkruczhb`, region
+  us-east-2, free tier). URL/anon key live in `lib/config/supabase_config.dart`
+  (safe to ship client-side — RLS locks every table to its owner). Schema so
+  far: `public.profiles` (first/last name, email, phone, home address
+  fields, avatar_url, auth_provider, face_id_enabled), RLS policies
+  (select/update/insert own row only), `handle_new_user()` trigger on
+  `auth.users` insert that seeds the row from OAuth metadata — locked down
+  (`revoke execute ... from anon, authenticated`) after the security
+  advisor flagged it as publicly callable via RPC otherwise. No trip/charge/
+  expense data has been moved to Postgres — that's still local `AppData`
+  in-memory state; only auth/profile is real-backend now. If asked to
+  persist trips/expenses for real, that's a separate, bigger migration.
+- **Auth** (`lib/services/auth_service.dart`): `signInWithApple()` /
+  `signInWithGoogle()` both go through Supabase's native
+  `signInWithIdToken` (not the web OAuth redirect flow) — Apple via
+  `sign_in_with_apple` package + a SHA-256 nonce, Google via `google_sign_in`
+  package. `AuthResult.isNewUser` compares `createdAt`/`lastSignInAt` to
+  know whether to show the Face ID prompt. `loadProfile()`/`saveProfile()`
+  read/write the `profiles` row.
+- **Onboarding rewrite** (`lib/screens/onboarding/`): replaced the old fake
+  manual-form + fake-OTP flow entirely. New flow: `SignInStep` (Apple/Google
+  buttons, no manual name/email/phone form — that data now comes from
+  OAuth) -> `ProfileDetailsStep` (just phone + home address, since OAuth
+  can't give us those) -> `AllSetStep` -> `EnableFaceIdStep` (only shown on
+  a first sign-up). Deleted `create_account_step.dart`, `verify_code_step.dart`,
+  `home_address_step.dart` (superseded/folded in).
+- **Session persistence + Face ID**: `main.dart`'s `_StartupGate` checks
+  `AuthService.instance.isSignedIn` (Supabase persists the session locally
+  on its own) on cold launch — signed out -> `OnboardingFlow`; signed in
+  without Face ID enabled -> straight to `MainShell`; signed in with Face ID
+  enabled -> `FaceIdGateScreen` first (`lib/screens/onboarding/
+  face_id_gate_screen.dart`). Toggle lives in `ProfileTab` too (Face ID
+  switch + a "Sign out" button), backed by `lib/services/
+  biometric_service.dart` (wraps `local_auth`).
+- **Cover generation** (`lib/services/cover_generation_service.dart`):
+  `generate(destination)` branches on platform. iOS calls a native
+  MethodChannel (`com.waypoint.waypoint/image_playground`) implemented in
+  **`ios/Runner/ImagePlaygroundBridge.swift`** (new file — presents
+  `ImagePlaygroundViewController`, iOS 18.1+, Apple-Intelligence-capable
+  devices only; gracefully reports unavailable otherwise). Android calls
+  Unsplash's search API (`lib/config/unsplash_config.dart` — **empty
+  access key, needs the user to fill it in**, see below). Either platform
+  falls back to the 4 illustrated presets on failure/unavailability — see
+  `GroupDestinationStep`'s "Generate cover" card (added after the City/State
+  fields, since destination isn't known yet in `GroupBasicsStep` where the
+  preset swatches live) and `GroupBasicsStep`'s swatch row (picking a preset
+  clears any generated cover). `Trip.coverImageBytes` (new optional field)
+  + `TripCoverArt` widget (new — `lib/widgets/trip_cover_art.dart`) render
+  the generated photo when present, else fall back to the existing
+  `TripLandscape` CustomPainter; `TripHeroCard` and `TripDetailScreen` both
+  switched over to `TripCoverArt`.
+- **iOS native wiring done by hand** (no Xcode GUI available in this
+  environment): added `ios/Runner/Runner.entitlements`
+  (`com.apple.developer.applesignin`), wired `CODE_SIGN_ENTITLEMENTS` into
+  all 3 Runner build configs in `project.pbxproj` via a scripted edit (not
+  Xcode's "+Capability" button), added the new `ImagePlaygroundBridge.swift`
+  file to the pbxproj (`PBXFileReference`/`PBXBuildFile`/group/Sources phase
+  entries — this project doesn't use Xcode 16's synchronized-groups
+  auto-discovery, so new files need this manual wiring), registered the
+  channel in `AppDelegate.swift`'s `didInitializeImplicitFlutterEngine`.
+  Ran `pod install` for the first time (only `sign_in_with_apple` needs
+  CocoaPods — everything else, including the newly added google_sign_in/
+  local_auth, resolves via Swift Package Manager automatically, this
+  project's default). **Verified the full Runner target builds green** via
+  `xcodebuild -workspace Runner.xcworkspace -scheme Runner -sdk
+  iphonesimulator build` (must use the `.xcworkspace`, not the bare
+  `.xcodeproj`, now that CocoaPods is involved — building the bare
+  `.xcodeproj` fails with "Module 'sign_in_with_apple' not found").
+- **Android native wiring**: `MainActivity.kt` changed from `FlutterActivity`
+  to `FlutterFragmentActivity` (`local_auth`'s biometric prompt requires a
+  FragmentActivity — this would otherwise crash at runtime, not build time).
+  Added `INTERNET` and `USE_BIOMETRIC` permissions to the manifest
+  (`INTERNET` wasn't there before; debug builds get it implicitly but
+  release builds don't, and Supabase/Unsplash both need it). **Not build-
+  verified** — this project's established scope is iOS Simulator only (see
+  "Two-agent setup" above), no Android build has been run in this
+  environment at all, before or after this change.
+- `flutter analyze lib` clean throughout.
+
+### User setup steps still needed (I can't do these — external accounts)
+
+1. **Google Cloud Console** (user asked for help with this specifically —
+   offer to walk through it interactively next time it comes up): create an
+   OAuth consent screen, then an OAuth client of type "iOS" (bundle id
+   `com.waypoint.waypoint`) and one of type "Web application" (this is the
+   one whose Client ID goes into Supabase's Google provider config, below).
+   Then: paste the iOS client's *reversed* client ID into the placeholder
+   `CFBundleURLTypes` entry in `ios/Runner/Info.plist` (clearly commented
+   where).
+2. **Supabase dashboard** (Authentication > Providers) — enable Apple and
+   Google, paste in the credentials from steps above / the Apple Developer
+   portal. No MCP tool exposes this config, it's dashboard-only.
+3. **Apple Developer portal** — the `DEVELOPMENT_TEAM` (C8M2XYZHB3) is
+   already set in the project, and the entitlement is wired, so Xcode
+   *should* auto-register the "Sign In with Apple" capability on the
+   `com.waypoint.waypoint` App ID on next signed build — but if a real-
+   device/TestFlight build ever rejects it, check developer.apple.com >
+   Identifiers > that App ID > capabilities.
+4. **Unsplash API key** (Android covers) — register a free app at
+   https://unsplash.com/oauth/applications, paste the Access Key into
+   `lib/config/unsplash_config.dart` (currently empty — Android cover
+   generation silently falls back to presets until this is filled in).
+
+None of the above block iOS Simulator testing of the rest of the app —
+Apple/Google buttons will just fail to complete sign-in until steps 1-2 are
+done (existing account UX degrades to "sign-in failed, try again", no
+crash), and cover generation will fall back to presets until step 4 (and
+step 1's device-capability gate) are satisfied.
 
 ## Git hygiene reminder
 

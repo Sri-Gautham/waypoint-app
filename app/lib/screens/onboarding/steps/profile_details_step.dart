@@ -1,35 +1,38 @@
 import 'package:flutter/material.dart';
 
 import '../../../models/onboarding_data.dart';
+import '../../../services/auth_service.dart';
 import '../../../theme/app_colors.dart';
 import '../../../widgets/labeled_field.dart';
 import '../../../widgets/step_header.dart';
 
-class HomeAddressStep extends StatefulWidget {
-  const HomeAddressStep({
-    super.key,
-    required this.data,
-    required this.onBack,
-    required this.onContinue,
-  });
+/// Collects what Apple/Google sign-in can't give us: phone number and
+/// home address (used to plan routes/carpools). Name and email already
+/// came from the OAuth provider by the time this step is reached.
+class ProfileDetailsStep extends StatefulWidget {
+  const ProfileDetailsStep({super.key, required this.data, required this.onBack, required this.onContinue});
 
   final OnboardingData data;
   final VoidCallback onBack;
   final VoidCallback onContinue;
 
   @override
-  State<HomeAddressStep> createState() => _HomeAddressStepState();
+  State<ProfileDetailsStep> createState() => _ProfileDetailsStepState();
 }
 
-class _HomeAddressStepState extends State<HomeAddressStep> {
+class _ProfileDetailsStepState extends State<ProfileDetailsStep> {
+  late final _phoneController = TextEditingController(text: widget.data.phone);
   late final _streetController = TextEditingController(text: widget.data.street);
   late final _aptController = TextEditingController(text: widget.data.apt);
   late final _cityController = TextEditingController(text: widget.data.city);
   late final _stateController = TextEditingController(text: widget.data.state);
   late final _zipController = TextEditingController(text: widget.data.zip);
 
+  bool _saving = false;
+
   @override
   void dispose() {
+    _phoneController.dispose();
     _streetController.dispose();
     _aptController.dispose();
     _cityController.dispose();
@@ -51,6 +54,20 @@ class _HomeAddressStepState extends State<HomeAddressStep> {
     _cityController.text = data.city;
     _stateController.text = data.state;
     _zipController.text = data.zip;
+    setState(() {});
+  }
+
+  Future<void> _continue() async {
+    setState(() => _saving = true);
+    try {
+      await AuthService.instance.saveProfile(widget.data);
+    } catch (_) {
+      // Best-effort: the data still lives in `widget.data` for this
+      // session even if the write fails, so don't block the flow on it.
+    }
+    if (!mounted) return;
+    setState(() => _saving = false);
+    widget.onContinue();
   }
 
   @override
@@ -62,15 +79,15 @@ class _HomeAddressStepState extends State<HomeAddressStep> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(height: 12),
-          StepHeader(step: 4, onBack: widget.onBack),
+          StepHeader(step: 1, total: 1, onBack: widget.onBack),
           const SizedBox(height: 28),
           Text(
-            'Add your home address',
+            'A few more details',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 8),
           const Text(
-            'Used to plan routes and carpools for your trips. You can update it anytime.',
+            'Used to plan routes and carpools for your trips. You can update this anytime.',
             style: TextStyle(fontSize: 14, color: AppColors.textSecondary, height: 1.4),
           ),
           const SizedBox(height: 20),
@@ -79,6 +96,14 @@ class _HomeAddressStepState extends State<HomeAddressStep> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  LabeledField(
+                    label: 'Phone number',
+                    hint: '(555) 010-0198',
+                    controller: _phoneController,
+                    keyboardType: TextInputType.phone,
+                    onChanged: (v) => data.phone = v,
+                  ),
+                  const SizedBox(height: 22),
                   OutlinedButton.icon(
                     onPressed: _useCurrentLocation,
                     icon: const Icon(Icons.my_location_rounded, size: 15, color: AppColors.accent),
@@ -140,7 +165,16 @@ class _HomeAddressStepState extends State<HomeAddressStep> {
             ),
           ),
           const SizedBox(height: 12),
-          ElevatedButton(onPressed: widget.onContinue, child: const Text('Finish')),
+          ElevatedButton(
+            onPressed: _saving ? null : _continue,
+            child: _saving
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                  )
+                : const Text('Finish'),
+          ),
           const SizedBox(height: 24),
         ],
       ),

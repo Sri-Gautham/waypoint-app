@@ -69,12 +69,33 @@ class _GroupBasicsStepState extends State<GroupBasicsStep> {
                           padding: const EdgeInsets.only(right: 10),
                           child: _CoverSwatch(
                             theme: theme,
-                            selected: draft.coverIndex == i,
-                            onTap: () => setState(() => draft.coverIndex = i),
+                            selected: draft.generatedCoverBytes == null && draft.coverIndex == i,
+                            onTap: () => setState(() {
+                              draft.coverIndex = i;
+                              draft.generatedCoverBytes = null;
+                            }),
                           ),
                         ),
                     ],
                   ),
+                  if (draft.generatedCoverBytes != null) ...[
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.memory(draft.generatedCoverBytes!, width: 40, height: 40, fit: BoxFit.cover),
+                        ),
+                        const SizedBox(width: 10),
+                        const Expanded(
+                          child: Text(
+                            'Using your generated cover — set on the Destination step.',
+                            style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                   const SizedBox(height: 20),
                   LabeledField(label: 'Trip name', hint: 'Lake Tahoe Crew', onChanged: (v) => draft.name = v),
                   const SizedBox(height: 18),

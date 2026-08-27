@@ -41,8 +41,31 @@ dependencies:
   # Picking real photos for a trip's gallery.
   image_picker: ^1.1.2
 
+  # Backend: auth, session persistence, Postgres profiles.
+  supabase_flutter: ^2.8.0
+
+  # Sign in with Apple.
+  sign_in_with_apple: ^6.1.4
+
+  # Sign in with Google (native, exchanged for a Supabase session via ID token).
+  google_sign_in: ^6.2.2
+
+  # Face ID / Touch ID gate on top of a persisted session.
+  local_auth: ^2.3.0
+
+  # SHA-256 for the Sign in with Apple nonce.
+  crypto: ^3.0.5
+
+  # Android cover search (Unsplash) and downloading the generated iOS
+  # cover isn't needed here, but the search request/download both use it.
+  http: ^1.2.2
+
 dev_dependencies:
   flutter_test:
+    sdk: flutter
+
+  # Drives the app on a real device/simulator for QA e2e testing.
+  integration_test:
     sdk: flutter
 
   # The "flutter_lints" package below contains a set of recommended lints to

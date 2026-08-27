@@ -1,5 +1,7 @@
 package com.waypoint.waypoint
 
-import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.android.FlutterFragmentActivity
 
-class MainActivity : FlutterActivity()
+// local_auth's biometric prompt requires a FragmentActivity, not the
+// plain FlutterActivity the template ships with.
+class MainActivity : FlutterFragmentActivity()

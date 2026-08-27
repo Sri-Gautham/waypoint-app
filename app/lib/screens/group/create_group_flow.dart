@@ -78,6 +78,7 @@ class _CreateGroupFlowState extends State<CreateGroupFlow> {
       etaLabel: 'TBD',
       cover: CoverTheme.all[_draft.coverIndex],
       members: [...contactMembers, ...manualMembers],
+      coverImageBytes: _draft.generatedCoverBytes,
     );
 
     AppDataScope.of(context).addTrip(trip);

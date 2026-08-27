@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import '../theme/cover_theme.dart';
 import 'activity_log_entry.dart';
 
@@ -38,6 +40,7 @@ class Trip {
     required this.cover,
     required this.members,
     this.activityLog = const [],
+    this.coverImageBytes,
   });
 
   final String id;
@@ -57,6 +60,11 @@ class Trip {
 
   /// Only populated for past trips.
   final List<ActivityLogEntry> activityLog;
+
+  /// A generated/fetched cover photo (see CoverGenerationService). When
+  /// present, this takes priority over [cover]'s illustrated palette —
+  /// see TripCoverArt, the one widget that renders either.
+  final Uint8List? coverImageBytes;
 
   static const lakeTahoe = Trip(
     id: 't1',

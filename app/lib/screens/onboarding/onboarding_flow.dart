@@ -3,11 +3,15 @@ import 'package:flutter/material.dart';
 import '../../models/onboarding_data.dart';
 import '../home/main_shell.dart';
 import 'steps/all_set_step.dart';
-import 'steps/create_account_step.dart';
-import 'steps/home_address_step.dart';
-import 'steps/verify_code_step.dart';
+import 'steps/enable_face_id_step.dart';
+import 'steps/profile_details_step.dart';
+import 'steps/sign_in_step.dart';
 
-/// Owns the sign-up wizard's state and steps the user through it.
+enum _Step { signIn, profileDetails, allSet, enableFaceId }
+
+/// Owns the sign-up wizard's state and steps the user through it:
+/// Apple/Google sign-in -> profile details -> all set -> (optional)
+/// enable Face ID -> Home.
 class OnboardingFlow extends StatefulWidget {
   const OnboardingFlow({super.key});
 
@@ -17,40 +21,45 @@ class OnboardingFlow extends StatefulWidget {
 
 class _OnboardingFlowState extends State<OnboardingFlow> {
   final _data = OnboardingData();
-  int _step = 0;
+  _Step _step = _Step.signIn;
+  bool _isNewUser = false;
 
-  void _goNext() => setState(() => _step = (_step + 1).clamp(0, 4));
-  void _goBack() => setState(() => _step = (_step - 1).clamp(0, 4));
+  void _enterApp() {
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (_) => MainShell(data: _data)),
+    );
+  }
+
+  void _onAllSet() {
+    if (_isNewUser) {
+      setState(() => _step = _Step.enableFaceId);
+    } else {
+      _enterApp();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
         child: switch (_step) {
-          0 => CreateAccountStep(data: _data, onContinue: _goNext),
-          1 => VerifyCodeStep(
-              stepNumber: 2,
-              title: 'Verify your email',
-              destinationLabel: _data.email.isEmpty ? 'your email' : _data.email,
-              onBack: _goBack,
-              onContinue: _goNext,
+          _Step.signIn => SignInStep(
+              data: _data,
+              onSignedIn: ({required isNewUser}) => setState(() {
+                _isNewUser = isNewUser;
+                _step = _Step.profileDetails;
+              }),
             ),
-          2 => VerifyCodeStep(
-              stepNumber: 3,
-              title: 'Verify your phone',
-              destinationLabel: _data.phone.isEmpty ? 'your phone' : _data.phone,
-              onBack: _goBack,
-              onContinue: _goNext,
+          _Step.profileDetails => ProfileDetailsStep(
+              data: _data,
+              onBack: () => setState(() => _step = _Step.signIn),
+              onContinue: () => setState(() => _step = _Step.allSet),
             ),
-          3 => HomeAddressStep(data: _data, onBack: _goBack, onContinue: _goNext),
-          _ => AllSetStep(
+          _Step.allSet => AllSetStep(
               firstName: _data.firstName.isEmpty ? 'there' : _data.firstName,
-              onGetStarted: () {
-                Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(builder: (_) => MainShell(data: _data)),
-                );
-              },
+              onGetStarted: _onAllSet,
             ),
+          _Step.enableFaceId => EnableFaceIdStep(onDone: _enterApp),
         },
       ),
     );

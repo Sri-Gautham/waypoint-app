@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/trip.dart';
-import 'trip_landscape.dart';
+import 'trip_cover_art.dart';
 
 /// The illustrated trip card used on the Home dashboard and in the Trips
 /// tab's Upcoming list: landscape art, name, destination/date, and an
@@ -24,7 +24,7 @@ class TripHeroCard extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            TripLandscape(theme: trip.cover),
+            TripCoverArt(trip: trip),
             DecoratedBox(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
