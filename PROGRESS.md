@@ -6,6 +6,45 @@ unclear (e.g. after a compaction/restart) before assuming project state.
 Repo: https://github.com/Sri-Gautham/waypoint-app (private)
 Local path: `/Users/srigautham/Documents/My Projects/Personal Projects/travel-companion-app`
 
+## Current phase: differentiation features (from competitive research)
+
+A separate research agent (`personal-projects-7c`) scanned ~11 niche
+competitors (group-trip-coordination apps specifically, not general
+expense-splitters or solo-itinerary tools) and found weather/ETA/
+countdown, cross-trip balances, and AI cover art are things Waypoint
+already has that NONE of them do. Full report:
+https://claude.ai/code/artifact/484c9740-9e2e-4e63-b96c-d839a0106ae9
+
+User picked 4 recommendations to build, in this order:
+1. ~~**Group polls**~~ **DONE** (`d9ad500`) — inline in chat as a message
+   type, single-choice, local to the chat session (not backend-synced,
+   matches existing chat architecture). See `lib/models/poll.dart` +
+   `chat_screen.dart`.
+2. **Receipt OCR** for expense entry — not started. Plan: on-device text
+   recognition (cross-platform ML Kit via `google_mlkit_text_recognition`,
+   no API key/billing needed), triggered from Add Expense, parses an
+   amount to prefill, attaches the receipt photo to the Charge.
+3. **Post-trip memory reveal** — not started. Always-available recap
+   section (user's choice, not a one-time animated reveal) in the Trips
+   tab's past-trip expanded view: cover art, dates, all photos, total
+   spend. Mostly UI composition over existing data, no new model.
+4. **Ad-hoc member ETA** — not started, biggest lift. User wants: on trip
+   day, opening a trip computes YOUR current ETA to the destination and
+   shows everyone else's last-known ETA too (ad-hoc, not persistent
+   background tracking — battery-conscious by design). Decisions made:
+   - iOS: real routing ETA via Apple MapKit (`MKDirections`, free, needs a
+     new native Swift bridge like `ImagePlaygroundBridge.swift`).
+   - Android: no MapKit equivalent — straight-line-distance + rough-speed
+     estimate instead (same "iOS gets the fancy version, Android gets a
+     reasonable fallback" pattern as cover generation).
+   - Cross-member visibility needs REAL backend sync — nothing about
+     trips/members is in Supabase yet (only auth/profile is). Plan: a
+     small `trip_day_status` table (trip_id, member, eta_minutes,
+     computed_at) each device writes to on open, reads from to show
+     others. This is new scope beyond what auth/profile needed.
+   - Location permission: just-in-time, only requested when opening a
+     trip's detail screen on the actual trip date — not upfront.
+
 ## Big picture
 
 1. Designed the whole app first as a clickable prototype using the `design`
