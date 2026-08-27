@@ -25,6 +25,12 @@ class _AddExpenseSheetState extends State<AddExpenseSheet> {
   final Set<String> _splitWith = {};
   ChargeCategory _category = ChargeCategory.food;
 
+  // Guards against a second Navigator.pop() firing (e.g. a fast
+  // double-tap landing before the sheet's closing transition removes the
+  // button from the hit-test tree) — that leaves a stray route/barrier
+  // behind since there's nothing left to legitimately pop a second time.
+  bool _submitted = false;
+
   @override
   void initState() {
     super.initState();
@@ -39,10 +45,12 @@ class _AddExpenseSheetState extends State<AddExpenseSheet> {
   }
 
   void _submit() {
+    if (_submitted) return;
     final description = _descriptionController.text.trim();
     final amount = double.tryParse(_amountController.text.trim());
     if (description.isEmpty || amount == null || amount <= 0 || _splitWith.isEmpty) return;
 
+    _submitted = true;
     final split = {_payer, ..._splitWith}.toList();
     final charge = Charge(
       id: 'c-${DateTime.now().microsecondsSinceEpoch}',
