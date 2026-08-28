@@ -1,6 +1,10 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../models/charge.dart';
+import '../../services/receipt_scanner_service.dart';
 import '../../theme/app_colors.dart';
 
 /// A form for logging a new expense against a trip. Returns the new
@@ -21,9 +25,12 @@ class AddExpenseSheet extends StatefulWidget {
 class _AddExpenseSheetState extends State<AddExpenseSheet> {
   final _descriptionController = TextEditingController();
   final _amountController = TextEditingController();
+  final _picker = ImagePicker();
   late String _payer = widget.participants.first;
   final Set<String> _splitWith = {};
   ChargeCategory _category = ChargeCategory.food;
+  File? _receiptImage;
+  bool _scanning = false;
 
   // Guards against a second Navigator.pop() firing (e.g. a fast
   // double-tap landing before the sheet's closing transition removes the
@@ -44,6 +51,57 @@ class _AddExpenseSheetState extends State<AddExpenseSheet> {
     super.dispose();
   }
 
+  Future<void> _scanReceipt() async {
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined, color: AppColors.accent),
+              title: const Text('Choose from library'),
+              onTap: () => Navigator.of(context).pop(ImageSource.gallery),
+            ),
+            ListTile(
+              leading: const Icon(Icons.camera_alt_outlined, color: AppColors.accent),
+              title: const Text('Take a photo'),
+              onTap: () => Navigator.of(context).pop(ImageSource.camera),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (source == null) return;
+
+    final picked = await _picker.pickImage(source: source, maxWidth: 1600, imageQuality: 85);
+    if (picked == null || !mounted) return;
+
+    final image = File(picked.path);
+    setState(() {
+      _receiptImage = image;
+      _scanning = true;
+    });
+
+    double? total;
+    try {
+      total = await ReceiptScannerService.instance.scanTotal(image);
+    } catch (_) {
+      total = null;
+    }
+    if (!mounted) return;
+    setState(() => _scanning = false);
+
+    if (total != null) {
+      _amountController.text = total.toStringAsFixed(2);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Couldn't read an amount from that receipt — enter it manually.")),
+      );
+    }
+  }
+
   void _submit() {
     if (_submitted) return;
     final description = _descriptionController.text.trim();
@@ -61,6 +119,7 @@ class _AddExpenseSheetState extends State<AddExpenseSheet> {
       category: _category,
       date: 'Just now',
       splitWith: split,
+      receiptImage: _receiptImage,
     );
     Navigator.of(context).pop(charge);
   }
@@ -94,6 +153,43 @@ class _AddExpenseSheetState extends State<AddExpenseSheet> {
           mainAxisSize: MainAxisSize.min,
           children: [
             const Text('Add expense', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+            const SizedBox(height: 18),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(color: AppColors.accentTint, borderRadius: BorderRadius.circular(12)),
+              child: Row(
+                children: [
+                  if (_receiptImage != null)
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.file(_receiptImage!, width: 40, height: 40, fit: BoxFit.cover),
+                    )
+                  else
+                    const Icon(Icons.document_scanner_outlined, color: AppColors.accent, size: 22),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      _receiptImage == null ? 'Scan a receipt' : (_scanning ? 'Reading receipt…' : 'Amount filled from receipt'),
+                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                    ),
+                  ),
+                  OutlinedButton(
+                    onPressed: _scanning ? null : _scanReceipt,
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: Size.zero,
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                      foregroundColor: AppColors.accent,
+                      side: BorderSide.none,
+                      backgroundColor: Colors.white,
+                      textStyle: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700),
+                    ),
+                    child: _scanning
+                        ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
+                        : Text(_receiptImage == null ? 'Scan' : 'Retake'),
+                  ),
+                ],
+              ),
+            ),
             const SizedBox(height: 18),
             TextField(
               controller: _descriptionController,

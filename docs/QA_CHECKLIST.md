@@ -138,10 +138,25 @@ not a bug to report. What IS testable now:
 - "Who owes whom" lists correct per-member amounts for that trip only.
 - "Activity" lists every charge for the trip with the right category icon,
   payer phrasing ("You paid" vs "`<name>` paid"), date, and split-with text.
+  A charge added via a scanned receipt shows a small square thumbnail on
+  the right; tapping it opens a full-screen (pinch-to-zoom) viewer with a
+  back button. Charges added without scanning show no thumbnail at all —
+  not a broken-image placeholder.
 - "Add expense": rejects empty description, non-numeric/zero/negative
   amount, and an empty split selection; on success the sheet closes and both
   the trip's balance and the Balances tab's overall balance update
   immediately, no navigation needed to see the new number.
+- **Scan receipt (new)**: the "Scan" button at the top of the sheet opens
+  the same Library/Camera choice sheet as the Trips tab's photo picker.
+  After picking a photo: a small thumbnail replaces the receipt icon, the
+  button becomes disabled with a spinner while "Reading receipt…" shows,
+  then either the Amount field gets prefilled with a number (if the photo
+  had a recognizable total) or a snackbar says it couldn't read one — no
+  crash either way, and the rest of the form (description, category,
+  payer, split) stays fully editable regardless of what happened.
+  "Retake" (shown once a receipt's attached) reopens the same picker and
+  replaces the thumbnail/re-scans. Submitting without ever scanning a
+  receipt still works exactly as before (receipt is optional).
 - "Settle Now" opens Balances-by-person.
 - Balances-by-person: correct net per person aggregated across *all* trips;
   "Settle up" appears only for people you owe, never for people who owe you.

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 import '../../models/charge.dart';
@@ -302,6 +304,18 @@ class _TripBalanceCard extends StatelessWidget {
                         ],
                       ),
                     ),
+                    if (charge.receiptImage != null) ...[
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => _ReceiptViewerScreen(image: charge.receiptImage!)),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(6),
+                          child: Image.file(charge.receiptImage!, width: 28, height: 28, fit: BoxFit.cover),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -317,6 +331,29 @@ class _TripBalanceCard extends StatelessWidget {
             ),
           ],
         ],
+      ),
+    );
+  }
+}
+
+class _ReceiptViewerScreen extends StatelessWidget {
+  const _ReceiptViewerScreen({required this.image});
+
+  final File image;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+        title: const Text('Receipt'),
+      ),
+      body: Center(
+        child: InteractiveViewer(
+          child: Image.file(image),
+        ),
       ),
     );
   }

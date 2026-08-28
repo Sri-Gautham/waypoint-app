@@ -15,5 +15,6 @@ import UIKit
     if #available(iOS 18.1, *) {
       ImagePlaygroundBridge.register(with: engineBridge.applicationRegistrar.messenger())
     }
+    ReceiptScannerBridge.register(with: engineBridge.applicationRegistrar.messenger())
   }
 }

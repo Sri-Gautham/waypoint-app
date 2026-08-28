@@ -20,10 +20,21 @@ User picked 4 recommendations to build, in this order:
    type, single-choice, local to the chat session (not backend-synced,
    matches existing chat architecture). See `lib/models/poll.dart` +
    `chat_screen.dart`.
-2. **Receipt OCR** for expense entry — not started. Plan: on-device text
-   recognition (cross-platform ML Kit via `google_mlkit_text_recognition`,
-   no API key/billing needed), triggered from Add Expense, parses an
-   amount to prefill, attaches the receipt photo to the Charge.
+2. ~~**Receipt OCR**~~ **DONE**, but NOT via the originally-planned
+   `google_mlkit_text_recognition` package — see "Receipt OCR: why not
+   Google ML Kit" below for what happened and why. Ended up as two native
+   bridges instead: `ios/Runner/ReceiptScannerBridge.swift` (Apple's
+   Vision framework) and `android/.../ReceiptScannerBridge.kt` (Android's
+   ML Kit as a direct Gradle dependency, not a Flutter plugin), both
+   behind one `lib/services/receipt_scanner_service.dart` (does the
+   amount-parsing in Dart, shared across platforms — the native side only
+   returns raw recognized text). Wired into `AddExpenseSheet` (a "Scan"
+   button, thumbnail preview, prefills the Amount field) and
+   `BalancesTab`'s Activity list (a receipt thumbnail, tappable to a
+   full-screen viewer). `Charge` gained an optional `receiptImage` field
+   (a `File`, matching the existing `TripPhoto` pattern — not persisted
+   anywhere beyond the in-memory session, same as the rest of Charges/
+   AppData right now).
 3. **Post-trip memory reveal** — not started. Always-available recap
    section (user's choice, not a one-time animated reveal) in the Trips
    tab's past-trip expanded view: cover art, dates, all photos, total
@@ -44,6 +55,61 @@ User picked 4 recommendations to build, in this order:
      others. This is new scope beyond what auth/profile needed.
    - Location permission: just-in-time, only requested when opening a
      trip's detail screen on the actual trip date — not upfront.
+
+## Receipt OCR: why not Google ML Kit (real environment blocker, not a
+## project bug — read this before adding ANY new iOS CocoaPod)
+
+Originally implemented with `google_mlkit_text_recognition` (the obvious,
+cross-platform choice). Hit a genuine dead end on iOS, specific to THIS
+environment:
+
+- Google's underlying iOS pods (`GoogleMLKit`/`MLKitCommon`/`MLKitVision`/
+  `MLImage`) ship **no arm64 simulator slice** — a long-standing gap in
+  their precompiled binaries. Confirmed via `flutter run`'s own error
+  message, not a guess.
+- The old workaround for that (`EXCLUDED_ARCHS[sdk=iphonesimulator*] =
+  arm64`, forcing x86_64-via-Rosetta) does NOT work here: this machine's
+  simulator runtimes are iOS 26.5/27.0, and `flutter run` explicitly
+  refuses arm64-lacking pods on "Apple Silicon iOS 26+ simulators" —
+  Apple has dropped x86_64 simulator support entirely at this OS version,
+  so there's no architecture that satisfies both the pods and the
+  runtime. No simulator runtime older than 26.5 is installed here either
+  (checked `xcrun simctl list runtimes`), so there's no escape-hatch
+  device to fall back to.
+- **Fix**: dropped the Flutter plugin entirely. Replaced with two native
+  bridges, matching the `ImagePlaygroundBridge.swift` pattern already
+  established for Image Playground — first-party APIs only, no
+  precompiled third-party binaries, so this class of problem can't recur:
+  `ios/Runner/ReceiptScannerBridge.swift` (Apple's own Vision framework,
+  ships with the OS) and `android/.../ReceiptScannerBridge.kt` (Android's
+  ML Kit as a **direct Gradle dependency**, not a Flutter plugin — Android
+  isn't affected by any of this, but going direct avoids the iOS
+  podspec-per-platform coupling a Flutter plugin would otherwise force).
+  One shared `lib/services/receipt_scanner_service.dart` talks to
+  whichever platform's bridge is present.
+
+**Separate, also-real environment bug hit along the way**: while
+diagnosing the above, `xcodebuild` (any action — `build`, `-showBuildSettings`)
+stopped resolving ANY concrete simulator destination (`-destination
+id=<udid>`) — always falls back to offering only generic placeholders
+("Any iOS Simulator Device"), even though `xcrun simctl` and `xcodebuild
+-showdestinations` both see the device correctly. Reproduced with the
+project in its known-good, pre-ML-Kit state too, so it's **not caused by
+this session's code changes at all** — purely environmental. Ruled out:
+stale DerivedData (cleared, still broken), a duplicate "iPhone 17"
+simulator name collision (renamed the unused duplicate to "iPhone 17
+(unused)", still broken), a stale CoreSimulator cache (restarted the
+service, still broken). Best guess, unconfirmed: something related to
+now having TWO simulator runtimes installed (26.5 and 27.0) confusing
+Xcode 26.6's destination matcher. **Practical impact**: `flutter run -d
+<device>` (needed for interactive/video verification) doesn't work right
+now in THIS session's environment — but `xcodebuild ... -destination
+'generic/platform=iOS Simulator' build` (no concrete device) still works
+fine, and IS how the Receipt OCR code above was verified (build succeeds,
+`flutter analyze` clean) — just without a live on-screen capture this
+round. Worth asking the QA agent whether their launch mechanism hits the
+same wall or is unaffected (their session may not have gone through
+whatever triggered this).
 
 ## Big picture
 

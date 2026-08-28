@@ -1,3 +1,5 @@
+import 'dart:io';
+
 enum ChargeCategory { food, transport, lodging, activity }
 
 /// A single expense logged against a trip and split among some subset of
@@ -12,6 +14,7 @@ class Charge {
     required this.category,
     required this.date,
     required this.splitWith,
+    this.receiptImage,
   });
 
   final String id;
@@ -26,6 +29,10 @@ class Charge {
 
   /// Names of everyone this charge is split among, including the payer.
   final List<String> splitWith;
+
+  /// The scanned/photographed receipt, if this charge was added via the
+  /// Add Expense sheet's "Scan receipt" flow. Kept for reference only.
+  final File? receiptImage;
 
   double get shareEach => amount / splitWith.length;
 }

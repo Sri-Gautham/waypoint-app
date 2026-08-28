@@ -44,6 +44,15 @@ kotlin {
     }
 }
 
+dependencies {
+    // On-device receipt text recognition (ReceiptScannerBridge.kt) — a
+    // direct Gradle dependency rather than a Flutter plugin, so it can't
+    // drag in the iOS CocoaPods that have no arm64 simulator slice (see
+    // ios/Runner/ReceiptScannerBridge.swift, which uses Apple's own
+    // Vision framework instead for exactly that reason).
+    implementation("com.google.mlkit:text-recognition:16.0.1")
+}
+
 flutter {
     source = "../.."
 }
