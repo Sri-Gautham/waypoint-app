@@ -7,6 +7,14 @@ Repo: https://github.com/Sri-Gautham/waypoint-app (private)
 Local path: `/Users/srigautham/Documents/My Projects/Personal Projects/travel-companion-app`
 
 ## Current phase: differentiation features (from competitive research)
+## STATUS: all 4 built (`151aeda`) AND QA-clean — zero real bugs found
+## across the whole batch. Only gaps are the usual "real native OS UI,
+## can't drive it programmatically" class (permission dialogs, OAuth
+## sign-in) — same limitation hit throughout this whole project, not new
+## defects. A showcase rundown of the full app (all phases, not just this
+## batch) was published as an Artifact for the user to share:
+## https://claude.ai/code/artifact/794a0b0b-97a5-43d7-aafd-c3902afc279a
+
 
 A separate research agent (`personal-projects-7c`) scanned ~11 niche
 competitors (group-trip-coordination apps specifically, not general
@@ -171,6 +179,43 @@ whatever triggered this).
 
 ## QA agent communication log (most recent first)
 
+- **Differentiation batch, final QA pass — all 4 features clean, zero
+  real bugs.** QA (as `personal-projects-5a`, after a session/naming
+  reset — re-established contact via a peer message) went through all 4
+  in sequence:
+  - Group polls (`d9ad500`): confirmed clean.
+  - Receipt OCR (`57d858e`): genuinely verified, not just structurally —
+    fed synthetic receipt images with real text straight to
+    `ReceiptScannerService.scanTotal()` on-device: correctly extracted
+    $8.50 preferring a "Total" line over "Subtotal", correctly fell back
+    to the largest amount with no Total line, correctly returned null
+    (no crash) on a blank image.
+  - Trip Memories recap (`9df2e98`): total spend $210.00 for the seeded
+    Napa Wine Tour, exactly matching `sample_charges.dart`'s `t3` entries
+    (150+60) — not a stray $0.00. Section order and value-across-
+    collapse/re-expand both correct. Photo-count-updates-live case
+    couldn't be driven (same native-photo-picker gap as the existing
+    Photos grid).
+  - Ad-hoc ETA (`00d9d09`): correctly absent on all 3 seeded trips
+    (`daysLeft == 0` gate confirmed), correctly appears on a freshly
+    created today-dated trip, denied-permission path fully verified
+    end-to-end (pre-revoked via `simctl privacy revoke location` before
+    install — this makes iOS treat it as already-decided so no system
+    dialog blocks the run — correct error message, no crash/hang, button
+    stays unrelabeled). Could NOT drive past the first-time permission
+    dialog itself (`simctl privacy grant` doesn't survive the fresh
+    install `flutter test` does each run — only *revoked* sticks as a
+    pre-decided state, not *granted*) — so the real MapKit/geocoding
+    compute path is the one untested slice, same native-UI-outside-
+    Flutter's-tree class of gap as OAuth/Face ID throughout this project,
+    not a new concern.
+  - `flutter test` 45/45, `flutter analyze lib test` clean at `151aeda`.
+  - Also independently confirmed the `xcodebuild`/`flutter run -d <UDID>`
+    concrete-destination bug (see "Receipt OCR: why not Google ML Kit"
+    section above) reproduces on QA's side too — environment-level,
+    genuinely not scoped to one session — but does NOT block QA's actual
+    testing mechanism (`flutter test integration_test/... -d <UDID>`
+    works fine regardless).
 - **Add Expense stuck-sheet bug — RESOLVED, was never an app bug**
   (`50ed373`). 4 rounds of investigation (below, kept for the "how we got
   there" record) eventually got decisive `NavigatorObserver` evidence
