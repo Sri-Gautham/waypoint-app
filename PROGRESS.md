@@ -15,7 +15,7 @@ countdown, cross-trip balances, and AI cover art are things Waypoint
 already has that NONE of them do. Full report:
 https://claude.ai/code/artifact/484c9740-9e2e-4e63-b96c-d839a0106ae9
 
-**All 4 done as of `<pending commit>`.** User picked these, in this order:
+**All 4 done as of `00d9d09`.** User picked these, in this order:
 1. ~~**Group polls**~~ **DONE** (`d9ad500`) — inline in chat as a message
    type, single-choice, local to the chat session (not backend-synced,
    matches existing chat architecture). See `lib/models/poll.dart` +
