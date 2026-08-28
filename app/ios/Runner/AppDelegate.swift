@@ -16,5 +16,6 @@ import UIKit
       ImagePlaygroundBridge.register(with: engineBridge.applicationRegistrar.messenger())
     }
     ReceiptScannerBridge.register(with: engineBridge.applicationRegistrar.messenger())
+    EtaBridge.register(with: engineBridge.applicationRegistrar.messenger())
   }
 }

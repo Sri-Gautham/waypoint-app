@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		1498D2341E8E89220040F4C2 /* GeneratedPluginRegistrant.m in Sources */ = {isa = PBXBuildFile; fileRef = 1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */; };
 		1F2CD4122A3E87B34133F79C /* ReceiptScannerBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7196256AF355C5F150F8FE2 /* ReceiptScannerBridge.swift */; };
+		749EA6407D52A0C07DD51F51 /* EtaBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BE727339012E436A79BA943 /* EtaBridge.swift */; };
 		331C808B294A63AB00263BE5 /* RunnerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 331C807B294A618700263BE5 /* RunnerTests.swift */; };
 		3B3967161E833CAA004F5970 /* AppFrameworkInfo.plist in Resources */ = {isa = PBXBuildFile; fileRef = 3B3967151E833CAA004F5970 /* AppFrameworkInfo.plist */; };
 		74858FAF1ED2DC5600515810 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74858FAE1ED2DC5600515810 /* AppDelegate.swift */; };
@@ -69,6 +70,7 @@
 		97C147021CF9000F007C117D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		AC58FB019E01622D8C73154E /* Pods-RunnerTests.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.profile.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.profile.xcconfig"; sourceTree = "<group>"; };
 		B7196256AF355C5F150F8FE2 /* ReceiptScannerBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReceiptScannerBridge.swift; sourceTree = "<group>"; };
+		2BE727339012E436A79BA943 /* EtaBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EtaBridge.swift; sourceTree = "<group>"; };
 		D1F0769FDE40D7DF2D0C2C41 /* Pods-RunnerTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.release.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.release.xcconfig"; sourceTree = "<group>"; };
 		D404498DB04E80501BBA94C4 /* ImagePlaygroundBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImagePlaygroundBridge.swift; sourceTree = "<group>"; };
 		EA8FF2749082C6B65F61A5AC /* Pods_RunnerTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_RunnerTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -164,6 +166,7 @@
 				7884E8672EC3CC0400C636F2 /* SceneDelegate.swift */,
 				D404498DB04E80501BBA94C4 /* ImagePlaygroundBridge.swift */,
 				B7196256AF355C5F150F8FE2 /* ReceiptScannerBridge.swift */,
+				2BE727339012E436A79BA943 /* EtaBridge.swift */,
 				74858FAD1ED2DC5600515810 /* Runner-Bridging-Header.h */,
 			);
 			path = Runner;
@@ -401,6 +404,7 @@
 				7884E8682EC3CC0700C636F2 /* SceneDelegate.swift in Sources */,
 				C7306C97D8FB08589AB745E2 /* ImagePlaygroundBridge.swift in Sources */,
 				1F2CD4122A3E87B34133F79C /* ReceiptScannerBridge.swift in Sources */,
+				749EA6407D52A0C07DD51F51 /* EtaBridge.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -1,17 +1,80 @@
 import 'package:flutter/material.dart';
 
 import '../../models/trip.dart';
+import '../../services/auth_service.dart';
+import '../../services/eta_service.dart';
 import '../../theme/app_colors.dart';
 import '../../widgets/trip_cover_art.dart';
 import 'chat_screen.dart';
 
-class TripDetailScreen extends StatelessWidget {
+class TripDetailScreen extends StatefulWidget {
   const TripDetailScreen({super.key, required this.trip});
 
   final Trip trip;
 
+  @override
+  State<TripDetailScreen> createState() => _TripDetailScreenState();
+}
+
+class _TripDetailScreenState extends State<TripDetailScreen> {
+  bool get _isTripDay => widget.trip.status == TripStatus.upcoming && widget.trip.daysLeft == 0;
+
+  List<MemberEta> _etas = const [];
+  bool _loadingEtas = false;
+  bool _sharing = false;
+  int? _myEtaMinutes;
+  EtaUnavailableReason? _shareError;
+
+  @override
+  void initState() {
+    super.initState();
+    if (_isTripDay) _loadEtas();
+  }
+
+  Future<void> _loadEtas() async {
+    setState(() => _loadingEtas = true);
+    final etas = await EtaService.instance.fetchEtas(widget.trip.id);
+    if (!mounted) return;
+    setState(() {
+      _etas = etas;
+      _loadingEtas = false;
+    });
+  }
+
+  Future<void> _shareMyEta() async {
+    setState(() {
+      _sharing = true;
+      _shareError = null;
+    });
+    // loadProfile() doesn't catch its own network errors — a failed
+    // lookup here shouldn't block sharing an ETA, just fall back to a
+    // generic label.
+    String displayName = 'You';
+    try {
+      final profile = await AuthService.instance.loadProfile();
+      if (profile.fullName.isNotEmpty) displayName = profile.fullName;
+    } catch (_) {
+      // fall back to 'You'
+    }
+    final result = await EtaService.instance.computeAndShareMyEta(
+      tripId: widget.trip.id,
+      destination: widget.trip.destination,
+      displayName: displayName,
+    );
+    if (!mounted) return;
+    setState(() {
+      _sharing = false;
+      if (result.succeeded) {
+        _myEtaMinutes = result.etaMinutes;
+      } else {
+        _shareError = result.reason;
+      }
+    });
+    if (result.succeeded) await _loadEtas();
+  }
+
   void _openChat(BuildContext context) {
-    Navigator.of(context).push(MaterialPageRoute(builder: (_) => ChatScreen(trip: trip)));
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => ChatScreen(trip: widget.trip)));
   }
 
   void _startNavigation(BuildContext context) {
@@ -20,8 +83,26 @@ class TripDetailScreen extends StatelessWidget {
     );
   }
 
+  String _errorMessage(EtaUnavailableReason reason) {
+    switch (reason) {
+      case EtaUnavailableReason.permissionDenied:
+        return "Location access is off — enable it in Settings to share your ETA.";
+      case EtaUnavailableReason.locationServicesOff:
+        return "Location services are off on this device.";
+      case EtaUnavailableReason.locationFailed:
+        return "Couldn't get your current location — try again.";
+      case EtaUnavailableReason.geocodeFailed:
+        return "Couldn't find the trip destination on the map.";
+      case EtaUnavailableReason.notSignedIn:
+        return "Sign in again to share your ETA.";
+      case EtaUnavailableReason.syncFailed:
+        return "Computed your ETA, but couldn't share it — try again.";
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final trip = widget.trip;
     return Scaffold(
       appBar: AppBar(
         title: Text(trip.name, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800)),
@@ -151,6 +232,18 @@ class TripDetailScreen extends StatelessWidget {
                 ),
               ],
             ),
+            if (_isTripDay) ...[
+              const SizedBox(height: 24),
+              _EtaSection(
+                trip: trip,
+                etas: _etas,
+                loading: _loadingEtas,
+                sharing: _sharing,
+                myEtaMinutes: _myEtaMinutes,
+                errorMessage: _shareError == null ? null : _errorMessage(_shareError!),
+                onShare: _shareMyEta,
+              ),
+            ],
             const SizedBox(height: 24),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -165,6 +258,112 @@ class TripDetailScreen extends StatelessWidget {
               _MemberRow(name: member.name, initials: member.initials, status: member.status, distance: member.distance),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _EtaSection extends StatelessWidget {
+  const _EtaSection({
+    required this.trip,
+    required this.etas,
+    required this.loading,
+    required this.sharing,
+    required this.myEtaMinutes,
+    required this.errorMessage,
+    required this.onShare,
+  });
+
+  final Trip trip;
+  final List<MemberEta> etas;
+  final bool loading;
+  final bool sharing;
+  final int? myEtaMinutes;
+  final String? errorMessage;
+  final VoidCallback onShare;
+
+  String _formatEta(int minutes) {
+    if (minutes < 60) return '$minutes min';
+    final hours = minutes ~/ 60;
+    final rest = minutes % 60;
+    return rest == 0 ? '${hours}h' : '${hours}h ${rest}m';
+  }
+
+  String _formatAge(DateTime computedAt) {
+    final age = DateTime.now().difference(computedAt);
+    if (age.inMinutes < 1) return 'just now';
+    if (age.inMinutes < 60) return '${age.inMinutes} min ago';
+    if (age.inHours < 24) return '${age.inHours}h ago';
+    return '${age.inDays}d ago';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final everyone = ['You', ...trip.members.map((m) => m.name)];
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.accentTint,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.near_me_outlined, size: 16, color: AppColors.accent),
+              const SizedBox(width: 8),
+              const Text("Today's ETAs", style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+            ],
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            "Share your live location once — this doesn't track in the background.",
+            style: TextStyle(fontSize: 11.5, color: AppColors.textSecondary, height: 1.3),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: sharing ? null : onShare,
+              icon: sharing
+                  ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  : const Icon(Icons.my_location_rounded, size: 16),
+              label: Text(myEtaMinutes == null ? 'Share my ETA' : 'Update my ETA (${_formatEta(myEtaMinutes!)})'),
+            ),
+          ),
+          if (errorMessage != null) ...[
+            const SizedBox(height: 8),
+            Text(errorMessage!, style: const TextStyle(fontSize: 11.5, color: Colors.red)),
+          ],
+          const SizedBox(height: 14),
+          if (loading)
+            const Center(child: Padding(padding: EdgeInsets.symmetric(vertical: 8), child: CircularProgressIndicator(strokeWidth: 2)))
+          else
+            for (final name in everyone)
+              Builder(
+                builder: (context) {
+                  final eta = etas.where((e) => e.displayName == name).firstOrNull;
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(name, style: const TextStyle(fontSize: 12.5, color: AppColors.textPrimary)),
+                        Text(
+                          eta == null ? 'Not shared yet' : '${_formatEta(eta.etaMinutes)} · ${_formatAge(eta.computedAt)}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: eta == null ? FontWeight.normal : FontWeight.w700,
+                            color: eta == null ? AppColors.textTertiary : AppColors.textPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+        ],
       ),
     );
   }

@@ -60,6 +60,14 @@ dependencies:
   # cover isn't needed here, but the search request/download both use it.
   http: ^1.2.2
 
+  # Current location + straight-line distance (Android's ETA estimate,
+  # and the "where am I" input to iOS's MapKit routing bridge) for the
+  # ad-hoc member ETA feature.
+  geolocator: ^13.0.2
+
+  # Destination string ("Lake Tahoe, CA") -> coordinates, for ETA.
+  geocoding: ^3.0.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

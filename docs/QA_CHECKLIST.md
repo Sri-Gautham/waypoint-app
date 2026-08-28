@@ -66,6 +66,38 @@ not a bug to report. What IS testable now:
   status badge (Admin/Member/Invited) and distance text.
 - Chat icon opens `ChatScreen` for the same trip.
 
+### Today's ETAs (new — only shows on trip day)
+
+None of the 3 seeded sample trips are dated today, so this section won't
+appear on them — **create a new trip via the group wizard with today's
+date** (Home > Create a group > pick today in the date picker) to test it.
+It should appear between the weather/Start row and Members, and NOT
+appear at all on any trip whose date isn't today (including all 3 seeded
+trips) or on past trips.
+
+- Tapping "Share my ETA" triggers the OS location-permission prompt the
+  first time (can't be driven by `integration_test` — check it appears
+  and that denying it surfaces "Location access is off..." rather than
+  hanging or crashing). Granting it (or pre-granting via Simulator's
+  Settings app, or `xcrun simctl privacy <udid> grant location
+  com.srigautham.waypoint` beforehand) should let the flow complete.
+- On success: the button relabels to "Update my ETA (N min)", "You" in
+  the list below shows that same value + "just now", and every other
+  listed member shows "Not shared yet" (there's no real second account
+  sharing into the same trip in this environment, so that's the expected
+  steady state, not a bug).
+- Tapping "Update my ETA" again re-shares (button shows a spinner, no
+  double-fire if tapped rapidly) and the "just now"/minute-count should
+  refresh.
+- Denying location, disabling location services, or being offline should
+  each surface a specific, readable error message under the button (see
+  `_errorMessage` in `trip_detail_screen.dart` for the exact wording per
+  case) — never a crash or a silently stuck spinner.
+- Backend check (optional, if you want to go one level deeper): the
+  `trip_day_status` table in Supabase should get a row per (trip_id,
+  your user_id) that upserts in place on repeat shares, not a new row
+  each time.
+
 ## Chat (`ChatScreen`)
 
 - Seeded conversation renders; sender name shows only on received messages,

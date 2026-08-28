@@ -15,7 +15,7 @@ countdown, cross-trip balances, and AI cover art are things Waypoint
 already has that NONE of them do. Full report:
 https://claude.ai/code/artifact/484c9740-9e2e-4e63-b96c-d839a0106ae9
 
-User picked 4 recommendations to build, in this order:
+**All 4 done as of `<pending commit>`.** User picked these, in this order:
 1. ~~**Group polls**~~ **DONE** (`d9ad500`) — inline in chat as a message
    type, single-choice, local to the chat session (not backend-synced,
    matches existing chat architecture). See `lib/models/poll.dart` +
@@ -47,22 +47,45 @@ User picked 4 recommendations to build, in this order:
    had this data, just wasn't surfaced as a headline stat). No new model,
    no backend — matches the "mostly UI composition over existing data"
    plan exactly.
-4. **Ad-hoc member ETA** — not started, biggest lift. User wants: on trip
-   day, opening a trip computes YOUR current ETA to the destination and
-   shows everyone else's last-known ETA too (ad-hoc, not persistent
-   background tracking — battery-conscious by design). Decisions made:
-   - iOS: real routing ETA via Apple MapKit (`MKDirections`, free, needs a
-     new native Swift bridge like `ImagePlaygroundBridge.swift`).
-   - Android: no MapKit equivalent — straight-line-distance + rough-speed
-     estimate instead (same "iOS gets the fancy version, Android gets a
-     reasonable fallback" pattern as cover generation).
-   - Cross-member visibility needs REAL backend sync — nothing about
-     trips/members is in Supabase yet (only auth/profile is). Plan: a
-     small `trip_day_status` table (trip_id, member, eta_minutes,
-     computed_at) each device writes to on open, reads from to show
-     others. This is new scope beyond what auth/profile needed.
-   - Location permission: just-in-time, only requested when opening a
-     trip's detail screen on the actual trip date — not upfront.
+4. ~~**Ad-hoc member ETA**~~ **DONE** — the last of the 4. On trip day
+   (`trip.status == upcoming && trip.daysLeft == 0` — none of the 3
+   seeded sample trips satisfy this, only a freshly-created one dated
+   today will show this section; see QA_CHECKLIST.md for how to test it),
+   `TripDetailScreen` shows a "Today's ETAs" card between the weather row
+   and Members: a "Share my ETA" button plus a list of every member's
+   last-shared ETA (or "Not shared yet").
+   - **iOS**: real driving-time ETA via Apple's MapKit — new
+     `ios/Runner/EtaBridge.swift` (`MKDirections.calculateETA`), same
+     wiring pattern as `ImagePlaygroundBridge.swift`/
+     `ReceiptScannerBridge.swift` (manual pbxproj entries, registered in
+     `AppDelegate.swift`).
+   - **Android**: no MapKit equivalent, so a straight-line-distance
+     (`Geolocator.distanceBetween`) + assumed-70kmh estimate instead —
+     pure Dart, no native bridge needed on that side.
+   - **Current location + destination geocoding**: `geolocator` (current
+     position + the distance-between utility, also handles the OS
+     permission prompt itself) and `geocoding` (turns `trip.destination`,
+     e.g. "Lake Tahoe, CA", into coordinates) — both resolve via Swift
+     Package Manager on iOS, no CocoaPods/deployment-target complications
+     (unlike the ML Kit detour — see the Receipt OCR section above).
+   - **Cross-member sync — the first real trip-data backend piece**: a
+     new Supabase table, `trip_day_status` (trip_id, user_id, display_name,
+     eta_minutes, computed_at; PK on trip_id+user_id so a repeat share
+     upserts in place). RLS is deliberately loose (any signed-in user can
+     SELECT all rows, can only INSERT/UPDATE their own) because trips/
+     members still have no real backend membership concept to check
+     against — noted as an interim policy in the migration's own
+     comments, worth tightening if/when trips themselves get a real
+     backend home.
+   - **Location permission**: just-in-time as planned — only requested
+     when "Share my ETA" is actually tapped, nothing upfront.
+   - `lib/services/eta_service.dart` holds all of this (both platforms'
+     ETA computation + the Supabase read/write), returning typed
+     unavailable-reasons (permission denied, location services off,
+     geocode failed, not signed in, sync failed) rather than throwing —
+     every failure path surfaces a specific message in the UI, matching
+     the pattern established by `CoverGenerationResult`/
+     `AuthResult`/etc. elsewhere in the codebase.
 
 ## Receipt OCR: why not Google ML Kit (real environment blocker, not a
 ## project bug — read this before adding ANY new iOS CocoaPod)

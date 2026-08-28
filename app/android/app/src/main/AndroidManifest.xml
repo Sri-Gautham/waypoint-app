@@ -4,6 +4,10 @@
          needed for Supabase (auth/data) and the Unsplash cover search. -->
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.USE_BIOMETRIC"/>
+    <!-- Ad-hoc member ETA: only used when a member taps to share their
+         location on the day of a trip, never in the background. -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
     <application
         android:label="waypoint"
         android:name="${applicationName}"

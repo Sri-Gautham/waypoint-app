@@ -32,6 +32,8 @@
 	<string>Waypoint needs camera access so you can take a photo to add to a trip.</string>
 	<key>NSFaceIDUsageDescription</key>
 	<string>Waypoint uses Face ID to confirm it's you before signing back in.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Waypoint uses your location, only when you tap to share it, to show your trip group your ETA on the day of a trip.</string>
 	<!-- Google Sign-In redirect: reversed form of the iOS OAuth client ID
 	     (Cloud Console > APIs & Services > Credentials > iOS client for
 	     com.srigautham.waypoint), matching lib/config/google_auth_config.dart's
