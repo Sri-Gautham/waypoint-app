@@ -112,8 +112,17 @@ not a bug to report. What IS testable now:
 - Play button opens the full-screen photo slideshow — confirm tapping Play
   does **not** also toggle the card's inline expansion (tap-target
   isolation/`stopPropagation` check).
-- Tapping the card body (not Play) toggles inline expansion: Members,
-  Photos, Activity.
+- Tapping the card body (not Play) toggles inline expansion: **Trip
+  Memories** (new), Members, Photos, Activity — in that order.
+- **Trip Memories (new)**: cover art (same image/illustration as the
+  card's own cover), "TRIP MEMORIES" label, destination + date line
+  overlaid on it. Below that, two stat tiles: "Total spent" (sum of every
+  charge for that trip — cross-check against `sample_charges.dart`'s `t3`
+  entries for the seeded past trip, should be a real non-zero dollar
+  figure, not $0.00) and "Photos" (matches the photo count shown in the
+  Photos section below it exactly, including after adding a new photo —
+  expand/collapse and re-expand to confirm it updates, doesn't just
+  reflect the count from when the card first rendered).
 - Members list shows You + every trip member.
 - Photos grid: existing photos render as square thumbnails (see the
   screenshot-tool caveat above); the "+" tile opens a Library/Camera choice

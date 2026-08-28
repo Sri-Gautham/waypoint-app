@@ -35,10 +35,18 @@ User picked 4 recommendations to build, in this order:
    (a `File`, matching the existing `TripPhoto` pattern — not persisted
    anywhere beyond the in-memory session, same as the rest of Charges/
    AppData right now).
-3. **Post-trip memory reveal** — not started. Always-available recap
-   section (user's choice, not a one-time animated reveal) in the Trips
-   tab's past-trip expanded view: cover art, dates, all photos, total
-   spend. Mostly UI composition over existing data, no new model.
+3. ~~**Post-trip memory reveal**~~ **DONE.** Always-available recap card
+   (user's choice, not a one-time animated reveal) — new `_MemoryRecapCard`
+   in `trips_tab.dart`, the first thing shown when a past trip is expanded
+   (above Members/Photos/Activity, same order as before). Reuses the
+   existing `TripCoverArt` widget (so it automatically shows a generated
+   cover when one exists, same as everywhere else) with a gradient +
+   destination/date overlay matching `TripHeroCard`'s visual style, plus
+   two stat tiles: total spend (summed from `AppData.chargesByTrip`,
+   `TripsTab` didn't touch charges before this) and photo count (already
+   had this data, just wasn't surfaced as a headline stat). No new model,
+   no backend — matches the "mostly UI composition over existing data"
+   plan exactly.
 4. **Ad-hoc member ETA** — not started, biggest lift. User wants: on trip
    day, opening a trip computes YOUR current ETA to the destination and
    shows everyone else's last-known ETA too (ad-hoc, not persistent

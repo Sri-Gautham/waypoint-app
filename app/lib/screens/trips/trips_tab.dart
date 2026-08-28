@@ -8,6 +8,7 @@ import '../../models/trip.dart';
 import '../../models/trip_photo.dart';
 import '../../state/app_data.dart';
 import '../../theme/app_colors.dart';
+import '../../widgets/trip_cover_art.dart';
 import '../../widgets/trip_hero_card.dart';
 import '../trip/trip_detail_screen.dart';
 import 'photo_slideshow_screen.dart';
@@ -114,6 +115,7 @@ class _TripsTabState extends State<TripsTab> {
                 trip: trip,
                 expanded: _expandedTripIds.contains(trip.id),
                 photos: _photosFor(trip.id),
+                totalSpend: (appData.chargesByTrip[trip.id] ?? const []).fold(0.0, (sum, c) => sum + c.amount),
                 onToggleExpand: () => _toggleExpanded(trip.id),
                 onPlay: () => _openSlideshow(trip),
                 onOpenPhoto: (i) => _openSlideshow(trip, startIndex: i),
@@ -144,6 +146,7 @@ class _PastTripCard extends StatelessWidget {
     required this.trip,
     required this.expanded,
     required this.photos,
+    required this.totalSpend,
     required this.onToggleExpand,
     required this.onPlay,
     required this.onOpenPhoto,
@@ -153,6 +156,7 @@ class _PastTripCard extends StatelessWidget {
   final Trip trip;
   final bool expanded;
   final List<TripPhoto> photos;
+  final double totalSpend;
   final VoidCallback onToggleExpand;
   final VoidCallback onPlay;
   final ValueChanged<int> onOpenPhoto;
@@ -212,7 +216,12 @@ class _PastTripCard extends StatelessWidget {
           ),
           if (expanded) ...[
             const Padding(
-              padding: EdgeInsets.only(top: 14, bottom: 8),
+              padding: EdgeInsets.only(top: 14, bottom: 12),
+              child: Divider(height: 1, color: AppColors.divider),
+            ),
+            _MemoryRecapCard(trip: trip, totalSpend: totalSpend, photoCount: photos.length),
+            const Padding(
+              padding: EdgeInsets.only(top: 18, bottom: 8),
               child: Divider(height: 1, color: AppColors.divider),
             ),
             _SectionLabel('Members'),
@@ -236,6 +245,97 @@ class _PastTripCard extends StatelessWidget {
             const SizedBox(height: 8),
             _ActivityLog(entries: trip.activityLog),
           ],
+        ],
+      ),
+    );
+  }
+}
+
+/// The post-trip recap: cover art, dates, and a couple of headline stats.
+/// Appears automatically once a trip has ended — no separate "reveal"
+/// moment, just always there when you expand a past trip.
+class _MemoryRecapCard extends StatelessWidget {
+  const _MemoryRecapCard({required this.trip, required this.totalSpend, required this.photoCount});
+
+  final Trip trip;
+  final double totalSpend;
+  final int photoCount;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          height: 140,
+          width: double.infinity,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              TripCoverArt(trip: trip),
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Colors.black.withValues(alpha: 0), Colors.black.withValues(alpha: 0.75)],
+                    stops: const [0.4, 1],
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 14,
+                right: 14,
+                bottom: 12,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'TRIP MEMORIES',
+                      style: TextStyle(color: Colors.white70, fontSize: 10.5, fontWeight: FontWeight.w800, letterSpacing: 0.6),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      '${trip.destination} · ${trip.dateLabel}',
+                      style: const TextStyle(color: Colors.white, fontSize: 13.5, fontWeight: FontWeight.w700),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            Expanded(child: _StatTile(label: 'Total spent', value: '\$${totalSpend.toStringAsFixed(2)}')),
+            const SizedBox(width: 10),
+            Expanded(child: _StatTile(label: 'Photos', value: '$photoCount')),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _StatTile extends StatelessWidget {
+  const _StatTile({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(color: AppColors.accentTint, borderRadius: BorderRadius.circular(10)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label.toUpperCase(), style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.textSecondary, letterSpacing: 0.4)),
+          const SizedBox(height: 2),
+          Text(value, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
         ],
       ),
     );
