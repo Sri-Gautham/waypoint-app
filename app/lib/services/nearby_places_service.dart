@@ -26,21 +26,32 @@ class NearbyPlacesService {
 
   static const _radiusMeters = 16093; // 10 miles
 
+  // Foursquare deprecated the old api.foursquare.com/v3 endpoint (raw-key
+  // auth, nested geocodes.main.lat/lng) in favor of this one — Bearer
+  // auth, a required version header, top-level latitude/longitude, and
+  // fsq_place_id instead of fsq_id. Confirmed directly against the live
+  // API, not from (possibly stale) memory of the old v3 shape.
+  static const _apiVersion = '2025-06-17';
+
   Future<NearbySearchResult> searchNear(double lat, double lng) async {
     if (FoursquareConfig.apiKey.isEmpty) {
       return const NearbySearchResult.unavailable(NearbySearchUnavailableReason.noApiKey);
     }
     try {
-      final uri = Uri.https('api.foursquare.com', '/v3/places/search', {
+      final uri = Uri.https('places-api.foursquare.com', '/places/search', {
         'll': '$lat,$lng',
         'radius': '$_radiusMeters',
         'limit': '30',
         'sort': 'RELEVANCE',
-        'fields': 'fsq_id,name,categories,location,geocodes,distance',
+        'fields': 'fsq_place_id,name,categories,location,latitude,longitude,distance',
       });
       final response = await http.get(
         uri,
-        headers: {'Authorization': FoursquareConfig.apiKey, 'Accept': 'application/json'},
+        headers: {
+          'Authorization': 'Bearer ${FoursquareConfig.apiKey}',
+          'Accept': 'application/json',
+          'X-Places-Api-Version': _apiVersion,
+        },
       );
       if (response.statusCode != 200) {
         return const NearbySearchResult.unavailable(NearbySearchUnavailableReason.requestFailed);
@@ -51,15 +62,13 @@ class NearbyPlacesService {
         final categories = row['categories'] as List<dynamic>? ?? const [];
         final category = categories.isNotEmpty ? (categories.first as Map<String, dynamic>)['name'] as String : 'Place';
         final location = row['location'] as Map<String, dynamic>? ?? const {};
-        final geocodes = row['geocodes'] as Map<String, dynamic>? ?? const {};
-        final main = geocodes['main'] as Map<String, dynamic>? ?? const {};
         return NearbyPlace(
-          fsqId: row['fsq_id'] as String,
+          fsqId: row['fsq_place_id'] as String,
           name: row['name'] as String,
           category: category,
           address: (location['formatted_address'] as String?) ?? '',
-          lat: (main['latitude'] as num?)?.toDouble() ?? lat,
-          lng: (main['longitude'] as num?)?.toDouble() ?? lng,
+          lat: (row['latitude'] as num?)?.toDouble() ?? lat,
+          lng: (row['longitude'] as num?)?.toDouble() ?? lng,
           distanceMeters: (row['distance'] as num?)?.toInt() ?? 0,
         );
       }).toList();

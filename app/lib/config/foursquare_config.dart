@@ -4,5 +4,5 @@
 /// "couldn't load nearby places" while this is empty, same pattern as
 /// unsplash_config.dart.
 class FoursquareConfig {
-  static const apiKey = '';
+  static const apiKey = 'QDBLNUWI34C3ZZ5B4MPGQJ4DHAYB1HC2RW5F4ZNBWKD5W3EH';
 }
