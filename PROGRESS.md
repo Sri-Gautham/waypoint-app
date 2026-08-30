@@ -6,6 +6,29 @@ unclear (e.g. after a compaction/restart) before assuming project state.
 Repo: https://github.com/Sri-Gautham/waypoint-app (private)
 Local path: `/Users/srigautham/Documents/My Projects/Personal Projects/travel-companion-app`
 
+## Post-batch fixes from real user testing (`28e9768`)
+
+User actually used a live build (see "how to view a real build" section
+below — this is what made that possible) and reported 3 things:
+1. **Google sign-in "did not work properly"** — root cause not
+   investigated yet this round (user asked for a mitigation, not a
+   Google-specific debug session). **Mitigation shipped**: email
+   sign-in as a third path — "Continue with email" on `SignInStep` ->
+   `EmailSignInStep` (enter email) -> `EmailOtpStep` (6-digit code,
+   `AuthService.sendEmailOtp`/`verifyEmailOtp`, Supabase's built-in
+   email OTP, no new backend config needed — Email provider is on by
+   default). Since email gives no name at all, `ProfileDetailsStep`
+   now conditionally collects first/last name when sign-in didn't
+   provide one (`_needsName`). **Still worth root-causing the actual
+   Google failure separately** — worth checking the OAuth consent
+   screen is genuinely in Production/Published status (not stuck in
+   Testing, which would explain exactly this symptom for any account
+   that isn't a pre-approved test user).
+2. Add Expense had no cancel affordance (only way out was submitting a
+   dummy expense) — added an X button, pops without adding anything.
+3. No way to delete a wrongly-entered expense — swipe-to-delete on
+   Activity rows with a confirmation dialog; `AppData.removeCharge()`.
+
 ## Current phase: differentiation features (from competitive research)
 ## STATUS: all 4 built (`151aeda`) AND QA-clean — zero real bugs found
 ## across the whole batch. Only gaps are the usual "real native OS UI,
