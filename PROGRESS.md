@@ -6,6 +6,70 @@ unclear (e.g. after a compaction/restart) before assuming project state.
 Repo: https://github.com/Sri-Gautham/waypoint-app (private)
 Local path: `/Users/srigautham/Documents/My Projects/Personal Projects/travel-companion-app`
 
+## New feature: "Things to do nearby" — not yet QA-verified
+
+User's own idea, brainstormed and scoped via a couple of question rounds
+before building (not from the earlier competitive-research batch). Lets a
+member browse Foursquare-sourced venues within 10 miles of a trip's
+destination and save any number to the trip's shared list, visible to the
+whole group, each with a Navigate (device Maps app) and Remove action.
+
+**Decisions locked in during brainstorming**: suggestions-list scope for
+v1 (not a full day-by-day itinerary builder — that's a natural follow-up
+if this lands well); Foursquare Places API over Google Places (free tier)
+or OSM/Overpass (harder to work with); lives in the Trips tab's
+expandable card (same place as Members/Photos/Activity/Memories), not
+Trip Detail; shared group-wide via Supabase, not local-only like Photos;
+Navigate hands off to the device's Maps app rather than an in-app
+MapKit-style estimate.
+
+**Real architectural finding surfaced mid-build**: the existing
+expandable-card pattern (tap to reveal Members/Photos/Activity/Memories)
+only existed on PAST trip cards — Upcoming trips in the Trips tab were
+just a plain, non-expandable hero card. Since planning things to do is
+inherently a pre-trip activity, extended Upcoming trip cards to also be
+expandable (a separate "Details" toggle below the existing hero card,
+NOT overloading the hero card's own tap — that's still tap-to-open-Trip-
+Detail, unchanged), showing Members + Things to do nearby (deliberately
+NOT Photos/Activity/Memories, which are past-trip concepts). This was my
+own call, flagged to the user rather than silently expanding scope.
+
+**What's built**:
+- New Supabase table `trip_places` (trip_id, fsq_id, name, category,
+  address, lat/lng, added_by, added_by_name; unique on trip_id+fsq_id so
+  re-adding the same venue no-ops instead of duplicating). RLS is the
+  same deliberately-loose interim policy as `trip_day_status` (any
+  signed-in user can read/add/remove any trip's rows) — noted in the
+  migration, same caveat as ETA: revisit once trips have real backend
+  membership.
+- `lib/services/nearby_places_service.dart` — Foursquare Places API
+  search (`/v3/places/search`, `ll`+`radius`, no category filter so
+  results come back naturally varied). `lib/config/foursquare_config.dart`
+  holds the key — empty for now, feature no-ops gracefully (same pattern
+  as `unsplash_config.dart`) until the user registers one. **Still needs
+  the user to get this key** — see the walkthrough given at the time.
+- `lib/services/trip_places_service.dart` — the Supabase read/add/remove
+  calls.
+- `lib/screens/trips/nearby_places_picker_screen.dart` — full-screen
+  browse+multi-select+add flow, geocodes the trip's destination
+  (reusing the `geocoding` package already added for ETA) before
+  searching.
+- `trips_tab.dart` restructured: new `_UpcomingTripCard` (hero card +
+  separate Details toggle + expanded Members/Things-to-do), `_PastTripCard`
+  gained the same Things-to-do section (view/remove only, no Browse
+  button — no adding new plans to a trip that's already happened), new
+  shared `_ThingsToDoSection` widget used by both.
+- `url_launcher` added as a new dependency for the Navigate button
+  (hands off to `https://maps.apple.com/?daddr=...` on iOS,
+  `https://www.google.com/maps/dir/...` on Android — both plain https
+  universal links, no custom URL scheme / Info.plist entries needed).
+
+**Verification status**: `flutter analyze` clean, full build succeeds
+(arm64, installed and launched without crashing). Could NOT visually
+verify the new UI myself (no OS-level tap automation, same limitation as
+always) — this needs a QA pass before considering it done. Full checklist
+added to `docs/QA_CHECKLIST.md` under "Things to do nearby (new)".
+
 ## QA pass on `28e9768` (`ef4e789` for the fix) — 1 real bug, 2 clean, 1 blocked
 
 - **Real bug, FIXED**: name fields on `ProfileDetailsStep` (email

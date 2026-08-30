@@ -151,10 +151,17 @@ trips) or on past trips.
 - Upcoming section: one hero card per upcoming `Trip`, correct cover art per
   trip (they should look visibly different, not all the same palette),
   avatar overlap + overflow badge correct per trip.
-- Tapping an Upcoming card opens Trip Detail: for the trip matching Home's
-  current `activeGroup`-equivalent (Lake Tahoe Crew) it should show the same
-  data as Home's card; for a *different* trip it should construct fresh
-  detail data without crashing or showing stale/wrong info.
+- Tapping an Upcoming card's hero image opens Trip Detail: for the trip
+  matching Home's current `activeGroup`-equivalent (Lake Tahoe Crew) it
+  should show the same data as Home's card; for a *different* trip it
+  should construct fresh detail data without crashing or showing
+  stale/wrong info.
+- **New**: below each Upcoming hero card, a separate "Details ▾" row
+  toggles inline expansion (Members + Things to do nearby — see below).
+  Tapping this row must NOT also navigate to Trip Detail (separate tap
+  target from the hero card above it, same tap-isolation principle as
+  Play vs. expand on Past cards) — and tapping the hero card itself must
+  NOT toggle this expansion.
 - Past section: one bordered card per past `Trip`.
 - Play button opens the full-screen photo slideshow — confirm tapping Play
   does **not** also toggle the card's inline expansion (tap-target
@@ -178,6 +185,44 @@ trips) or on past trips.
   photo's index (not always index 0).
 - Slideshow Previous/Next wrap around correctly; both are disabled (not
   crashing) when there's only 1 photo; the "N / total" counter is correct.
+
+### Things to do nearby (new — shared across the group via Supabase)
+
+Shown in the expanded section of BOTH Upcoming and Past trip cards
+(Upcoming via the new "Details" toggle, Past below Activity). Backed by
+Foursquare's Places API — silently shows "Nearby search isn't set up
+yet" if `lib/config/foursquare_config.dart`'s key is still empty; not a
+bug if so, just means the key hasn't been added yet.
+
+- **Upcoming trips only**: a "Browse" button opens a full-screen picker.
+  It geocodes the trip's destination and searches within 10 miles —
+  confirm it shows a loading state, then either a checkbox list of
+  varied venues (not all the same category) or a clear error (no
+  network, no results, geocode failed) without crashing. Checking items
+  and tapping "Add N selected" should save them and return to the trip
+  card with the new items appearing in its list. **Past trips do NOT
+  show a Browse button** — view/remove only, confirm it's genuinely
+  absent, not just disabled.
+- Each saved place shows name, category, who added it, a Navigate icon,
+  and a Remove (X) icon.
+- **Navigate**: should hand off to the device's Maps app with directions
+  to that place. Can't verify the handoff completes on Simulator (no
+  real Maps app to actually route in), but confirm tapping it doesn't
+  crash or hang.
+- **Remove**: tapping X removes it immediately (no confirmation dialog
+  by design, unlike deleting an expense) — confirm it's gone from both
+  the UI and stays gone after collapsing and re-expanding the card (i.e.
+  actually removed from the backend, not just hidden locally).
+- **Shared across the group**: this is real Supabase-backed shared data
+  (`trip_places` table), not local-only like Photos — if you have a way
+  to check the Supabase dashboard or a second account, a place added by
+  one account should be visible to another. Otherwise, at minimum
+  confirm a saved place survives a full app restart (proves it's not
+  just in-memory).
+- Adding the SAME place twice (browse again, select something already
+  saved) should be a graceful no-op, not a duplicate entry or a crash —
+  the picker should show already-saved items as pre-checked/disabled
+  rather than letting you re-select them.
 
 ## Balances tab (`BalancesTab`)
 

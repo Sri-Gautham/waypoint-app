@@ -2,15 +2,19 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../models/activity_log_entry.dart';
+import '../../models/saved_place.dart';
 import '../../models/trip.dart';
 import '../../models/trip_photo.dart';
+import '../../services/trip_places_service.dart';
 import '../../state/app_data.dart';
 import '../../theme/app_colors.dart';
 import '../../widgets/trip_cover_art.dart';
 import '../../widgets/trip_hero_card.dart';
 import '../trip/trip_detail_screen.dart';
+import 'nearby_places_picker_screen.dart';
 import 'photo_slideshow_screen.dart';
 
 class TripsTab extends StatefulWidget {
@@ -24,8 +28,57 @@ class _TripsTabState extends State<TripsTab> {
   final _picker = ImagePicker();
   final Map<String, List<TripPhoto>> _photosByTrip = {};
   final Set<String> _expandedTripIds = {};
+  final Map<String, List<SavedPlace>> _savedPlacesByTrip = {};
+  final Set<String> _loadingPlacesFor = {};
 
   List<TripPhoto> _photosFor(String tripId) => _photosByTrip[tripId] ?? const [];
+  List<SavedPlace> _placesFor(String tripId) => _savedPlacesByTrip[tripId] ?? const [];
+
+  Future<void> _ensurePlacesLoaded(String tripId) async {
+    if (_savedPlacesByTrip.containsKey(tripId) || _loadingPlacesFor.contains(tripId)) return;
+    setState(() => _loadingPlacesFor.add(tripId));
+    final places = await TripPlacesService.instance.fetchSavedPlaces(tripId);
+    if (!mounted) return;
+    setState(() {
+      _savedPlacesByTrip[tripId] = places;
+      _loadingPlacesFor.remove(tripId);
+    });
+  }
+
+  Future<void> _browseNearby(Trip trip) async {
+    final added = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => NearbyPlacesPickerScreen(
+          trip: trip,
+          alreadySavedFsqIds: _placesFor(trip.id).map((p) => p.fsqId).toSet(),
+        ),
+      ),
+    );
+    if (added == true) {
+      _savedPlacesByTrip.remove(trip.id);
+      await _ensurePlacesLoaded(trip.id);
+    }
+  }
+
+  Future<void> _removePlace(String tripId, String placeId) async {
+    final ok = await TripPlacesService.instance.removePlace(placeId);
+    if (!ok || !mounted) return;
+    setState(() {
+      _savedPlacesByTrip[tripId] = _placesFor(tripId).where((p) => p.id != placeId).toList();
+    });
+  }
+
+  Future<void> _navigateTo(SavedPlace place) async {
+    final uri = Platform.isIOS
+        ? Uri.parse('https://maps.apple.com/?daddr=${place.lat},${place.lng}')
+        : Uri.parse('https://www.google.com/maps/dir/?api=1&destination=${place.lat},${place.lng}');
+    try {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Couldn't open Maps.")));
+    }
+  }
 
   Future<void> _addPhoto(String tripId) async {
     final source = await showModalBottomSheet<ImageSource>(
@@ -79,6 +132,7 @@ class _TripsTabState extends State<TripsTab> {
         _expandedTripIds.add(tripId);
       }
     });
+    if (_expandedTripIds.contains(tripId)) _ensurePlacesLoaded(tripId);
   }
 
   @override
@@ -94,14 +148,15 @@ class _TripsTabState extends State<TripsTab> {
           const _SectionLabel('Upcoming'),
           const SizedBox(height: 10),
           for (final trip in appData.upcoming) ...[
-            SizedBox(
-              height: 120,
-              child: TripHeroCard(
-                trip: trip,
-                onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => TripDetailScreen(trip: trip)),
-                ),
-              ),
+            _UpcomingTripCard(
+              trip: trip,
+              expanded: _expandedTripIds.contains(trip.id),
+              places: _placesFor(trip.id),
+              loadingPlaces: _loadingPlacesFor.contains(trip.id),
+              onToggleExpand: () => _toggleExpanded(trip.id),
+              onBrowseNearby: () => _browseNearby(trip),
+              onRemovePlace: (p) => _removePlace(trip.id, p.id),
+              onNavigate: _navigateTo,
             ),
             const SizedBox(height: 12),
           ],
@@ -116,10 +171,14 @@ class _TripsTabState extends State<TripsTab> {
                 expanded: _expandedTripIds.contains(trip.id),
                 photos: _photosFor(trip.id),
                 totalSpend: (appData.chargesByTrip[trip.id] ?? const []).fold(0.0, (sum, c) => sum + c.amount),
+                places: _placesFor(trip.id),
+                loadingPlaces: _loadingPlacesFor.contains(trip.id),
                 onToggleExpand: () => _toggleExpanded(trip.id),
                 onPlay: () => _openSlideshow(trip),
                 onOpenPhoto: (i) => _openSlideshow(trip, startIndex: i),
                 onAddPhoto: () => _addPhoto(trip.id),
+                onRemovePlace: (p) => _removePlace(trip.id, p.id),
+                onNavigate: _navigateTo,
               ),
             ),
         ],
@@ -147,20 +206,28 @@ class _PastTripCard extends StatelessWidget {
     required this.expanded,
     required this.photos,
     required this.totalSpend,
+    required this.places,
+    required this.loadingPlaces,
     required this.onToggleExpand,
     required this.onPlay,
     required this.onOpenPhoto,
     required this.onAddPhoto,
+    required this.onRemovePlace,
+    required this.onNavigate,
   });
 
   final Trip trip;
   final bool expanded;
   final List<TripPhoto> photos;
   final double totalSpend;
+  final List<SavedPlace> places;
+  final bool loadingPlaces;
   final VoidCallback onToggleExpand;
   final VoidCallback onPlay;
   final ValueChanged<int> onOpenPhoto;
   final VoidCallback onAddPhoto;
+  final ValueChanged<SavedPlace> onRemovePlace;
+  final ValueChanged<SavedPlace> onNavigate;
 
   @override
   Widget build(BuildContext context) {
@@ -244,9 +311,196 @@ class _PastTripCard extends StatelessWidget {
             _SectionLabel('Activity'),
             const SizedBox(height: 8),
             _ActivityLog(entries: trip.activityLog),
+            const SizedBox(height: 18),
+            _ThingsToDoSection(
+              places: places,
+              loading: loadingPlaces,
+              onRemove: onRemovePlace,
+              onNavigate: onNavigate,
+              onBrowse: null, // no adding new plans to a trip that's already over
+            ),
           ],
         ],
       ),
+    );
+  }
+}
+
+/// Upcoming trips list uses the existing illustrated [TripHeroCard] for
+/// its collapsed state (unchanged tap-to-open-detail behavior) with a
+/// separate "Details" toggle below it — distinct tap targets, since
+/// overloading the hero card's own onTap would break the existing
+/// navigate-to-detail behavior.
+class _UpcomingTripCard extends StatelessWidget {
+  const _UpcomingTripCard({
+    required this.trip,
+    required this.expanded,
+    required this.places,
+    required this.loadingPlaces,
+    required this.onToggleExpand,
+    required this.onBrowseNearby,
+    required this.onRemovePlace,
+    required this.onNavigate,
+  });
+
+  final Trip trip;
+  final bool expanded;
+  final List<SavedPlace> places;
+  final bool loadingPlaces;
+  final VoidCallback onToggleExpand;
+  final VoidCallback onBrowseNearby;
+  final ValueChanged<SavedPlace> onRemovePlace;
+  final ValueChanged<SavedPlace> onNavigate;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          height: 120,
+          child: TripHeroCard(
+            trip: trip,
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => TripDetailScreen(trip: trip)),
+            ),
+          ),
+        ),
+        InkWell(
+          onTap: onToggleExpand,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  expanded ? 'Hide details' : 'Details',
+                  style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppColors.accent),
+                ),
+                Icon(
+                  expanded ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
+                  size: 18,
+                  color: AppColors.accent,
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (expanded)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+            decoration: BoxDecoration(border: Border.all(color: AppColors.border, width: 1.5), borderRadius: BorderRadius.circular(14)),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const _SectionLabel('Members'),
+                const SizedBox(height: 8),
+                _MemberList(trip: trip),
+                const SizedBox(height: 18),
+                _ThingsToDoSection(
+                  places: places,
+                  loading: loadingPlaces,
+                  onRemove: onRemovePlace,
+                  onNavigate: onNavigate,
+                  onBrowse: onBrowseNearby,
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+/// A trip's group-wide saved-places list — shared across members via
+/// Supabase (see trip_places_service.dart). [onBrowse] is null for past
+/// trips (view/remove only, no adding new plans after the fact).
+class _ThingsToDoSection extends StatelessWidget {
+  const _ThingsToDoSection({
+    required this.places,
+    required this.loading,
+    required this.onRemove,
+    required this.onNavigate,
+    required this.onBrowse,
+  });
+
+  final List<SavedPlace> places;
+  final bool loading;
+  final ValueChanged<SavedPlace> onRemove;
+  final ValueChanged<SavedPlace> onNavigate;
+  final VoidCallback? onBrowse;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const _SectionLabel('Things to do nearby'),
+            if (onBrowse != null)
+              TextButton.icon(
+                onPressed: onBrowse,
+                icon: const Icon(Icons.add_rounded, size: 15),
+                label: const Text('Browse'),
+                style: TextButton.styleFrom(
+                  minimumSize: Size.zero,
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  foregroundColor: AppColors.accent,
+                  textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        if (loading)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 12),
+            child: Center(child: SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))),
+          )
+        else if (places.isEmpty)
+          Text(
+            onBrowse != null ? 'Nothing saved yet — browse nearby to add some.' : 'Nothing was saved for this trip.',
+            style: const TextStyle(fontSize: 12.5, color: AppColors.textSecondary),
+          )
+        else
+          for (final place in places)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(place.name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                        Text(
+                          '${place.category} · added by ${place.addedByName}',
+                          style: const TextStyle(fontSize: 11.5, color: AppColors.textSecondary),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => onNavigate(place),
+                    icon: const Icon(Icons.directions_rounded, size: 20, color: AppColors.accent),
+                    tooltip: 'Navigate',
+                    constraints: const BoxConstraints(),
+                    padding: const EdgeInsets.all(8),
+                  ),
+                  IconButton(
+                    onPressed: () => onRemove(place),
+                    icon: const Icon(Icons.close_rounded, size: 18, color: AppColors.textTertiary),
+                    tooltip: 'Remove',
+                    constraints: const BoxConstraints(),
+                    padding: const EdgeInsets.all(8),
+                  ),
+                ],
+              ),
+            ),
+      ],
     );
   }
 }
