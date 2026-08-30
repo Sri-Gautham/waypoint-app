@@ -52,8 +52,13 @@ class _SignInStepState extends State<SignInStep> {
       widget.onSignedIn(isNewUser: result.isNewUser);
     } on SignInWithAppleAuthorizationException catch (e) {
       if (e.code == AuthorizationErrorCode.canceled) return;
+      debugPrint('[SignIn] Apple sign-in failed: ${e.code} — ${e.message}');
       setState(() => _error = 'Apple sign-in failed. Please try again.');
-    } catch (_) {
+    } catch (e, st) {
+      // Logged, not swallowed — a bare "Sign-in failed" with nothing in
+      // the console makes the actual cause (network, provider config,
+      // native SDK error) unfindable later.
+      debugPrint('[SignIn] Sign-in failed: $e\n$st');
       if (!mounted) return;
       setState(() => _error = 'Sign-in failed. Please try again.');
     } finally {

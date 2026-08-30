@@ -81,7 +81,13 @@ class AuthService {
     );
     final googleUser = await googleSignIn.signIn();
     if (googleUser == null) {
-      throw const AuthException('Google sign-in was cancelled.');
+      // google_sign_in's iOS/Android implementation returns null for a
+      // real user cancellation AND for some silent underlying failures
+      // (e.g. the system auth-session view never completing) — there's
+      // no way to tell these apart from this API, so don't assert it
+      // was a cancellation when it might not have been (that assumption
+      // previously hid a real bug from debugging output for a while).
+      throw const AuthException('Google sign-in did not complete.');
     }
 
     final googleAuth = await googleUser.authentication;
