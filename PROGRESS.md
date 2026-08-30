@@ -43,11 +43,21 @@ own call, flagged to the user rather than silently expanding scope.
   migration, same caveat as ETA: revisit once trips have real backend
   membership.
 - `lib/services/nearby_places_service.dart` — Foursquare Places API
-  search (`/v3/places/search`, `ll`+`radius`, no category filter so
-  results come back naturally varied). `lib/config/foursquare_config.dart`
-  holds the key — empty for now, feature no-ops gracefully (same pattern
-  as `unsplash_config.dart`) until the user registers one. **Still needs
-  the user to get this key** — see the walkthrough given at the time.
+  search, `ll`+`radius`, no category filter so results come back
+  naturally varied. **User registered a key and it's wired in
+  (`89bc8cb`)** — but the FIRST version of this service used
+  Foursquare's OLD `api.foursquare.com/v3/places/search` endpoint
+  (raw-key auth, nested `geocodes.main` lat/lng), which turned out to
+  return `410 Gone` — Foursquare had migrated their API entirely.
+  Confirmed the new shape directly with curl against the live API
+  rather than guessing again: new base URL
+  `places-api.foursquare.com/places/search`, `Authorization: Bearer
+  <key>` (not the raw key), a required `X-Places-Api-Version` dated
+  header, `fsq_place_id` instead of `fsq_id`, and top-level
+  `latitude`/`longitude` per result instead of nested under
+  `geocodes.main`. Verified end-to-end against real Lake Tahoe
+  coordinates before considering it done — got back a genuinely varied
+  set (a lake, a state park, a scenic lookout, a bar).
 - `lib/services/trip_places_service.dart` — the Supabase read/add/remove
   calls.
 - `lib/screens/trips/nearby_places_picker_screen.dart` — full-screen
@@ -65,10 +75,12 @@ own call, flagged to the user rather than silently expanding scope.
   universal links, no custom URL scheme / Info.plist entries needed).
 
 **Verification status**: `flutter analyze` clean, full build succeeds
-(arm64, installed and launched without crashing). Could NOT visually
-verify the new UI myself (no OS-level tap automation, same limitation as
-always) — this needs a QA pass before considering it done. Full checklist
-added to `docs/QA_CHECKLIST.md` under "Things to do nearby (new)".
+(arm64, installed and launched without crashing), the Foursquare API
+call itself is confirmed genuinely working end-to-end via direct curl
+testing (real varied results for real coordinates). Could NOT visually
+verify the in-app UI myself (no OS-level tap automation, same limitation
+as always) — this needs a QA pass before considering it fully done. Full
+checklist in `docs/QA_CHECKLIST.md` under "Things to do nearby (new)".
 
 ## QA pass on `28e9768` (`ef4e789` for the fix) — 1 real bug, 2 clean, 1 blocked
 
