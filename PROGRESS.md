@@ -10,24 +10,108 @@ Local path: `/Users/srigautham/Documents/My Projects/Personal Projects/travel-co
 
 User actually used a live build (see "how to view a real build" section
 below — this is what made that possible) and reported 3 things:
-1. **Google sign-in "did not work properly"** — root cause not
-   investigated yet this round (user asked for a mitigation, not a
-   Google-specific debug session). **Mitigation shipped**: email
-   sign-in as a third path — "Continue with email" on `SignInStep` ->
-   `EmailSignInStep` (enter email) -> `EmailOtpStep` (6-digit code,
-   `AuthService.sendEmailOtp`/`verifyEmailOtp`, Supabase's built-in
-   email OTP, no new backend config needed — Email provider is on by
-   default). Since email gives no name at all, `ProfileDetailsStep`
-   now conditionally collects first/last name when sign-in didn't
-   provide one (`_needsName`). **Still worth root-causing the actual
-   Google failure separately** — worth checking the OAuth consent
-   screen is genuinely in Production/Published status (not stuck in
-   Testing, which would explain exactly this symptom for any account
-   that isn't a pre-approved test user).
+1. **Google sign-in "did not work properly"** — **mitigation shipped**
+   (`28e9768`): email sign-in as a third path — "Continue with email" on
+   `SignInStep` -> `EmailSignInStep` (enter email) -> `EmailOtpStep`
+   (6-digit code, `AuthService.sendEmailOtp`/`verifyEmailOtp`, Supabase's
+   built-in email OTP, no new backend config needed). Since email gives
+   no name at all, `ProfileDetailsStep` now conditionally collects
+   first/last name when sign-in didn't provide one (`_needsName`).
+
+   **Root cause investigated separately** (`0caf48e`), see the dedicated
+   "Google sign-in root-cause investigation" section below for the full
+   writeup — short version: it's very likely an iOS Simulator-specific
+   `SafariViewService` presentation bug in THIS environment, not an app
+   or config bug. Along the way found and fixed a real, unrelated bug:
+   the sign-in error handler swallowed every exception silently (no
+   logging anywhere), and `signInWithGoogle()` mislabeled ANY failure as
+   "cancelled" — both fixed, which is what made this investigation
+   possible at all and will make the NEXT one (whatever it's about)
+   faster too.
 2. Add Expense had no cancel affordance (only way out was submitting a
    dummy expense) — added an X button, pops without adding anything.
 3. No way to delete a wrongly-entered expense — swipe-to-delete on
    Activity rows with a confirmation dialog; `AppData.removeCharge()`.
+
+## Google sign-in root-cause investigation (`0caf48e`) — READ BEFORE
+## touching Google Sign-In code again, and before assuming it's an app bug
+
+**Method**: couldn't tap through the UI myself (no OS-level tap
+automation), so called `AuthService.instance.signInWithGoogle()`
+DIRECTLY from `main()` via a temporary `Future.delayed` trigger — same
+effect as tapping the button, no UI interaction needed. Captured the
+live device log via `xcrun simctl spawn <udid> log stream --predicate
+'process == "Runner"'` (started BEFORE the trigger fires) and separately
+checked Supabase's own auth logs via `mcp__claude_ai_Supabase__query_logs`.
+Both temporary — reverted `main.dart` back to clean before committing;
+only the two real fixes below (error logging, honest error message) are
+permanent.
+
+**Findings, most to least certain:**
+
+1. **Zero Google sign-in attempts reached Supabase at all** — queried
+   `auth_logs` for anything mentioning "google" in the last 24h: nothing.
+   Compare: Apple sign-in attempts show up clearly (including two 400s
+   with `"error":"invalid request: Passed nonce and nonce in id_token
+   should either both exist or not"` right before a successful retry —
+   worth knowing that error text if it resurfaces, but it was Apple
+   retries here, not Google, and Apple's flow did succeed). This proves
+   the failure is 100% client-side, before any token exchange —
+   Supabase's Google provider config and the Cloud Console client IDs
+   are not implicated by this evidence.
+2. **The app's own error handling was actively hiding the problem**: found
+   this BEFORE finding the real cause. `SignInStep`'s `catch (_)` never
+   logged the actual exception anywhere, and `AuthService.signInWithGoogle()`
+   asserted "Google sign-in was cancelled" for ANY null return from the
+   native call — but that null return covers a real cancel AND silent
+   failures identically, so the message was actively misleading. Both
+   fixed (`0caf48e`) — this alone is worth having even if the deeper
+   cause below turns out to be environment-specific and unfixable from
+   here.
+3. **Network connectivity to Google is fine** — `curl
+   https://accounts.google.com/.well-known/openid-configuration` from
+   this host: HTTP 200 in 77ms. Rules out "no internet access" as an
+   explanation.
+4. **The native flow does correctly start**: device log shows
+   `AppSSOCore`'s `canPerformAuthorizationWithURL` returning NO (so it
+   falls back to a full browser-hosted flow, which is normal), then a
+   real request to `com.apple.SafariViewService` to host Google's OAuth
+   web content, and that request succeeds
+   (`FBSSystemService... Request successful: <BSProcessHandle:
+   ...SafariViewServi:9953...>`). This rules out a bad client ID or a
+   URL-scheme mismatch as the cause — those would show as an immediate
+   config-rejection error, not a service that successfully launches.
+5. **But the SafariViewService process never actually becomes visible**:
+   `RunningBoardServices` reports its state as `running-active-NotVisible`
+   — twice, a couple hundred ms apart — and it's never seen transitioning
+   to visible before the flow gives up and `signIn()` resolves to null.
+   The very first (shorter-delay) run additionally logged a UIKit
+   warning: `Attempting to load the view of a view controller while it
+   is deallocating is not allowed` (`SFAuthenticationViewController`) and
+   `View service session ended with error ... {Message=Invalidation
+   requested}` — consistent with the same "starts, never renders, gets
+   torn down" pattern.
+
+**Best-evidence conclusion, not 100% certain**: this looks like an iOS
+Simulator-specific bug in how this Xcode/iOS runtime combination (26.6 /
+26.5–27.0, all recently-new territory — this project has hit several
+OTHER Simulator-specific quirks in exactly this environment already,
+see the destination-resolution and arch-exclusion sections elsewhere in
+this doc) presents `SafariViewService`'s remote view controller for
+`ASWebAuthenticationSession`-style flows. **Apple's own Sign In succeeds
+fine** because it goes through native `ASAuthorizationController`
+(`sign_in_with_apple`'s actual code path), never touching
+SafariViewService at all — so it isn't exposed to whatever this is.
+
+**What would actually confirm or refute this**: someone with real hands
+on a device (the user, or QA if it can reach a real device) tapping
+"Continue with Google" and directly WATCHING whether a Google login page
+ever visibly renders vs. flashes/does nothing vs. shows an error — my
+automated trigger can't observe the screen the way a human can. Testing
+on a REAL iOS device (not Simulator) would be the most decisive next
+step, since this entire failure signature is specifically about
+on-screen presentation, which real-device SafariViewService handling may
+not share.
 
 ## Current phase: differentiation features (from competitive research)
 ## STATUS: all 4 built (`151aeda`) AND QA-clean — zero real bugs found
