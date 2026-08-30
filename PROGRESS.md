@@ -6,6 +6,36 @@ unclear (e.g. after a compaction/restart) before assuming project state.
 Repo: https://github.com/Sri-Gautham/waypoint-app (private)
 Local path: `/Users/srigautham/Documents/My Projects/Personal Projects/travel-companion-app`
 
+## QA pass on `28e9768` (`ef4e789` for the fix) — 1 real bug, 2 clean, 1 blocked
+
+- **Real bug, FIXED**: name fields on `ProfileDetailsStep` (email
+  sign-in path) vanished mid-edit — `_needsName` was a live getter
+  (`data.firstName.isEmpty && ...`), and the error-clearing `setState`
+  in the name field's own `onChanged` triggered a rebuild the moment a
+  single character was typed, at which point `_needsName` had already
+  flipped to `false` and removed the very field being typed into
+  (whatever was typed became permanent, no way to enter a last name at
+  all). Fixed: `_needsName` captured once via `late final` at mount
+  instead of recomputed live.
+- **Cancel button (X) on Add Expense**: confirmed clean — filled a full
+  form, tapped X, verified directly against `AppData` (not just the UI)
+  that nothing was added.
+- **Swipe-to-delete**: confirmed clean — Cancel leaves the charge
+  untouched AND still swipeable afterward (not stuck half-swiped);
+  Delete removes it from both UI and `AppData` immediately.
+- **Email sign-in — blocked by a real Supabase rate limit**, not an app
+  bug: `sendEmailOtp` returned a genuine `AuthApiException` (429,
+  `over_email_send_rate_limit`) during testing. The graceful-failure
+  path worked correctly (inline error shown, no hang/crash), but this
+  means the OTP-screen transition, wrong-code handling, resend, and
+  back-navigation chain are still unverified live. **Worth checking**:
+  Supabase dashboard's Auth rate-limit config (Authentication > Rate
+  Limits) — if it's set low enough to bite during normal testing, it'll
+  also bite real early users signing up in a short window. No MCP tool
+  available for reading/changing this (it's GoTrue/Auth server config,
+  not a DB table) — dashboard-only, same as the Apple/Google provider
+  setup earlier.
+
 ## Post-batch fixes from real user testing (`28e9768`)
 
 User actually used a live build (see "how to view a real build" section
