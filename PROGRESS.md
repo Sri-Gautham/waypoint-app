@@ -148,7 +148,64 @@ fine, and IS how the Receipt OCR code above was verified (build succeeds,
 `flutter analyze` clean) — just without a live on-screen capture this
 round. Worth asking the QA agent whether their launch mechanism hits the
 same wall or is unaffected (their session may not have gone through
-whatever triggered this).
+whatever triggered this). **Update: QA independently confirmed the same
+`-destination id=<udid>` resolution bug on their side too — genuinely
+environmental, not scoped to one session. Does NOT block QA's actual
+mechanism (`flutter test integration_test/... -d <udid>`), which works
+fine regardless.**
+
+**Second, related discovery (2026-08-29) — the "generic destination"
+verification workaround above was quietly incomplete.** User asked how
+to view a full build themselves, which needed an actually-*runnable*
+binary, not just a compiling one — that surfaced this: `xcodebuild
+-destination 'generic/platform=iOS Simulator'` builds for **x86_64 by
+default** (`ARCHS = x86_64` — confirmed via `-showBuildSettings`), and
+this machine's simulator runtimes (26.5/27.0 only) can't run x86_64 at
+all — Apple dropped that entirely, same fact already established in the
+Receipt OCR section above. So every "verified via successful
+generic-destination build" claim earlier in this doc proved the *code*
+compiles and links correctly, but never proved the binary could actually
+*run* here — `xcrun simctl install` on one of those builds fails outright
+("Failed to find matching arch for input file"). Root cause: Flutter's
+own auto-generated `ios/Flutter/Generated.xcconfig` hardcodes
+`EXCLUDED_ARCHS[sdk=iphonesimulator*]=i386 arm64` as a static fallback —
+normally corrected dynamically at build time by Flutter's own
+`xcode_backend.sh` script phase for a concrete target device, but the
+*generic* destination gives that script nothing concrete to correct
+*for*, so the static x86_64-only fallback survives uncorrected.
+
+**The fix / how to actually view a real build on this machine**, since
+both the concrete-destination CLI path AND the plain generic-destination
+path are broken in their own ways:
+
+```bash
+# 1. Build for the generic simulator destination, but override the
+#    arch exclusion Flutter's Generated.xcconfig hardcodes, and force
+#    arm64 explicitly (both on the command line so they win over the
+#    xcconfig file):
+xcodebuild -workspace Runner.xcworkspace -scheme Runner -configuration Debug \
+  -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+  'EXCLUDED_ARCHS[sdk=iphonesimulator*]=i386' ARCHS=arm64 build
+
+# 2. Install + launch directly via simctl — a different tool from
+#    xcodebuild, unaffected by its broken -destination id=<udid>
+#    resolution:
+APP=~/Library/Developer/Xcode/DerivedData/Runner-*/Build/Products/Debug-iphonesimulator/Runner.app
+xcrun simctl install 607D6413-7714-4C48-9EDE-979E0E97D7F3 "$APP"
+xcrun simctl launch 607D6413-7714-4C48-9EDE-979E0E97D7F3 com.srigautham.waypoint
+open -a Simulator   # brings the window forward so it's actually visible
+```
+
+Confirmed working end-to-end (2026-08-29): built, installed, launched,
+video-captured a frame showing the real sign-in screen rendering
+correctly. **This is now the standard way to get an interactive,
+on-screen build in this environment** — faster and more reliable than
+chasing the `flutter run -d <device>` bug further. Retroactive note: this
+doesn't cast doubt on any FEATURE's correctness verified earlier via
+`flutter analyze` + a successful generic-destination build — those are
+still valid proof the code compiles/links right — it just means none of
+those checks alone ever proved the binary could run here, which this
+method now closes.
 
 ## Big picture
 
