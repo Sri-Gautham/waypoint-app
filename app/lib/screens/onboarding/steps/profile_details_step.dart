@@ -23,7 +23,13 @@ class ProfileDetailsStep extends StatefulWidget {
 }
 
 class _ProfileDetailsStepState extends State<ProfileDetailsStep> {
-  bool get _needsName => widget.data.firstName.isEmpty && widget.data.lastName.isEmpty;
+  // Captured once at mount, not a live getter — this step's own name
+  // fields update widget.data as you type, so a live
+  // "data.firstName.isEmpty" check would flip to false (and remove the
+  // fields you're actively typing into) the moment any rebuild happens
+  // after the first character, e.g. from the error-clearing setState in
+  // the name field's onChanged below.
+  late final bool _needsName = widget.data.firstName.isEmpty && widget.data.lastName.isEmpty;
 
   late final _firstNameController = TextEditingController();
   late final _lastNameController = TextEditingController();
