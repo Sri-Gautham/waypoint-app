@@ -82,6 +82,43 @@ verify the in-app UI myself (no OS-level tap automation, same limitation
 as always) — this needs a QA pass before considering it fully done. Full
 checklist in `docs/QA_CHECKLIST.md` under "Things to do nearby (new)".
 
+**QA pass on `cc5a59e` + `864690b` — clean, one gap identified and
+independently closed (`e5d71d5`).** All the pre-key UI (Upcoming card
+regression check, tap isolation between hero-card-tap and Details-
+toggle, expansion order, empty-state copy on both Upcoming/Past,
+Past-card regression check) and the post-key live Browse flow (30
+results, 17 distinct categories for the same Lake Tahoe coordinates,
+real per-place lat/lng confirmed not falling back to the search
+center) all confirmed clean. One gap QA correctly couldn't close: no
+live signed-in session in their harness (same structural limitation as
+OAuth) meant `TripPlacesService.addPlace`'s actual Supabase write was
+unverified.
+
+Tried to close that gap myself the same way — turned out the
+simulator's own session had been cleared by earlier reinstalls, so no
+live session was available to me either. Instead did a careful
+line-by-line cross-check between the LIVE RLS policies (queried
+directly, not from memory of what the migration said) and the actual
+Dart calls — and that surfaced a real, independent bug neither the
+code review nor QA's UI-level testing would have caught:
+`addPlace()`'s upsert used Supabase's default merge-on-conflict
+behavior, but `trip_places` only has SELECT/INSERT/DELETE RLS policies
+— no UPDATE. A merge-style upsert's conflict path needs UPDATE
+privileges even to legitimately no-op, so RLS would reject the WHOLE
+request outright on any real duplicate (two different members
+independently adding the same venue, or any accidental re-add) — not
+just skip the duplicate, silently fail the entire add. Fixed with
+`ignoreDuplicates: true` (keeps it on the INSERT/`ON CONFLICT DO
+NOTHING` path, which only needs the INSERT policy — also a better
+semantic match, since re-adding a place shouldn't reassign
+`added_by`/`added_by_name`). Cross-checked `trip_day_status`'s similar
+ETA upsert against the same pattern — that one does have a real UPDATE
+policy (correct, since re-sharing an ETA should genuinely overwrite),
+so it wasn't affected. **The actual live end-to-end write/read/remove
+round trip is still unverified by anyone** — needs either a real
+signed-in test session or a Supabase dashboard spot-check once someone
+actually uses the feature for real.
+
 ## QA pass on `28e9768` (`ef4e789` for the fix) — 1 real bug, 2 clean, 1 blocked
 
 - **Real bug, FIXED**: name fields on `ProfileDetailsStep` (email
