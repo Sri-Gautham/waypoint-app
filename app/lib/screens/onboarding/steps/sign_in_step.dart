@@ -6,6 +6,7 @@ import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import '../../../models/onboarding_data.dart';
 import '../../../services/auth_service.dart';
 import '../../../theme/app_colors.dart';
+import 'email_sign_in_step.dart';
 
 /// The front door: Apple/Google sign-in, no manual form. A first-time
 /// sign-in creates the account (via the `handle_new_user` Postgres
@@ -112,6 +113,19 @@ class _SignInStepState extends State<SignInStep> {
               ),
               icon: const Icon(Icons.g_mobiledata_rounded, size: 26),
               label: const Text('Continue with Google'),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Center(
+            child: TextButton(
+              onPressed: _busy
+                  ? null
+                  : () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => EmailSignInStep(data: widget.data, onSignedIn: widget.onSignedIn),
+                        ),
+                      ),
+              child: const Text('Continue with email', style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.w700)),
             ),
           ),
           if (_busy) ...[

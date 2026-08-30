@@ -104,6 +104,20 @@ class AuthService {
     );
   }
 
+  /// Sends a 6-digit sign-in code to [email] — same code path for a new
+  /// account or a returning one (Supabase creates the account on first
+  /// use, same as the Apple/Google flows above never showing a separate
+  /// "sign up" step).
+  Future<void> sendEmailOtp(String email) async {
+    await _client.auth.signInWithOtp(email: email);
+  }
+
+  /// Verifies the code sent by [sendEmailOtp] and completes sign-in.
+  Future<AuthResult> verifyEmailOtp({required String email, required String token}) async {
+    final response = await _client.auth.verifyOTP(type: OtpType.email, token: token, email: email);
+    return AuthResult(isNewUser: response.user?.createdAt == response.user?.lastSignInAt);
+  }
+
   Future<void> signOut() async {
     await _client.auth.signOut();
     await GoogleSignIn().signOut().catchError((_) => null);

@@ -16,27 +16,42 @@ apart look suspiciously identical despite navigating, cross-check with a
 video-frame capture or direct widget-tree inspection before filing it as a
 bug.
 
-## Onboarding (`OnboardingFlow`) — real auth now, not fake forms
+## Onboarding (`OnboardingFlow`) — real auth, 3 sign-in paths
 
-**Apple/Google sign-in will not complete in this environment yet** —
-Google Cloud Console OAuth clients and the Supabase dashboard's
-Apple/Google provider config are pending user setup (see `PROGRESS.md`'s
-"User setup steps still needed"). Expect the buttons to show a "Sign-in
-failed" message rather than crash; that's the current known-good state,
-not a bug to report. What IS testable now:
+Apple and Google OAuth are now fully configured (Google Cloud Console +
+Supabase provider setup both done — see `PROGRESS.md`). Both should be
+able to complete end-to-end, though driving Apple/Google's native system
+UI to a full successful finish is still outside `integration_test`'s
+reach — structural checks (button presence, no crash, spinner behavior)
+remain the practical ceiling for those two specifically.
 
 - Sign-in screen (`SignInStep`): Apple button only shows on iOS; Google
-  button on both; tapping either shows a loading spinner and doesn't crash
-  even though the sign-in itself can't complete yet; a cancelled Apple
-  sheet doesn't show a spurious error.
-- Profile Details step: phone + address fields behave like the old Home
-  Address step did (same fields, "Use current location" fills them);
-  "Finish" doesn't crash even if `saveProfile` fails (no session yet).
-- All Set -> Enable Face ID step (only reachable in code review right now
-  since sign-in can't complete to trigger `isNewUser`) — "Enable Face ID"
-  and "Not now" both should be tappable without crashing once reachable.
-- Cold launch with no session still lands on the sign-in screen (no
-  crash from `_StartupGate`'s `AuthService.instance.isSignedIn` check).
+  button on both; tapping either shows a loading spinner and doesn't
+  crash; a cancelled Apple sheet doesn't show a spurious error.
+- **Email sign-in (new)**: "Continue with email" pushes a new screen
+  (email field, "Send code" button). Submitting an invalid email (no @,
+  no domain) shows an inline error without calling Supabase. A valid
+  email calls `sendEmailOtp` and pushes the 6-digit code entry screen —
+  can't verify actual email delivery/receipt via `integration_test`
+  (same "real external system" limitation as OAuth), but the screen
+  transition, loading states, and "resend code" button should all work
+  without crashing regardless of whether a real code ever arrives.
+  Entering a wrong/expired code shows "That code is invalid or expired"
+  inline, not a crash. Back button on either email screen returns
+  correctly (email code screen -> email entry screen -> sign-in screen).
+- Profile Details step: phone + address fields behave as before ("Use
+  current location" fills them); "Finish" doesn't crash even if
+  `saveProfile` fails. **New**: if sign-in didn't provide a name (this
+  only happens via the email path — Apple/Google always give one),
+  First/Last name fields appear above phone; "Finish" is blocked with an
+  inline error until First name is filled; these fields do NOT appear at
+  all after Apple/Google sign-in (should never see them there).
+- All Set -> Enable Face ID step (only for a genuinely new account,
+  detected via `isNewUser`) — "Enable Face ID" and "Not now" both
+  tappable without crashing.
+- Cold launch with no session lands on the sign-in screen; with a
+  persisted session, skips straight to Home (or the Face ID gate if
+  enabled) — no crash from `_StartupGate`'s session check either way.
 
 ## Home tab (`HomeTab`)
 
@@ -187,6 +202,20 @@ trips) or on past trips.
   amount, and an empty split selection; on success the sheet closes and both
   the trip's balance and the Balances tab's overall balance update
   immediately, no navigation needed to see the new number.
+- **Cancel button (new)**: an X in the top-right of the Add Expense sheet
+  closes it without adding anything, regardless of what's been typed into
+  any field — no dummy expense should appear in Activity, no balance
+  change. (Tapping outside the sheet should also still dismiss it, same
+  as before — that was never broken, just not the only way out anymore.)
+- **Delete an expense (new)**: swiping a charge left in the Activity list
+  reveals a red delete affordance; releasing it (past the dismiss
+  threshold) prompts "Delete this expense?" with Cancel/Delete — Cancel
+  leaves the charge untouched (including if you swipe again after
+  cancelling, it should still work normally, not be stuck half-swiped);
+  Delete removes it immediately, and both the trip's balance and the
+  Balances tab's overall balance update right away, matching what a
+  manual recompute would give (spot-check against `sample_charges.dart`
+  minus the deleted entry).
 - **Scan receipt (new)**: the "Scan" button at the top of the sheet opens
   the same Library/Camera choice sheet as the Trips tab's photo picker.
   After picking a photo: a small thumbnail replaces the receipt icon, the

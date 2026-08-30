@@ -35,6 +35,11 @@ class AppData extends ChangeNotifier {
     notifyListeners();
   }
 
+  void removeCharge(String tripId, String chargeId) {
+    chargesByTrip[tripId]?.removeWhere((c) => c.id == chargeId);
+    notifyListeners();
+  }
+
   void addPayment(Payment payment) {
     payments.add(payment);
     notifyListeners();

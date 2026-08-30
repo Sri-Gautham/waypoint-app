@@ -146,6 +146,7 @@ class _BalancesTabState extends State<BalancesTab> {
                 if (!_expandedTripIds.add(trip.id)) _expandedTripIds.remove(trip.id);
               }),
               onAddExpense: () => _addExpense(trip),
+              onDeleteCharge: (chargeId) => AppDataScope.of(context).removeCharge(trip.id, chargeId),
             ),
             const SizedBox(height: 12),
           ],
@@ -178,6 +179,7 @@ class _TripBalanceCard extends StatelessWidget {
     required this.expanded,
     required this.onToggle,
     required this.onAddExpense,
+    required this.onDeleteCharge,
   });
 
   final Trip trip;
@@ -185,6 +187,25 @@ class _TripBalanceCard extends StatelessWidget {
   final bool expanded;
   final VoidCallback onToggle;
   final VoidCallback onAddExpense;
+  final ValueChanged<String> onDeleteCharge;
+
+  Future<bool> _confirmDelete(BuildContext context, Charge charge) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete this expense?'),
+        content: Text('"${charge.description}" (\$${charge.amount.toStringAsFixed(2)}) will be removed and balances will update.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Delete', style: TextStyle(color: AppColors.moneyOwe)),
+          ),
+        ],
+      ),
+    );
+    return confirmed ?? false;
+  }
 
   IconData _iconFor(ChargeCategory c) {
     switch (c) {
@@ -272,51 +293,64 @@ class _TripBalanceCard extends StatelessWidget {
             const Text('ACTIVITY', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.textSecondary, letterSpacing: 0.4)),
             const SizedBox(height: 8),
             for (final charge in charges)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 6),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: 28,
-                      height: 28,
-                      alignment: Alignment.center,
-                      decoration: const BoxDecoration(color: AppColors.divider, shape: BoxShape.circle),
-                      child: Icon(_iconFor(charge.category), size: 14, color: AppColors.textSecondary),
-                    ),
-                    const SizedBox(width: 9),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(charge.description, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
-                              Text('\$${charge.amount.toStringAsFixed(2)}', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
-                            ],
-                          ),
-                          Text(
-                            '${charge.payer == 'You' ? 'You paid' : '${charge.payer} paid'} · ${charge.date}',
-                            style: const TextStyle(fontSize: 11.5, color: AppColors.textSecondary),
-                          ),
-                          Text('Split: ${charge.splitWith.join(', ')}', style: const TextStyle(fontSize: 11, color: AppColors.textTertiary)),
-                        ],
+              Dismissible(
+                key: ValueKey(charge.id),
+                direction: DismissDirection.endToStart,
+                confirmDismiss: (_) => _confirmDelete(context, charge),
+                onDismissed: (_) => onDeleteCharge(charge.id),
+                background: Container(
+                  alignment: Alignment.centerRight,
+                  padding: const EdgeInsets.only(right: 14),
+                  margin: const EdgeInsets.symmetric(vertical: 6),
+                  decoration: BoxDecoration(color: AppColors.moneyOwe, borderRadius: BorderRadius.circular(10)),
+                  child: const Icon(Icons.delete_outline_rounded, color: Colors.white, size: 20),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 28,
+                        height: 28,
+                        alignment: Alignment.center,
+                        decoration: const BoxDecoration(color: AppColors.divider, shape: BoxShape.circle),
+                        child: Icon(_iconFor(charge.category), size: 14, color: AppColors.textSecondary),
                       ),
-                    ),
-                    if (charge.receiptImage != null) ...[
-                      const SizedBox(width: 8),
-                      GestureDetector(
-                        onTap: () => Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => _ReceiptViewerScreen(image: charge.receiptImage!)),
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(6),
-                          child: Image.file(charge.receiptImage!, width: 28, height: 28, fit: BoxFit.cover),
+                      const SizedBox(width: 9),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(charge.description, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                                Text('\$${charge.amount.toStringAsFixed(2)}', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                              ],
+                            ),
+                            Text(
+                              '${charge.payer == 'You' ? 'You paid' : '${charge.payer} paid'} · ${charge.date}',
+                              style: const TextStyle(fontSize: 11.5, color: AppColors.textSecondary),
+                            ),
+                            Text('Split: ${charge.splitWith.join(', ')}', style: const TextStyle(fontSize: 11, color: AppColors.textTertiary)),
+                          ],
                         ),
                       ),
+                      if (charge.receiptImage != null) ...[
+                        const SizedBox(width: 8),
+                        GestureDetector(
+                          onTap: () => Navigator.of(context).push(
+                            MaterialPageRoute(builder: (_) => _ReceiptViewerScreen(image: charge.receiptImage!)),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(6),
+                            child: Image.file(charge.receiptImage!, width: 28, height: 28, fit: BoxFit.cover),
+                          ),
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
               ),
             const SizedBox(height: 6),

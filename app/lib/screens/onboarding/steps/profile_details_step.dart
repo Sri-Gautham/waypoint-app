@@ -8,7 +8,9 @@ import '../../../widgets/step_header.dart';
 
 /// Collects what Apple/Google sign-in can't give us: phone number and
 /// home address (used to plan routes/carpools). Name and email already
-/// came from the OAuth provider by the time this step is reached.
+/// came from the OAuth provider by the time this step is reached — except
+/// for email sign-in, which gives no name at all, so this step also
+/// collects first/last name in that one case (see [_needsName]).
 class ProfileDetailsStep extends StatefulWidget {
   const ProfileDetailsStep({super.key, required this.data, required this.onBack, required this.onContinue});
 
@@ -21,6 +23,10 @@ class ProfileDetailsStep extends StatefulWidget {
 }
 
 class _ProfileDetailsStepState extends State<ProfileDetailsStep> {
+  bool get _needsName => widget.data.firstName.isEmpty && widget.data.lastName.isEmpty;
+
+  late final _firstNameController = TextEditingController();
+  late final _lastNameController = TextEditingController();
   late final _phoneController = TextEditingController(text: widget.data.phone);
   late final _streetController = TextEditingController(text: widget.data.street);
   late final _aptController = TextEditingController(text: widget.data.apt);
@@ -29,9 +35,12 @@ class _ProfileDetailsStepState extends State<ProfileDetailsStep> {
   late final _zipController = TextEditingController(text: widget.data.zip);
 
   bool _saving = false;
+  String? _nameError;
 
   @override
   void dispose() {
+    _firstNameController.dispose();
+    _lastNameController.dispose();
     _phoneController.dispose();
     _streetController.dispose();
     _aptController.dispose();
@@ -58,7 +67,14 @@ class _ProfileDetailsStepState extends State<ProfileDetailsStep> {
   }
 
   Future<void> _continue() async {
-    setState(() => _saving = true);
+    if (_needsName && widget.data.firstName.trim().isEmpty) {
+      setState(() => _nameError = 'Enter your first name.');
+      return;
+    }
+    setState(() {
+      _saving = true;
+      _nameError = null;
+    });
     try {
       await AuthService.instance.saveProfile(widget.data);
     } catch (_) {
@@ -96,6 +112,37 @@ class _ProfileDetailsStepState extends State<ProfileDetailsStep> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  if (_needsName) ...[
+                    Row(
+                      children: [
+                        Expanded(
+                          child: LabeledField(
+                            label: 'First name',
+                            hint: 'Jamie',
+                            controller: _firstNameController,
+                            onChanged: (v) {
+                              data.firstName = v;
+                              if (_nameError != null) setState(() => _nameError = null);
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: LabeledField(
+                            label: 'Last name',
+                            hint: 'Rivera',
+                            controller: _lastNameController,
+                            onChanged: (v) => data.lastName = v,
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (_nameError != null) ...[
+                      const SizedBox(height: 6),
+                      Text(_nameError!, style: const TextStyle(color: Colors.red, fontSize: 12.5)),
+                    ],
+                    const SizedBox(height: 22),
+                  ],
                   LabeledField(
                     label: 'Phone number',
                     hint: '(555) 010-0198',
