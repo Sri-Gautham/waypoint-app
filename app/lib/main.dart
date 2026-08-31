@@ -41,6 +41,8 @@ class _WaypointAppState extends State<WaypointApp> {
         title: 'Waypoint',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light(),
+        darkTheme: AppTheme.dark(),
+        themeMode: ThemeMode.system,
         home: const _StartupGate(),
       ),
     );

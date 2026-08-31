@@ -74,9 +74,9 @@ class _EmailSignInStepState extends State<EmailSignInStep> {
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
               ),
               const SizedBox(height: 8),
-              const Text(
+              Text(
                 "We'll send a 6-digit code — no password needed.",
-                style: TextStyle(fontSize: 14, color: AppColors.textSecondary, height: 1.4),
+                style: TextStyle(fontSize: 14, color: context.colors.textSecondary, height: 1.4),
               ),
               const SizedBox(height: 28),
               TextField(

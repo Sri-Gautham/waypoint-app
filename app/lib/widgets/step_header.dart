@@ -22,10 +22,10 @@ class StepHeader extends StatelessWidget {
           const SizedBox(width: 36, height: 36),
         Text(
           '$step / $total',
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
-            color: AppColors.textSecondary,
+            color: context.colors.textSecondary,
           ),
         ),
       ],
@@ -42,7 +42,7 @@ class _CircleButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppColors.accentTint,
+      color: context.colors.accentTint,
       shape: const CircleBorder(),
       child: InkWell(
         customBorder: const CircleBorder(),
@@ -50,7 +50,7 @@ class _CircleButton extends StatelessWidget {
         child: SizedBox(
           width: 36,
           height: 36,
-          child: Icon(icon, size: 16, color: AppColors.textPrimary),
+          child: Icon(icon, size: 16, color: context.colors.textPrimary),
         ),
       ),
     );

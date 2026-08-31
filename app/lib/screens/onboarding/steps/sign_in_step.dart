@@ -76,7 +76,7 @@ class _SignInStepState extends State<SignInStep> {
           const SizedBox(height: 48),
           Row(
             children: [
-              const Icon(Icons.location_on_outlined, size: 22, color: AppColors.textPrimary),
+              Icon(Icons.location_on_outlined, size: 22, color: context.colors.textPrimary),
               const SizedBox(width: 9),
               Text(
                 'WAYPOINT',
@@ -90,9 +90,9 @@ class _SignInStepState extends State<SignInStep> {
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Sign in to create or join a trip group with the people you travel with.',
-            style: TextStyle(fontSize: 14, color: AppColors.textSecondary, height: 1.4),
+            style: TextStyle(fontSize: 14, color: context.colors.textSecondary, height: 1.4),
           ),
           const SizedBox(height: 32),
           if (Platform.isIOS)
@@ -113,8 +113,8 @@ class _SignInStepState extends State<SignInStep> {
             child: OutlinedButton.icon(
               onPressed: _busy ? null : () => _handle(AuthService.instance.signInWithGoogle),
               style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.textPrimary,
-                side: const BorderSide(color: AppColors.border, width: 1.5),
+                foregroundColor: context.colors.textPrimary,
+                side: BorderSide(color: context.colors.border, width: 1.5),
               ),
               icon: const Icon(Icons.g_mobiledata_rounded, size: 26),
               label: const Text('Continue with Google'),
@@ -130,7 +130,7 @@ class _SignInStepState extends State<SignInStep> {
                           builder: (_) => EmailSignInStep(data: widget.data, onSignedIn: widget.onSignedIn),
                         ),
                       ),
-              child: const Text('Continue with email', style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.w700)),
+              child: Text('Continue with email', style: TextStyle(color: context.colors.accent, fontWeight: FontWeight.w700)),
             ),
           ),
           if (_busy) ...[

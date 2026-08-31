@@ -53,14 +53,14 @@ class _GroupBasicsStepState extends State<GroupBasicsStep> {
           const SizedBox(height: 12),
           StepHeader(step: 1, total: 3, onBack: widget.onClose),
           const SizedBox(height: 24),
-          const Text('New trip', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+          Text('New trip', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: context.colors.textPrimary)),
           const SizedBox(height: 20),
           Expanded(
             child: SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('COVER', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary, letterSpacing: 0.4)),
+                  Text('COVER', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: context.colors.textSecondary, letterSpacing: 0.4)),
                   const SizedBox(height: 8),
                   Row(
                     children: [
@@ -87,10 +87,10 @@ class _GroupBasicsStepState extends State<GroupBasicsStep> {
                           child: Image.memory(draft.generatedCoverBytes!, width: 40, height: 40, fit: BoxFit.cover),
                         ),
                         const SizedBox(width: 10),
-                        const Expanded(
+                        Expanded(
                           child: Text(
                             'Using your generated cover — set on the Destination step.',
-                            style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                            style: TextStyle(fontSize: 12, color: context.colors.textSecondary),
                           ),
                         ),
                       ],
@@ -176,14 +176,14 @@ class _DateField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label.toUpperCase(), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary, letterSpacing: 0.4)),
+        Text(label.toUpperCase(), style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: context.colors.textSecondary, letterSpacing: 0.4)),
         const SizedBox(height: 7),
         InkWell(
           onTap: onTap,
           child: Container(
             padding: const EdgeInsets.symmetric(vertical: 8),
-            decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: AppColors.border, width: 1.5))),
-            child: Text(valueLabel, style: const TextStyle(fontSize: 15, color: AppColors.textPrimary)),
+            decoration: BoxDecoration(border: Border(bottom: BorderSide(color: context.colors.border, width: 1.5))),
+            child: Text(valueLabel, style: TextStyle(fontSize: 15, color: context.colors.textPrimary)),
           ),
         ),
       ],

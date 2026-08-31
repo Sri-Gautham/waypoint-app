@@ -109,7 +109,7 @@ class _NearbyPlacesPickerScreenState extends State<NearbyPlacesPickerScreen> {
         return ListView.separated(
           padding: const EdgeInsets.fromLTRB(20, 12, 20, 100),
           itemCount: _places.length,
-          separatorBuilder: (_, _) => const Divider(height: 1, color: AppColors.divider),
+          separatorBuilder: (_, _) => Divider(height: 1, color: context.colors.divider),
           itemBuilder: (context, i) {
             final place = _places[i];
             final alreadySaved = widget.alreadySavedFsqIds.contains(place.fsqId);
@@ -119,11 +119,11 @@ class _NearbyPlacesPickerScreenState extends State<NearbyPlacesPickerScreen> {
               onChanged: alreadySaved ? null : (_) => _toggle(place.fsqId),
               controlAffinity: ListTileControlAffinity.leading,
               contentPadding: EdgeInsets.zero,
-              activeColor: AppColors.accent,
-              title: Text(place.name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+              activeColor: context.colors.accent,
+              title: Text(place.name, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: context.colors.textPrimary)),
               subtitle: Text(
                 alreadySaved ? '${place.category} · Already saved' : '${place.category} · ${place.distanceLabel} · ${place.address}',
-                style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                style: TextStyle(fontSize: 12, color: context.colors.textSecondary),
               ),
             );
           },
@@ -169,7 +169,7 @@ class _ErrorState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(message, textAlign: TextAlign.center, style: const TextStyle(fontSize: 14, color: AppColors.textSecondary)),
+            Text(message, textAlign: TextAlign.center, style: TextStyle(fontSize: 14, color: context.colors.textSecondary)),
             if (onRetry != null) ...[
               const SizedBox(height: 16),
               OutlinedButton(onPressed: onRetry, child: const Text('Try again')),

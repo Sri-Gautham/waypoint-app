@@ -78,8 +78,8 @@ class _BalancesTabState extends State<BalancesTab> {
       }
     }
     final net = totalOwed - totalOwe;
-    final netColor = net == 0 ? AppColors.textSecondary : (net < 0 ? AppColors.moneyOwe : AppColors.moneyOwed);
-    final netBg = net == 0 ? AppColors.divider : (net < 0 ? const Color(0x1AA8372A) : const Color(0x1A085023));
+    final netColor = net == 0 ? context.colors.textSecondary : (net < 0 ? context.colors.moneyOwe : context.colors.moneyOwed);
+    final netBg = net == 0 ? context.colors.divider : (net < 0 ? const Color(0x1AA8372A) : const Color(0x1A085023));
     final netLabel = net == 0 ? 'All settled up' : (net < 0 ? 'You owe \$${(-net).toStringAsFixed(2)}' : "You're owed \$${net.toStringAsFixed(2)}");
 
     final trips = appData.trips.where((t) => t.status == _filter).toList();
@@ -89,7 +89,7 @@ class _BalancesTabState extends State<BalancesTab> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Balances', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+          Text('Balances', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: context.colors.textPrimary)),
           const SizedBox(height: 16),
           Container(
             padding: const EdgeInsets.all(16),
@@ -127,7 +127,7 @@ class _BalancesTabState extends State<BalancesTab> {
           ),
           const SizedBox(height: 16),
           Container(
-            decoration: BoxDecoration(border: Border.all(color: AppColors.border, width: 1.5), borderRadius: BorderRadius.circular(10)),
+            decoration: BoxDecoration(border: Border.all(color: context.colors.border, width: 1.5), borderRadius: BorderRadius.circular(10)),
             padding: const EdgeInsets.all(3),
             child: Row(
               children: [
@@ -162,11 +162,11 @@ class _BalancesTabState extends State<BalancesTab> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 9),
         decoration: BoxDecoration(
-          color: selected ? AppColors.accent : Colors.transparent,
+          color: selected ? context.colors.accent : Colors.transparent,
           borderRadius: BorderRadius.circular(7),
         ),
         alignment: Alignment.center,
-        child: Text(label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: selected ? Colors.white : AppColors.textPrimary)),
+        child: Text(label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: selected ? Colors.white : context.colors.textPrimary)),
       ),
     );
   }
@@ -199,7 +199,7 @@ class _TripBalanceCard extends StatelessWidget {
           TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Delete', style: TextStyle(color: AppColors.moneyOwe)),
+            child: Text('Delete', style: TextStyle(color: context.colors.moneyOwe)),
           ),
         ],
       ),
@@ -228,10 +228,10 @@ class _TripBalanceCard extends StatelessWidget {
     final balanceLabel = tripTotal == 0
         ? 'Settled up'
         : (owesThem ? 'You owe \$${(-tripTotal).toStringAsFixed(2)}' : "You're owed \$${tripTotal.toStringAsFixed(2)}");
-    final balanceColor = tripTotal == 0 ? AppColors.textSecondary : (owesThem ? AppColors.moneyOwe : AppColors.moneyOwed);
+    final balanceColor = tripTotal == 0 ? context.colors.textSecondary : (owesThem ? context.colors.moneyOwe : context.colors.moneyOwed);
 
     return Container(
-      decoration: BoxDecoration(border: Border.all(color: AppColors.border, width: 1.5), borderRadius: BorderRadius.circular(14)),
+      decoration: BoxDecoration(border: Border.all(color: context.colors.border, width: 1.5), borderRadius: BorderRadius.circular(14)),
       padding: const EdgeInsets.all(14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -244,14 +244,14 @@ class _TripBalanceCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(trip.name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
-                    Text('${trip.destination} · ${trip.dateLabel}', style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                    Text(trip.name, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: context.colors.textPrimary)),
+                    Text('${trip.destination} · ${trip.dateLabel}', style: TextStyle(fontSize: 12, color: context.colors.textSecondary)),
                   ],
                 ),
               ),
             ],
           ),
-          const Padding(padding: EdgeInsets.symmetric(vertical: 10), child: Divider(height: 1, color: AppColors.divider)),
+          Padding(padding: const EdgeInsets.symmetric(vertical: 10), child: Divider(height: 1, color: context.colors.divider)),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -261,8 +261,8 @@ class _TripBalanceCard extends StatelessWidget {
                 style: OutlinedButton.styleFrom(
                   minimumSize: Size.zero,
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                  side: const BorderSide(color: AppColors.accent, width: 1.5),
-                  foregroundColor: AppColors.accent,
+                  side: BorderSide(color: context.colors.accent, width: 1.5),
+                  foregroundColor: context.colors.accent,
                   textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
                 ),
                 child: Text(expanded ? 'Hide' : 'Details'),
@@ -270,9 +270,9 @@ class _TripBalanceCard extends StatelessWidget {
             ],
           ),
           if (expanded) ...[
-            const Padding(padding: EdgeInsets.symmetric(vertical: 12), child: Divider(height: 1, color: AppColors.divider)),
+            Padding(padding: const EdgeInsets.symmetric(vertical: 12), child: Divider(height: 1, color: context.colors.divider)),
             if (net.isNotEmpty) ...[
-              const Text('WHO OWES WHOM', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.textSecondary, letterSpacing: 0.4)),
+              Text('WHO OWES WHOM', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: context.colors.textSecondary, letterSpacing: 0.4)),
               const SizedBox(height: 8),
               for (final entry in net.entries)
                 Padding(
@@ -280,17 +280,17 @@ class _TripBalanceCard extends StatelessWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(entry.key, style: const TextStyle(fontSize: 12.5, color: AppColors.textPrimary)),
+                      Text(entry.key, style: TextStyle(fontSize: 12.5, color: context.colors.textPrimary)),
                       Text(
                         entry.value < 0 ? 'You owe \$${(-entry.value).toStringAsFixed(2)}' : 'Owes you \$${entry.value.toStringAsFixed(2)}',
-                        style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: entry.value < 0 ? AppColors.moneyOwe : AppColors.moneyOwed),
+                        style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: entry.value < 0 ? context.colors.moneyOwe : context.colors.moneyOwed),
                       ),
                     ],
                   ),
                 ),
               const SizedBox(height: 16),
             ],
-            const Text('ACTIVITY', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.textSecondary, letterSpacing: 0.4)),
+            Text('ACTIVITY', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: context.colors.textSecondary, letterSpacing: 0.4)),
             const SizedBox(height: 8),
             for (final charge in charges)
               Dismissible(
@@ -302,7 +302,7 @@ class _TripBalanceCard extends StatelessWidget {
                   alignment: Alignment.centerRight,
                   padding: const EdgeInsets.only(right: 14),
                   margin: const EdgeInsets.symmetric(vertical: 6),
-                  decoration: BoxDecoration(color: AppColors.moneyOwe, borderRadius: BorderRadius.circular(10)),
+                  decoration: BoxDecoration(color: context.colors.moneyOwe, borderRadius: BorderRadius.circular(10)),
                   child: const Icon(Icons.delete_outline_rounded, color: Colors.white, size: 20),
                 ),
                 child: Padding(
@@ -314,8 +314,8 @@ class _TripBalanceCard extends StatelessWidget {
                         width: 28,
                         height: 28,
                         alignment: Alignment.center,
-                        decoration: const BoxDecoration(color: AppColors.divider, shape: BoxShape.circle),
-                        child: Icon(_iconFor(charge.category), size: 14, color: AppColors.textSecondary),
+                        decoration: BoxDecoration(color: context.colors.divider, shape: BoxShape.circle),
+                        child: Icon(_iconFor(charge.category), size: 14, color: context.colors.textSecondary),
                       ),
                       const SizedBox(width: 9),
                       Expanded(
@@ -325,15 +325,15 @@ class _TripBalanceCard extends StatelessWidget {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text(charge.description, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
-                                Text('\$${charge.amount.toStringAsFixed(2)}', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                                Text(charge.description, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: context.colors.textPrimary)),
+                                Text('\$${charge.amount.toStringAsFixed(2)}', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: context.colors.textPrimary)),
                               ],
                             ),
                             Text(
                               '${charge.payer == 'You' ? 'You paid' : '${charge.payer} paid'} · ${charge.date}',
-                              style: const TextStyle(fontSize: 11.5, color: AppColors.textSecondary),
+                              style: TextStyle(fontSize: 11.5, color: context.colors.textSecondary),
                             ),
-                            Text('Split: ${charge.splitWith.join(', ')}', style: const TextStyle(fontSize: 11, color: AppColors.textTertiary)),
+                            Text('Split: ${charge.splitWith.join(', ')}', style: TextStyle(fontSize: 11, color: context.colors.textTertiary)),
                           ],
                         ),
                       ),

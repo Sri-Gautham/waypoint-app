@@ -63,7 +63,7 @@ class _GroupInviteStepState extends State<GroupInviteStep> {
           const SizedBox(height: 12),
           StepHeader(step: 3, total: 3, onBack: widget.onBack),
           const SizedBox(height: 24),
-          const Text('Invite members', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+          Text('Invite members', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: context.colors.textPrimary)),
           const SizedBox(height: 20),
           Expanded(
             child: SingleChildScrollView(
@@ -71,7 +71,7 @@ class _GroupInviteStepState extends State<GroupInviteStep> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
-                    decoration: BoxDecoration(border: Border.all(color: AppColors.border, width: 1.5), borderRadius: BorderRadius.circular(12)),
+                    decoration: BoxDecoration(border: Border.all(color: context.colors.border, width: 1.5), borderRadius: BorderRadius.circular(12)),
                     padding: const EdgeInsets.all(14),
                     child: Row(
                       children: [
@@ -79,9 +79,9 @@ class _GroupInviteStepState extends State<GroupInviteStep> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text('INVITE CODE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textSecondary, letterSpacing: 0.4)),
+                              Text('INVITE CODE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: context.colors.textSecondary, letterSpacing: 0.4)),
                               const SizedBox(height: 2),
-                              Text(_inviteCode, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.textPrimary, letterSpacing: 0.5)),
+                              Text(_inviteCode, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: context.colors.textPrimary, letterSpacing: 0.5)),
                             ],
                           ),
                         ),
@@ -90,7 +90,7 @@ class _GroupInviteStepState extends State<GroupInviteStep> {
                           style: OutlinedButton.styleFrom(
                             minimumSize: Size.zero,
                             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-                            foregroundColor: AppColors.accent,
+                            foregroundColor: context.colors.accent,
                             textStyle: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700),
                           ),
                           child: Text(_copied ? 'Copied!' : 'Copy'),
@@ -99,7 +99,7 @@ class _GroupInviteStepState extends State<GroupInviteStep> {
                     ),
                   ),
                   const SizedBox(height: 20),
-                  const Text('ADD BY PHONE OR EMAIL', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary, letterSpacing: 0.4)),
+                  Text('ADD BY PHONE OR EMAIL', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: context.colors.textSecondary, letterSpacing: 0.4)),
                   const SizedBox(height: 8),
                   Row(
                     children: [
@@ -126,7 +126,7 @@ class _GroupInviteStepState extends State<GroupInviteStep> {
                         for (final invitee in List<String>.from(draft.manualInvitees))
                           Chip(
                             label: Text(invitee, style: const TextStyle(fontSize: 12.5)),
-                            backgroundColor: AppColors.accentTint,
+                            backgroundColor: context.colors.accentTint,
                             side: BorderSide.none,
                             onDeleted: () => setState(() => draft.manualInvitees.remove(invitee)),
                           ),
@@ -134,7 +134,7 @@ class _GroupInviteStepState extends State<GroupInviteStep> {
                     ),
                   ],
                   const SizedBox(height: 22),
-                  const Text('FROM YOUR CONTACTS', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary, letterSpacing: 0.4)),
+                  Text('FROM YOUR CONTACTS', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: context.colors.textSecondary, letterSpacing: 0.4)),
                   for (final contact in sampleContacts)
                     CheckboxListTile(
                       value: draft.selectedContactIds.contains(contact.id),
@@ -150,9 +150,9 @@ class _GroupInviteStepState extends State<GroupInviteStep> {
                       controlAffinity: ListTileControlAffinity.leading,
                       contentPadding: EdgeInsets.zero,
                       dense: true,
-                      activeColor: AppColors.accent,
-                      title: Text(contact.name, style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
-                      subtitle: Text(contact.sub, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                      activeColor: context.colors.accent,
+                      title: Text(contact.name, style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: context.colors.textPrimary)),
+                      subtitle: Text(contact.sub, style: TextStyle(fontSize: 12, color: context.colors.textSecondary)),
                     ),
                 ],
               ),

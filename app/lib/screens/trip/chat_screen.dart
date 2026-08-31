@@ -81,7 +81,7 @@ class _ChatScreenState extends State<ChatScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(widget.trip.name, style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w800)),
-            Text(_subtitle, style: const TextStyle(fontSize: 11.5, color: AppColors.textSecondary, fontWeight: FontWeight.normal)),
+            Text(_subtitle, style: TextStyle(fontSize: 11.5, color: context.colors.textSecondary, fontWeight: FontWeight.normal)),
           ],
         ),
       ),
@@ -104,21 +104,21 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
             Container(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-              decoration: const BoxDecoration(
-                border: Border(top: BorderSide(color: AppColors.divider)),
+              decoration: BoxDecoration(
+                border: Border(top: BorderSide(color: context.colors.divider)),
               ),
               child: Row(
                 children: [
                   Material(
-                    color: AppColors.accentTint,
+                    color: context.colors.accentTint,
                     shape: const CircleBorder(),
                     child: InkWell(
                       customBorder: const CircleBorder(),
                       onTap: _openPollComposer,
-                      child: const SizedBox(
+                      child: SizedBox(
                         width: 38,
                         height: 38,
-                        child: Icon(Icons.bar_chart_rounded, size: 18, color: AppColors.accent),
+                        child: Icon(Icons.bar_chart_rounded, size: 18, color: context.colors.accent),
                       ),
                     ),
                   ),
@@ -134,22 +134,22 @@ class _ChatScreenState extends State<ChatScreen> {
                         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(999),
-                          borderSide: const BorderSide(color: AppColors.border, width: 1.5),
+                          borderSide: BorderSide(color: context.colors.border, width: 1.5),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(999),
-                          borderSide: const BorderSide(color: AppColors.border, width: 1.5),
+                          borderSide: BorderSide(color: context.colors.border, width: 1.5),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(999),
-                          borderSide: const BorderSide(color: AppColors.accent, width: 1.5),
+                          borderSide: BorderSide(color: context.colors.accent, width: 1.5),
                         ),
                       ),
                     ),
                   ),
                   const SizedBox(width: 10),
                   Material(
-                    color: AppColors.accent,
+                    color: context.colors.accent,
                     shape: const CircleBorder(),
                     child: InkWell(
                       customBorder: const CircleBorder(),
@@ -190,7 +190,7 @@ class _MessageBubble extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 3),
               child: Text(
                 message.sender,
-                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.textSecondary),
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: context.colors.textSecondary),
               ),
             ),
           if (message.poll != null)
@@ -200,7 +200,7 @@ class _MessageBubble extends StatelessWidget {
               constraints: const BoxConstraints(maxWidth: 240),
               padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
               decoration: BoxDecoration(
-                color: message.isSelf ? AppColors.accent : AppColors.divider,
+                color: message.isSelf ? context.colors.accent : context.colors.divider,
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Text(
@@ -208,13 +208,13 @@ class _MessageBubble extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 13.5,
                   height: 1.4,
-                  color: message.isSelf ? Colors.white : AppColors.textPrimary,
+                  color: message.isSelf ? Colors.white : context.colors.textPrimary,
                 ),
               ),
             ),
           Padding(
             padding: const EdgeInsets.only(top: 3),
-            child: Text(message.time, style: const TextStyle(fontSize: 10.5, color: AppColors.textTertiary)),
+            child: Text(message.time, style: TextStyle(fontSize: 10.5, color: context.colors.textTertiary)),
           ),
         ],
       ),
@@ -238,19 +238,19 @@ class _PollCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border, width: 1.5),
+        border: Border.all(color: context.colors.border, width: 1.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.bar_chart_rounded, size: 15, color: AppColors.accent),
+              Icon(Icons.bar_chart_rounded, size: 15, color: context.colors.accent),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
                   poll.question,
-                  style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+                  style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: context.colors.textPrimary),
                 ),
               ),
             ],
@@ -268,7 +268,7 @@ class _PollCard extends StatelessWidget {
           ],
           Text(
             total == 0 ? 'No votes yet' : '$total vote${total == 1 ? '' : 's'}',
-            style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+            style: TextStyle(fontSize: 11, color: context.colors.textSecondary),
           ),
         ],
       ),
@@ -302,13 +302,13 @@ class _PollOptionRow extends StatelessWidget {
         clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(9),
-          border: Border.all(color: selected ? AppColors.accent : AppColors.border, width: 1.5),
+          border: Border.all(color: selected ? context.colors.accent : context.colors.border, width: 1.5),
         ),
         child: Stack(
           children: [
             FractionallySizedBox(
               widthFactor: fraction,
-              child: Container(color: AppColors.accentTint),
+              child: Container(color: context.colors.accentTint),
             ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
@@ -317,17 +317,17 @@ class _PollOptionRow extends StatelessWidget {
                   Icon(
                     selected ? Icons.check_circle_rounded : Icons.circle_outlined,
                     size: 15,
-                    color: selected ? AppColors.accent : AppColors.textTertiary,
+                    color: selected ? context.colors.accent : context.colors.textTertiary,
                   ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       option,
-                      style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                      style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: context.colors.textPrimary),
                     ),
                   ),
                   if (total > 0)
-                    Text('$percent%', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.textSecondary)),
+                    Text('$percent%', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: context.colors.textSecondary)),
                 ],
               ),
             ),
@@ -388,14 +388,14 @@ class _PollComposeSheetState extends State<_PollComposeSheet> {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('New poll', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+            Text('New poll', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: context.colors.textPrimary)),
             const SizedBox(height: 18),
             TextField(
               controller: _questionController,
               decoration: const InputDecoration(labelText: 'Question', hintText: 'What weekend works best?'),
             ),
             const SizedBox(height: 16),
-            const Text('OPTIONS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textSecondary, letterSpacing: 0.4)),
+            Text('OPTIONS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: context.colors.textSecondary, letterSpacing: 0.4)),
             const SizedBox(height: 8),
             for (final (i, controller) in _optionControllers.indexed)
               Padding(
@@ -411,7 +411,7 @@ class _PollComposeSheetState extends State<_PollComposeSheet> {
                     if (_optionControllers.length > 2)
                       IconButton(
                         onPressed: () => _removeOption(i),
-                        icon: const Icon(Icons.close_rounded, size: 18, color: AppColors.textSecondary),
+                        icon: Icon(Icons.close_rounded, size: 18, color: context.colors.textSecondary),
                         constraints: const BoxConstraints(),
                         padding: const EdgeInsets.only(left: 8),
                       ),
@@ -423,7 +423,7 @@ class _PollComposeSheetState extends State<_PollComposeSheet> {
                 onPressed: _addOption,
                 icon: const Icon(Icons.add_rounded, size: 16),
                 label: const Text('Add option'),
-                style: TextButton.styleFrom(foregroundColor: AppColors.accent, padding: EdgeInsets.zero),
+                style: TextButton.styleFrom(foregroundColor: context.colors.accent, padding: EdgeInsets.zero),
               ),
             const SizedBox(height: 12),
             ElevatedButton(onPressed: _create, child: const Text('Create poll')),

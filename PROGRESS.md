@@ -6,6 +6,56 @@ unclear (e.g. after a compaction/restart) before assuming project state.
 Repo: https://github.com/Sri-Gautham/waypoint-app (private)
 Local path: `/Users/srigautham/Documents/My Projects/Personal Projects/travel-companion-app`
 
+## New feature: Dark mode — built, self-verified, not yet QA-verified
+
+User asked for light/dark mode support defaulting to the device's OS
+setting, alongside a bigger ask (personal status + 24h stories,
+scoped globally across all a user's trips — see the section below,
+not yet started). Agreed build order: dark mode → status line →
+stories. This section covers dark mode only.
+
+**What changed**: `lib/theme/app_colors.dart`'s `AppColors` went from
+a `static const` color class to a `ThemeExtension<AppColors>` with
+`AppColors.light`/`AppColors.dark` palettes (`copyWith`/`lerp`
+implemented). Access changed from static `AppColors.xxx` references to
+a `context.colors.xxx` extension getter (`AppColorsContext` at the
+bottom of the same file), since a `ThemeExtension` can only be read at
+runtime via `Theme.of(context)`. `lib/theme/app_theme.dart`'s
+`AppTheme` now builds both `light()`/`dark()` off one shared `_build`
+that takes an `AppColors` + `Brightness`. `lib/main.dart` gained
+`darkTheme: AppTheme.dark()` and `themeMode: ThemeMode.system` on the
+`MaterialApp` — no manual in-app toggle, purely OS-driven per the ask.
+
+This forced a full mechanical sweep of every screen/widget file that
+referenced the old static `AppColors.xxx` (26 files) to the new
+`context.colors.xxx` form, which in turn broke every `const` expression
+that had captured one of those references (a `ThemeExtension` lookup
+isn't compile-time-constant) — 161 `flutter analyze` errors
+(`invalid_constant`) across 24 files, fixed by removing just the
+specific `const` keyword on each affected constructor, file by file
+(never a blind regex/sed — an earlier bulk-sed attempt at the
+`AppColors.` → `context.colors.` rename itself briefly corrupted both
+theme files by not correctly excluding them; caught and fixed before
+it went further). One distinct bug surfaced in the same sweep, in
+`trip_detail_screen.dart`'s `_MemberRow`: a `StatelessWidget` doesn't
+get an implicit `context` (unlike `State`), so a plain getter
+referencing `context.colors.xxx` had an undefined `context` — fixed by
+converting the getter into a method taking an explicit `BuildContext`
+parameter, called from `build()`.
+
+**Verification status**: `flutter analyze lib` clean (0 issues), full
+arm64 build succeeds, installed and launched on the Simulator without
+crashing. Visually confirmed myself via `simctl io screenshot` in both
+appearance modes (`simctl ui <udid> appearance light|dark`) — light
+mode renders unchanged from before the refactor, dark mode renders
+correctly (dark background, light text, visible borders/accent, no
+unstyled or white-flash elements) on the sign-in screen. Have NOT
+visually walked every screen this way (no tap automation) — the
+`const`-removal fixes were applied per-file by reading each one, but a
+full QA pass across all 26 touched screens (especially ones with
+conditional/status-based coloring — balances owed/owed-to, activity
+badges, chat bubbles) is still warranted before considering this done.
+
 ## New feature: "Things to do nearby" — not yet QA-verified
 
 User's own idea, brainstormed and scoped via a couple of question rounds

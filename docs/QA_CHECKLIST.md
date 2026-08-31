@@ -337,6 +337,45 @@ it goes to the previous step without losing entered data.
   (should create successfully with just you as a member, "1 total" on its
   Trip Detail).
 
+## Dark mode (new) — OS-driven, no in-app toggle
+
+`AppColors` moved from static constants to a `ThemeExtension`
+(`light`/`dark` palettes), `MaterialApp` now sets `themeMode:
+ThemeMode.system` — the app should follow the Simulator's Settings >
+Developer > Dark Appearance (or `xcrun simctl ui <udid> appearance
+dark`), with no manual toggle anywhere in the app. This touched nearly
+every screen (26 files) since every hardcoded `AppColors.xxx` color
+reference had to move to a runtime `context.colors.xxx` lookup — self-
+verified via screenshot on the sign-in screen only (light mode
+unchanged, dark mode renders with a dark background, light text,
+visible borders/accent, no unstyled elements), so the main thing this
+QA pass should catch is anything that slipped through the mechanical
+sweep and still shows a stale/hardcoded color, a white flash, or
+unreadable low-contrast text in dark mode specifically.
+
+- Toggle the Simulator to dark appearance, then walk every major
+  screen (Onboarding/sign-in, Home, Trip Detail, Chat, Trips tab
+  expanded card, Balances tab + Add Expense sheet, Group creation
+  flow) and confirm: background/surface/text colors actually flip (not
+  stuck on the light palette), no white/light-colored boxes or icons
+  left over on a dark background (or vice versa in light mode), text
+  stays legible (no light-gray-on-white or dark-gray-on-black),
+  status/semantic colors (money owed vs owed-to, success/pending
+  badges in Balances and Activity, chat bubble colors) are still
+  visually distinguishable in both modes.
+- Toggle back to light mode and re-check the same screens — should
+  look exactly as before this change (this was the default palette
+  pre-refactor, just now sourced through the `ThemeExtension` instead
+  of static constants; any visual diff here is a regression).
+- Switch appearance while the app is already running (not just cold
+  launch) — Flutter's `ThemeMode.system` should repaint live without
+  needing a restart; a screen stuck on the old palette after a live
+  switch is a bug.
+- No `invalid_constant` or similar analyzer/build errors (already
+  confirmed clean via `flutter analyze lib` before this checklist
+  entry was written, but worth a fresh check if this file changes
+  again).
+
 ## Cross-cutting
 
 - **Shared state**: `AppData` (in `lib/state/app_data.dart`) is the one

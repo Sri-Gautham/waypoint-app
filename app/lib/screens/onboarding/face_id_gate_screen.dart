@@ -68,8 +68,8 @@ class _FaceIdGateScreenState extends State<FaceIdGateScreen> {
               Container(
                 width: 64,
                 height: 64,
-                decoration: const BoxDecoration(color: AppColors.accentTint, shape: BoxShape.circle),
-                child: const Icon(Icons.face_retouching_natural_rounded, color: AppColors.accent, size: 30),
+                decoration: BoxDecoration(color: context.colors.accentTint, shape: BoxShape.circle),
+                child: Icon(Icons.face_retouching_natural_rounded, color: context.colors.accent, size: 30),
               ),
               const SizedBox(height: 24),
               Text(
@@ -81,7 +81,7 @@ class _FaceIdGateScreenState extends State<FaceIdGateScreen> {
               Text(
                 _failed ? "Couldn't verify — try again." : 'Confirm with Face ID to continue.',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 14, color: _failed ? Colors.red : AppColors.textSecondary, height: 1.4),
+                style: TextStyle(fontSize: 14, color: _failed ? Colors.red : context.colors.textSecondary, height: 1.4),
               ),
               const SizedBox(height: 32),
               SizedBox(
@@ -102,7 +102,7 @@ class _FaceIdGateScreenState extends State<FaceIdGateScreen> {
                 width: double.infinity,
                 child: TextButton(
                   onPressed: _busy ? null : _signOutInstead,
-                  child: const Text('Sign in differently', style: TextStyle(color: AppColors.textSecondary)),
+                  child: Text('Sign in differently', style: TextStyle(color: context.colors.textSecondary)),
                 ),
               ),
             ],

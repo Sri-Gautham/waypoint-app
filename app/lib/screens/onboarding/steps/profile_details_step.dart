@@ -108,9 +108,9 @@ class _ProfileDetailsStepState extends State<ProfileDetailsStep> {
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Used to plan routes and carpools for your trips. You can update this anytime.',
-            style: TextStyle(fontSize: 14, color: AppColors.textSecondary, height: 1.4),
+            style: TextStyle(fontSize: 14, color: context.colors.textSecondary, height: 1.4),
           ),
           const SizedBox(height: 20),
           Expanded(
@@ -159,11 +159,11 @@ class _ProfileDetailsStepState extends State<ProfileDetailsStep> {
                   const SizedBox(height: 22),
                   OutlinedButton.icon(
                     onPressed: _useCurrentLocation,
-                    icon: const Icon(Icons.my_location_rounded, size: 15, color: AppColors.accent),
+                    icon: Icon(Icons.my_location_rounded, size: 15, color: context.colors.accent),
                     label: const Text('Use current location'),
                     style: OutlinedButton.styleFrom(
-                      backgroundColor: AppColors.accentTint,
-                      foregroundColor: AppColors.accent,
+                      backgroundColor: context.colors.accentTint,
+                      foregroundColor: context.colors.accent,
                       minimumSize: Size.zero,
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
                       side: BorderSide.none,

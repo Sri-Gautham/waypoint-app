@@ -13,16 +13,16 @@ class ActivityTab extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Activity',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: context.colors.textPrimary),
           ),
           const SizedBox(height: 16),
           for (final item in ActivityItem.sample)
             Container(
               padding: const EdgeInsets.symmetric(vertical: 12),
-              decoration: const BoxDecoration(
-                border: Border(bottom: BorderSide(color: AppColors.divider)),
+              decoration: BoxDecoration(
+                border: Border(bottom: BorderSide(color: context.colors.divider)),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -31,7 +31,7 @@ class ActivityTab extends StatelessWidget {
                     width: 8,
                     height: 8,
                     margin: const EdgeInsets.only(top: 6, right: 10),
-                    decoration: const BoxDecoration(color: AppColors.accent, shape: BoxShape.circle),
+                    decoration: BoxDecoration(color: context.colors.accent, shape: BoxShape.circle),
                   ),
                   Expanded(
                     child: Column(
@@ -39,12 +39,12 @@ class ActivityTab extends StatelessWidget {
                       children: [
                         Text(
                           item.text,
-                          style: const TextStyle(fontSize: 13, color: AppColors.textPrimary, height: 1.4),
+                          style: TextStyle(fontSize: 13, color: context.colors.textPrimary, height: 1.4),
                         ),
                         const SizedBox(height: 2),
                         Text(
                           item.time,
-                          style: const TextStyle(fontSize: 12, color: AppColors.textTertiary),
+                          style: TextStyle(fontSize: 12, color: context.colors.textTertiary),
                         ),
                       ],
                     ),

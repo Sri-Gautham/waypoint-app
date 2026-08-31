@@ -60,12 +60,12 @@ class _AddExpenseSheetState extends State<AddExpenseSheet> {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(Icons.photo_library_outlined, color: AppColors.accent),
+              leading: Icon(Icons.photo_library_outlined, color: context.colors.accent),
               title: const Text('Choose from library'),
               onTap: () => Navigator.of(context).pop(ImageSource.gallery),
             ),
             ListTile(
-              leading: const Icon(Icons.camera_alt_outlined, color: AppColors.accent),
+              leading: Icon(Icons.camera_alt_outlined, color: context.colors.accent),
               title: const Text('Take a photo'),
               onTap: () => Navigator.of(context).pop(ImageSource.camera),
             ),
@@ -128,12 +128,12 @@ class _AddExpenseSheetState extends State<AddExpenseSheet> {
     final selected = _category == category;
     return ChoiceChip(
       label: Text(label),
-      avatar: Icon(icon, size: 16, color: selected ? Colors.white : AppColors.textSecondary),
+      avatar: Icon(icon, size: 16, color: selected ? Colors.white : context.colors.textSecondary),
       selected: selected,
       onSelected: (_) => setState(() => _category = category),
-      selectedColor: AppColors.accent,
-      labelStyle: TextStyle(color: selected ? Colors.white : AppColors.textPrimary, fontSize: 12.5),
-      backgroundColor: AppColors.accentTint,
+      selectedColor: context.colors.accent,
+      labelStyle: TextStyle(color: selected ? Colors.white : context.colors.textPrimary, fontSize: 12.5),
+      backgroundColor: context.colors.accentTint,
       side: BorderSide.none,
     );
   }
@@ -155,10 +155,10 @@ class _AddExpenseSheetState extends State<AddExpenseSheet> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Add expense', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+                Text('Add expense', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: context.colors.textPrimary)),
                 IconButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  icon: const Icon(Icons.close_rounded, size: 20, color: AppColors.textSecondary),
+                  icon: Icon(Icons.close_rounded, size: 20, color: context.colors.textSecondary),
                   constraints: const BoxConstraints(),
                   padding: EdgeInsets.zero,
                   tooltip: 'Cancel',
@@ -168,7 +168,7 @@ class _AddExpenseSheetState extends State<AddExpenseSheet> {
             const SizedBox(height: 18),
             Container(
               padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(color: AppColors.accentTint, borderRadius: BorderRadius.circular(12)),
+              decoration: BoxDecoration(color: context.colors.accentTint, borderRadius: BorderRadius.circular(12)),
               child: Row(
                 children: [
                   if (_receiptImage != null)
@@ -177,12 +177,12 @@ class _AddExpenseSheetState extends State<AddExpenseSheet> {
                       child: Image.file(_receiptImage!, width: 40, height: 40, fit: BoxFit.cover),
                     )
                   else
-                    const Icon(Icons.document_scanner_outlined, color: AppColors.accent, size: 22),
+                    Icon(Icons.document_scanner_outlined, color: context.colors.accent, size: 22),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       _receiptImage == null ? 'Scan a receipt' : (_scanning ? 'Reading receipt…' : 'Amount filled from receipt'),
-                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: context.colors.textPrimary),
                     ),
                   ),
                   OutlinedButton(
@@ -190,7 +190,7 @@ class _AddExpenseSheetState extends State<AddExpenseSheet> {
                     style: OutlinedButton.styleFrom(
                       minimumSize: Size.zero,
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-                      foregroundColor: AppColors.accent,
+                      foregroundColor: context.colors.accent,
                       side: BorderSide.none,
                       backgroundColor: Colors.white,
                       textStyle: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700),
@@ -214,7 +214,7 @@ class _AddExpenseSheetState extends State<AddExpenseSheet> {
               decoration: const InputDecoration(labelText: 'Amount', prefixText: '\$ '),
             ),
             const SizedBox(height: 18),
-            const Text('CATEGORY', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textSecondary, letterSpacing: 0.4)),
+            Text('CATEGORY', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: context.colors.textSecondary, letterSpacing: 0.4)),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
@@ -227,7 +227,7 @@ class _AddExpenseSheetState extends State<AddExpenseSheet> {
               ],
             ),
             const SizedBox(height: 18),
-            const Text('PAID BY', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textSecondary, letterSpacing: 0.4)),
+            Text('PAID BY', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: context.colors.textSecondary, letterSpacing: 0.4)),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
@@ -238,15 +238,15 @@ class _AddExpenseSheetState extends State<AddExpenseSheet> {
                     label: Text(person),
                     selected: _payer == person,
                     onSelected: (_) => setState(() => _payer = person),
-                    selectedColor: AppColors.accent,
-                    labelStyle: TextStyle(color: _payer == person ? Colors.white : AppColors.textPrimary, fontSize: 12.5),
-                    backgroundColor: AppColors.accentTint,
+                    selectedColor: context.colors.accent,
+                    labelStyle: TextStyle(color: _payer == person ? Colors.white : context.colors.textPrimary, fontSize: 12.5),
+                    backgroundColor: context.colors.accentTint,
                     side: BorderSide.none,
                   ),
               ],
             ),
             const SizedBox(height: 18),
-            const Text('SPLIT WITH', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textSecondary, letterSpacing: 0.4)),
+            Text('SPLIT WITH', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: context.colors.textSecondary, letterSpacing: 0.4)),
             const SizedBox(height: 4),
             for (final person in widget.participants)
               CheckboxListTile(
@@ -260,11 +260,11 @@ class _AddExpenseSheetState extends State<AddExpenseSheet> {
                     }
                   });
                 },
-                title: Text(person, style: const TextStyle(fontSize: 13.5, color: AppColors.textPrimary)),
+                title: Text(person, style: TextStyle(fontSize: 13.5, color: context.colors.textPrimary)),
                 controlAffinity: ListTileControlAffinity.leading,
                 contentPadding: EdgeInsets.zero,
                 dense: true,
-                activeColor: AppColors.accent,
+                activeColor: context.colors.accent,
               ),
             const SizedBox(height: 12),
             ElevatedButton(onPressed: _submit, child: const Text('Add expense')),

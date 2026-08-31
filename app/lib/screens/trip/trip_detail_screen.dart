@@ -110,7 +110,7 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
           Padding(
             padding: const EdgeInsets.only(right: 16),
             child: Material(
-              color: AppColors.accent,
+              color: context.colors.accent,
               shape: const CircleBorder(),
               child: InkWell(
                 customBorder: const CircleBorder(),
@@ -216,7 +216,7 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
                   child: Container(
                     height: 64,
                     decoration: BoxDecoration(
-                      border: Border.all(color: AppColors.border, width: 1.5),
+                      border: Border.all(color: context.colors.border, width: 1.5),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Column(
@@ -224,8 +224,8 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
                       children: [
                         const Icon(Icons.wb_sunny_outlined, size: 18, color: Color(0xFFCB9A2E)),
                         const SizedBox(height: 2),
-                        Text(trip.weatherTemp, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
-                        Text(trip.weatherCondition, style: const TextStyle(fontSize: 10.5, color: AppColors.textSecondary)),
+                        Text(trip.weatherTemp, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: context.colors.textPrimary)),
+                        Text(trip.weatherCondition, style: TextStyle(fontSize: 10.5, color: context.colors.textSecondary)),
                       ],
                     ),
                   ),
@@ -248,8 +248,8 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Members', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
-                Text('${trip.members.length + 1} total', style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                Text('Members', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: context.colors.textPrimary)),
+                Text('${trip.members.length + 1} total', style: TextStyle(fontSize: 12, color: context.colors.textSecondary)),
               ],
             ),
             const SizedBox(height: 10),
@@ -303,7 +303,7 @@ class _EtaSection extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.accentTint,
+        color: context.colors.accentTint,
         borderRadius: BorderRadius.circular(14),
       ),
       child: Column(
@@ -311,15 +311,15 @@ class _EtaSection extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.near_me_outlined, size: 16, color: AppColors.accent),
+              Icon(Icons.near_me_outlined, size: 16, color: context.colors.accent),
               const SizedBox(width: 8),
-              const Text("Today's ETAs", style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+              Text("Today's ETAs", style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: context.colors.textPrimary)),
             ],
           ),
           const SizedBox(height: 4),
-          const Text(
+          Text(
             "Share your live location once — this doesn't track in the background.",
-            style: TextStyle(fontSize: 11.5, color: AppColors.textSecondary, height: 1.3),
+            style: TextStyle(fontSize: 11.5, color: context.colors.textSecondary, height: 1.3),
           ),
           const SizedBox(height: 12),
           SizedBox(
@@ -349,13 +349,13 @@ class _EtaSection extends StatelessWidget {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(name, style: const TextStyle(fontSize: 12.5, color: AppColors.textPrimary)),
+                        Text(name, style: TextStyle(fontSize: 12.5, color: context.colors.textPrimary)),
                         Text(
                           eta == null ? 'Not shared yet' : '${_formatEta(eta.etaMinutes)} · ${_formatAge(eta.computedAt)}',
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: eta == null ? FontWeight.normal : FontWeight.w700,
-                            color: eta == null ? AppColors.textTertiary : AppColors.textPrimary,
+                            color: eta == null ? context.colors.textTertiary : context.colors.textPrimary,
                           ),
                         ),
                       ],
@@ -377,20 +377,20 @@ class _MemberRow extends StatelessWidget {
   final MemberStatus status;
   final String distance;
 
-  (Color, Color, String) get _badge {
+  (Color, Color, String) _badge(BuildContext context) {
     switch (status) {
       case MemberStatus.admin:
-        return (AppColors.accentTint, AppColors.accent, 'Admin');
+        return (context.colors.accentTint, context.colors.accent, 'Admin');
       case MemberStatus.member:
-        return (AppColors.successBg, AppColors.success, 'Member');
+        return (context.colors.successBg, context.colors.success, 'Member');
       case MemberStatus.invited:
-        return (AppColors.pendingBg, AppColors.textSecondary, 'Invited');
+        return (context.colors.pendingBg, context.colors.textSecondary, 'Invited');
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final (bg, fg, label) = _badge;
+    final (bg, fg, label) = _badge(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -399,8 +399,8 @@ class _MemberRow extends StatelessWidget {
             width: 34,
             height: 34,
             alignment: Alignment.center,
-            decoration: const BoxDecoration(color: AppColors.accentTint, shape: BoxShape.circle),
-            child: Text(initials, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+            decoration: BoxDecoration(color: context.colors.accentTint, shape: BoxShape.circle),
+            child: Text(initials, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: context.colors.textPrimary)),
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -409,7 +409,7 @@ class _MemberRow extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Text(name, style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                    Text(name, style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: context.colors.textPrimary)),
                     const SizedBox(width: 6),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
@@ -418,7 +418,7 @@ class _MemberRow extends StatelessWidget {
                     ),
                   ],
                 ),
-                Text('$distance from home', style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                Text('$distance from home', style: TextStyle(fontSize: 12, color: context.colors.textSecondary)),
               ],
             ),
           ),

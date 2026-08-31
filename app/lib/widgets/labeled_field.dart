@@ -36,10 +36,10 @@ class LabeledField extends StatelessWidget {
       children: [
         Text(
           label.toUpperCase(),
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
-            color: AppColors.textSecondary,
+            color: context.colors.textSecondary,
             letterSpacing: 0.4,
           ),
         ),
@@ -49,7 +49,7 @@ class LabeledField extends StatelessWidget {
           initialValue: controller == null ? initialValue : null,
           keyboardType: keyboardType,
           onChanged: onChanged,
-          style: const TextStyle(fontSize: 15, color: AppColors.textPrimary),
+          style: TextStyle(fontSize: 15, color: context.colors.textPrimary),
           decoration: InputDecoration(hintText: hint),
         ),
       ],

@@ -6,42 +6,46 @@ import 'app_colors.dart';
 class AppTheme {
   AppTheme._();
 
-  static ThemeData light() {
-    final base = ThemeData.light(useMaterial3: true);
+  static ThemeData light() => _build(AppColors.light, Brightness.light);
+  static ThemeData dark() => _build(AppColors.dark, Brightness.dark);
+
+  static ThemeData _build(AppColors colors, Brightness brightness) {
+    final base = ThemeData(brightness: brightness, useMaterial3: true);
     final textTheme = GoogleFonts.manropeTextTheme(base.textTheme).apply(
-      bodyColor: AppColors.textPrimary,
-      displayColor: AppColors.textPrimary,
+      bodyColor: colors.textPrimary,
+      displayColor: colors.textPrimary,
     );
 
     return base.copyWith(
-      scaffoldBackgroundColor: AppColors.background,
+      scaffoldBackgroundColor: colors.background,
       colorScheme: base.colorScheme.copyWith(
-        primary: AppColors.accent,
-        surface: AppColors.background,
+        primary: colors.accent,
+        surface: colors.background,
       ),
       textTheme: textTheme,
-      appBarTheme: const AppBarTheme(
-        backgroundColor: AppColors.background,
-        foregroundColor: AppColors.textPrimary,
+      extensions: [colors],
+      appBarTheme: AppBarTheme(
+        backgroundColor: colors.background,
+        foregroundColor: colors.textPrimary,
         elevation: 0,
         centerTitle: false,
       ),
       inputDecorationTheme: InputDecorationTheme(
         border: UnderlineInputBorder(
-          borderSide: const BorderSide(color: AppColors.border, width: 1.5),
+          borderSide: BorderSide(color: colors.border, width: 1.5),
         ),
         enabledBorder: UnderlineInputBorder(
-          borderSide: const BorderSide(color: AppColors.border, width: 1.5),
+          borderSide: BorderSide(color: colors.border, width: 1.5),
         ),
-        focusedBorder: const UnderlineInputBorder(
-          borderSide: BorderSide(color: AppColors.accent, width: 1.5),
+        focusedBorder: UnderlineInputBorder(
+          borderSide: BorderSide(color: colors.accent, width: 1.5),
         ),
         contentPadding: const EdgeInsets.symmetric(vertical: 8),
-        hintStyle: GoogleFonts.manrope(color: AppColors.placeholder, fontSize: 15),
+        hintStyle: GoogleFonts.manrope(color: colors.placeholder, fontSize: 15),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.accent,
+          backgroundColor: colors.accent,
           foregroundColor: Colors.white,
           minimumSize: const Size.fromHeight(52),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -51,9 +55,9 @@ class AppTheme {
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.textPrimary,
+          foregroundColor: colors.textPrimary,
           minimumSize: const Size.fromHeight(52),
-          side: const BorderSide(color: AppColors.border, width: 1.5),
+          side: BorderSide(color: colors.border, width: 1.5),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           textStyle: GoogleFonts.manrope(fontSize: 15, fontWeight: FontWeight.w700),
         ),

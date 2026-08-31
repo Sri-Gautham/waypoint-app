@@ -71,7 +71,7 @@ class _ProfileTabState extends State<ProfileTab> {
                   width: 64,
                   height: 64,
                   alignment: Alignment.center,
-                  decoration: const BoxDecoration(color: AppColors.accent, shape: BoxShape.circle),
+                  decoration: BoxDecoration(color: context.colors.accent, shape: BoxShape.circle),
                   child: Text(
                     data.initials,
                     style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800),
@@ -80,7 +80,7 @@ class _ProfileTabState extends State<ProfileTab> {
                 const SizedBox(height: 12),
                 Text(
                   data.fullName.isEmpty ? 'Jamie Rivera' : data.fullName,
-                  style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: context.colors.textPrimary),
                 ),
               ],
             ),
@@ -92,7 +92,7 @@ class _ProfileTabState extends State<ProfileTab> {
           Container(
             padding: const EdgeInsets.only(bottom: 14),
             margin: const EdgeInsets.only(bottom: 14),
-            decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: AppColors.divider))),
+            decoration: BoxDecoration(border: Border(bottom: BorderSide(color: context.colors.divider))),
             child: Row(
               children: [
                 Expanded(
@@ -101,10 +101,10 @@ class _ProfileTabState extends State<ProfileTab> {
                     children: [
                       Text(
                         'FACE ID'.toUpperCase(),
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary, letterSpacing: 0.4),
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: context.colors.textSecondary, letterSpacing: 0.4),
                       ),
                       const SizedBox(height: 4),
-                      const Text('Skip sign-in on relaunch', style: TextStyle(fontSize: 14, color: AppColors.textPrimary)),
+                      Text('Skip sign-in on relaunch', style: TextStyle(fontSize: 14, color: context.colors.textPrimary)),
                     ],
                   ),
                 ),
@@ -112,7 +112,7 @@ class _ProfileTabState extends State<ProfileTab> {
                     ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
                     : Switch(
                         value: data.faceIdEnabled,
-                        activeThumbColor: AppColors.accent,
+                        activeThumbColor: context.colors.accent,
                         onChanged: _toggleFaceId,
                       ),
               ],
@@ -144,16 +144,16 @@ class _InfoRow extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.only(bottom: 14),
       margin: const EdgeInsets.only(bottom: 14),
-      decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: AppColors.divider))),
+      decoration: BoxDecoration(border: Border(bottom: BorderSide(color: context.colors.divider))),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             label.toUpperCase(),
-            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary, letterSpacing: 0.4),
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: context.colors.textSecondary, letterSpacing: 0.4),
           ),
           const SizedBox(height: 4),
-          Text(value, style: const TextStyle(fontSize: 14, color: AppColors.textPrimary)),
+          Text(value, style: TextStyle(fontSize: 14, color: context.colors.textPrimary)),
         ],
       ),
     );

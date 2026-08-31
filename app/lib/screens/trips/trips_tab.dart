@@ -89,12 +89,12 @@ class _TripsTabState extends State<TripsTab> {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(Icons.photo_library_outlined, color: AppColors.accent),
+              leading: Icon(Icons.photo_library_outlined, color: context.colors.accent),
               title: const Text('Choose from library'),
               onTap: () => Navigator.of(context).pop(ImageSource.gallery),
             ),
             ListTile(
-              leading: const Icon(Icons.camera_alt_outlined, color: AppColors.accent),
+              leading: Icon(Icons.camera_alt_outlined, color: context.colors.accent),
               title: const Text('Take a photo'),
               onTap: () => Navigator.of(context).pop(ImageSource.camera),
             ),
@@ -143,7 +143,7 @@ class _TripsTabState extends State<TripsTab> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Trips', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+          Text('Trips', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: context.colors.textPrimary)),
           const SizedBox(height: 20),
           const _SectionLabel('Upcoming'),
           const SizedBox(height: 10),
@@ -195,7 +195,7 @@ class _SectionLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text.toUpperCase(),
-      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.textSecondary, letterSpacing: 0.5),
+      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: context.colors.textSecondary, letterSpacing: 0.5),
     );
   }
 }
@@ -233,7 +233,7 @@ class _PastTripCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        border: Border.all(color: AppColors.border, width: 1.5),
+        border: Border.all(color: context.colors.border, width: 1.5),
         borderRadius: BorderRadius.circular(14),
       ),
       padding: const EdgeInsets.all(14),
@@ -257,8 +257,8 @@ class _PastTripCard extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(trip.name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
-                            Text('${trip.destination} · ${trip.dateLabel}', style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                            Text(trip.name, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: context.colors.textPrimary)),
+                            Text('${trip.destination} · ${trip.dateLabel}', style: TextStyle(fontSize: 12, color: context.colors.textSecondary)),
                           ],
                         ),
                       ),
@@ -267,7 +267,7 @@ class _PastTripCard extends StatelessWidget {
                 ),
               ),
               Material(
-                color: AppColors.accent,
+                color: context.colors.accent,
                 shape: const CircleBorder(),
                 child: InkWell(
                   customBorder: const CircleBorder(),
@@ -282,14 +282,14 @@ class _PastTripCard extends StatelessWidget {
             ],
           ),
           if (expanded) ...[
-            const Padding(
-              padding: EdgeInsets.only(top: 14, bottom: 12),
-              child: Divider(height: 1, color: AppColors.divider),
+            Padding(
+              padding: const EdgeInsets.only(top: 14, bottom: 12),
+              child: Divider(height: 1, color: context.colors.divider),
             ),
             _MemoryRecapCard(trip: trip, totalSpend: totalSpend, photoCount: photos.length),
-            const Padding(
-              padding: EdgeInsets.only(top: 18, bottom: 8),
-              child: Divider(height: 1, color: AppColors.divider),
+            Padding(
+              padding: const EdgeInsets.only(top: 18, bottom: 8),
+              child: Divider(height: 1, color: context.colors.divider),
             ),
             _SectionLabel('Members'),
             const SizedBox(height: 8),
@@ -301,7 +301,7 @@ class _PastTripCard extends StatelessWidget {
                 _SectionLabel('Photos'),
                 Text(
                   photos.isEmpty ? 'No photos yet' : '${photos.length} photo${photos.length == 1 ? '' : 's'}',
-                  style: const TextStyle(fontSize: 11.5, color: AppColors.textSecondary),
+                  style: TextStyle(fontSize: 11.5, color: context.colors.textSecondary),
                 ),
               ],
             ),
@@ -375,12 +375,12 @@ class _UpcomingTripCard extends StatelessWidget {
               children: [
                 Text(
                   expanded ? 'Hide details' : 'Details',
-                  style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppColors.accent),
+                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: context.colors.accent),
                 ),
                 Icon(
                   expanded ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
                   size: 18,
-                  color: AppColors.accent,
+                  color: context.colors.accent,
                 ),
               ],
             ),
@@ -390,7 +390,7 @@ class _UpcomingTripCard extends StatelessWidget {
           Container(
             width: double.infinity,
             padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
-            decoration: BoxDecoration(border: Border.all(color: AppColors.border, width: 1.5), borderRadius: BorderRadius.circular(14)),
+            decoration: BoxDecoration(border: Border.all(color: context.colors.border, width: 1.5), borderRadius: BorderRadius.circular(14)),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -448,7 +448,7 @@ class _ThingsToDoSection extends StatelessWidget {
                 style: TextButton.styleFrom(
                   minimumSize: Size.zero,
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  foregroundColor: AppColors.accent,
+                  foregroundColor: context.colors.accent,
                   textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
                 ),
               ),
@@ -463,7 +463,7 @@ class _ThingsToDoSection extends StatelessWidget {
         else if (places.isEmpty)
           Text(
             onBrowse != null ? 'Nothing saved yet — browse nearby to add some.' : 'Nothing was saved for this trip.',
-            style: const TextStyle(fontSize: 12.5, color: AppColors.textSecondary),
+            style: TextStyle(fontSize: 12.5, color: context.colors.textSecondary),
           )
         else
           for (final place in places)
@@ -475,24 +475,24 @@ class _ThingsToDoSection extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(place.name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                        Text(place.name, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: context.colors.textPrimary)),
                         Text(
                           '${place.category} · added by ${place.addedByName}',
-                          style: const TextStyle(fontSize: 11.5, color: AppColors.textSecondary),
+                          style: TextStyle(fontSize: 11.5, color: context.colors.textSecondary),
                         ),
                       ],
                     ),
                   ),
                   IconButton(
                     onPressed: () => onNavigate(place),
-                    icon: const Icon(Icons.directions_rounded, size: 20, color: AppColors.accent),
+                    icon: Icon(Icons.directions_rounded, size: 20, color: context.colors.accent),
                     tooltip: 'Navigate',
                     constraints: const BoxConstraints(),
                     padding: const EdgeInsets.all(8),
                   ),
                   IconButton(
                     onPressed: () => onRemove(place),
-                    icon: const Icon(Icons.close_rounded, size: 18, color: AppColors.textTertiary),
+                    icon: Icon(Icons.close_rounded, size: 18, color: context.colors.textTertiary),
                     tooltip: 'Remove',
                     constraints: const BoxConstraints(),
                     padding: const EdgeInsets.all(8),
@@ -583,13 +583,13 @@ class _StatTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(color: AppColors.accentTint, borderRadius: BorderRadius.circular(10)),
+      decoration: BoxDecoration(color: context.colors.accentTint, borderRadius: BorderRadius.circular(10)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label.toUpperCase(), style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.textSecondary, letterSpacing: 0.4)),
+          Text(label.toUpperCase(), style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: context.colors.textSecondary, letterSpacing: 0.4)),
           const SizedBox(height: 2),
-          Text(value, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+          Text(value, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: context.colors.textPrimary)),
         ],
       ),
     );
@@ -616,11 +616,11 @@ class _MemberList extends StatelessWidget {
                   width: 26,
                   height: 26,
                   alignment: Alignment.center,
-                  decoration: const BoxDecoration(color: AppColors.accentTint, shape: BoxShape.circle),
-                  child: Text(member.initials, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                  decoration: BoxDecoration(color: context.colors.accentTint, shape: BoxShape.circle),
+                  child: Text(member.initials, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: context.colors.textPrimary)),
                 ),
                 const SizedBox(width: 8),
-                Text(member.name, style: const TextStyle(fontSize: 12.5, color: AppColors.textPrimary)),
+                Text(member.name, style: TextStyle(fontSize: 12.5, color: context.colors.textPrimary)),
               ],
             ),
           ),
@@ -662,10 +662,10 @@ class _PhotoGrid extends StatelessWidget {
               height: tileSize,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                border: Border.all(color: AppColors.border, width: 1.5),
+                border: Border.all(color: context.colors.border, width: 1.5),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(Icons.add_rounded, size: 20, color: AppColors.textSecondary),
+              child: Icon(Icons.add_rounded, size: 20, color: context.colors.textSecondary),
             ),
           ),
         ];
@@ -706,16 +706,16 @@ class _ActivityLog extends StatelessWidget {
                   width: 24,
                   height: 24,
                   alignment: Alignment.center,
-                  decoration: const BoxDecoration(color: AppColors.divider, shape: BoxShape.circle),
-                  child: Icon(_iconFor(entry.kind), size: 12, color: AppColors.textSecondary),
+                  decoration: BoxDecoration(color: context.colors.divider, shape: BoxShape.circle),
+                  child: Icon(_iconFor(entry.kind), size: 12, color: context.colors.textSecondary),
                 ),
                 const SizedBox(width: 9),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(entry.text, style: const TextStyle(fontSize: 12.5, color: AppColors.textPrimary, height: 1.4)),
-                      Text(entry.time, style: const TextStyle(fontSize: 11, color: AppColors.textTertiary)),
+                      Text(entry.text, style: TextStyle(fontSize: 12.5, color: context.colors.textPrimary, height: 1.4)),
+                      Text(entry.time, style: TextStyle(fontSize: 11, color: context.colors.textTertiary)),
                     ],
                   ),
                 ),

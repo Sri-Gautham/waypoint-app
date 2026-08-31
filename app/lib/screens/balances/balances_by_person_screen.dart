@@ -90,16 +90,16 @@ class _BalancesByPersonScreenState extends State<BalancesByPersonScreen> {
             Center(
               child: Column(
                 children: [
-                  const Text('OVERALL', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textSecondary, letterSpacing: 0.5)),
+                  Text('OVERALL', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: context.colors.textSecondary, letterSpacing: 0.5)),
                   const SizedBox(height: 4),
                   Text(
                     net == 0 ? 'All settled up' : (net < 0 ? 'You owe \$${(-net).toStringAsFixed(2)}' : "You're owed \$${net.toStringAsFixed(2)}"),
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: net == 0 ? AppColors.textSecondary : (net < 0 ? AppColors.moneyOwe : AppColors.moneyOwed)),
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: net == 0 ? context.colors.textSecondary : (net < 0 ? context.colors.moneyOwe : context.colors.moneyOwed)),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     'You owe \$${totalOwe.toStringAsFixed(2)} · You\'re owed \$${totalOwed.toStringAsFixed(2)}',
-                    style: const TextStyle(fontSize: 12.5, color: AppColors.textSecondary),
+                    style: TextStyle(fontSize: 12.5, color: context.colors.textSecondary),
                   ),
                 ],
               ),
@@ -124,11 +124,11 @@ class _BalancesByPersonScreenState extends State<BalancesByPersonScreen> {
     final settleOpen = _settleOpenMember == member;
     final initials = member.split(' ').where((s) => s.isNotEmpty).map((s) => s[0]).take(2).join().toUpperCase();
 
-    final netColor = adjusted == 0 ? AppColors.textSecondary : (owesThem ? AppColors.moneyOwe : AppColors.moneyOwed);
+    final netColor = adjusted == 0 ? context.colors.textSecondary : (owesThem ? context.colors.moneyOwe : context.colors.moneyOwed);
     final netLabel = adjusted == 0 ? 'Settled up' : (owesThem ? 'You owe \$${owed.toStringAsFixed(2)}' : "Owes you \$${owed.toStringAsFixed(2)}");
 
     return Container(
-      decoration: BoxDecoration(border: Border.all(color: AppColors.border, width: 1.5), borderRadius: BorderRadius.circular(14)),
+      decoration: BoxDecoration(border: Border.all(color: context.colors.border, width: 1.5), borderRadius: BorderRadius.circular(14)),
       padding: const EdgeInsets.all(12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -144,11 +144,11 @@ class _BalancesByPersonScreenState extends State<BalancesByPersonScreen> {
                         width: 34,
                         height: 34,
                         alignment: Alignment.center,
-                        decoration: const BoxDecoration(color: AppColors.accentTint, shape: BoxShape.circle),
-                        child: Text(initials, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                        decoration: BoxDecoration(color: context.colors.accentTint, shape: BoxShape.circle),
+                        child: Text(initials, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: context.colors.textPrimary)),
                       ),
                       const SizedBox(width: 10),
-                      Expanded(child: Text(member, style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: AppColors.textPrimary))),
+                      Expanded(child: Text(member, style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: context.colors.textPrimary))),
                     ],
                   ),
                 ),
@@ -161,8 +161,8 @@ class _BalancesByPersonScreenState extends State<BalancesByPersonScreen> {
                   style: OutlinedButton.styleFrom(
                     minimumSize: Size.zero,
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    side: const BorderSide(color: AppColors.accent, width: 1.5),
-                    foregroundColor: AppColors.accent,
+                    side: BorderSide(color: context.colors.accent, width: 1.5),
+                    foregroundColor: context.colors.accent,
                     textStyle: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700),
                   ),
                   child: const Text('Settle up'),
@@ -171,12 +171,12 @@ class _BalancesByPersonScreenState extends State<BalancesByPersonScreen> {
             ],
           ),
           if (settleOpen) ...[
-            const Padding(padding: EdgeInsets.symmetric(vertical: 12), child: Divider(height: 1, color: AppColors.divider)),
-            Text('Record a payment to $member', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textSecondary)),
+            Padding(padding: const EdgeInsets.symmetric(vertical: 12), child: Divider(height: 1, color: context.colors.divider)),
+            Text('Record a payment to $member', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: context.colors.textSecondary)),
             const SizedBox(height: 8),
             Row(
               children: [
-                const Text('\$', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                Text('\$', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: context.colors.textPrimary)),
                 const SizedBox(width: 6),
                 Expanded(
                   child: TextField(
@@ -190,7 +190,7 @@ class _BalancesByPersonScreenState extends State<BalancesByPersonScreen> {
             ),
             Padding(
               padding: const EdgeInsets.only(top: 6),
-              child: Text('Up to \$${owed.toStringAsFixed(2)}, the full amount owed.', style: const TextStyle(fontSize: 11, color: AppColors.textTertiary)),
+              child: Text('Up to \$${owed.toStringAsFixed(2)}, the full amount owed.', style: TextStyle(fontSize: 11, color: context.colors.textTertiary)),
             ),
             const SizedBox(height: 12),
             Row(
@@ -212,17 +212,17 @@ class _BalancesByPersonScreenState extends State<BalancesByPersonScreen> {
             ),
           ],
           if (expanded) ...[
-            const Padding(padding: EdgeInsets.symmetric(vertical: 12), child: Divider(height: 1, color: AppColors.divider)),
+            Padding(padding: const EdgeInsets.symmetric(vertical: 12), child: Divider(height: 1, color: context.colors.divider)),
             for (final (tripName, amount) in trips)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 4),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(tripName, style: const TextStyle(fontSize: 12.5, color: AppColors.textSecondary)),
+                    Text(tripName, style: TextStyle(fontSize: 12.5, color: context.colors.textSecondary)),
                     Text(
                       amount < 0 ? 'You owe \$${(-amount).toStringAsFixed(2)}' : 'Owes you \$${amount.toStringAsFixed(2)}',
-                      style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: amount < 0 ? AppColors.moneyOwe : AppColors.moneyOwed),
+                      style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: amount < 0 ? context.colors.moneyOwe : context.colors.moneyOwed),
                     ),
                   ],
                 ),
@@ -233,8 +233,8 @@ class _BalancesByPersonScreenState extends State<BalancesByPersonScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Payment sent', style: TextStyle(fontSize: 12.5, color: AppColors.textSecondary)),
-                    Text('You paid \$${paid.toStringAsFixed(2)}', style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppColors.moneyOwed)),
+                    Text('Payment sent', style: TextStyle(fontSize: 12.5, color: context.colors.textSecondary)),
+                    Text('You paid \$${paid.toStringAsFixed(2)}', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: context.colors.moneyOwed)),
                   ],
                 ),
               ),

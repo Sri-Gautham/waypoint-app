@@ -32,17 +32,17 @@ class HomeTab extends StatelessWidget {
                 children: [
                   Text(
                     'Hi, $firstName',
-                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: context.colors.textPrimary),
                   ),
                   const SizedBox(height: 4),
-                  const Text("Here's what's coming up", style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                  Text("Here's what's coming up", style: TextStyle(fontSize: 13, color: context.colors.textSecondary)),
                 ],
               ),
               Container(
                 width: 38,
                 height: 38,
                 alignment: Alignment.center,
-                decoration: const BoxDecoration(color: AppColors.accent, shape: BoxShape.circle),
+                decoration: BoxDecoration(color: context.colors.accent, shape: BoxShape.circle),
                 child: Text(
                   data.initials,
                   style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w800),
@@ -81,16 +81,16 @@ class HomeTab extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 28),
-          const Text(
+          Text(
             'Recent activity',
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: context.colors.textPrimary),
           ),
           const SizedBox(height: 12),
           for (final item in ActivityItem.sample)
             Container(
               padding: const EdgeInsets.symmetric(vertical: 10),
-              decoration: const BoxDecoration(
-                border: Border(bottom: BorderSide(color: AppColors.divider)),
+              decoration: BoxDecoration(
+                border: Border(bottom: BorderSide(color: context.colors.divider)),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -99,15 +99,15 @@ class HomeTab extends StatelessWidget {
                     width: 8,
                     height: 8,
                     margin: const EdgeInsets.only(top: 6, right: 10),
-                    decoration: const BoxDecoration(color: AppColors.accent, shape: BoxShape.circle),
+                    decoration: BoxDecoration(color: context.colors.accent, shape: BoxShape.circle),
                   ),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(item.text, style: const TextStyle(fontSize: 13, color: AppColors.textPrimary, height: 1.4)),
+                        Text(item.text, style: TextStyle(fontSize: 13, color: context.colors.textPrimary, height: 1.4)),
                         const SizedBox(height: 2),
-                        Text(item.time, style: const TextStyle(fontSize: 12, color: AppColors.textTertiary)),
+                        Text(item.time, style: TextStyle(fontSize: 12, color: context.colors.textTertiary)),
                       ],
                     ),
                   ),

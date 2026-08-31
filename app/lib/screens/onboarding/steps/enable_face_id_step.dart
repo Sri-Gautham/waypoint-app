@@ -50,8 +50,8 @@ class _EnableFaceIdStepState extends State<EnableFaceIdStep> {
           Container(
             width: 64,
             height: 64,
-            decoration: const BoxDecoration(color: AppColors.accentTint, shape: BoxShape.circle),
-            child: const Icon(Icons.face_retouching_natural_rounded, color: AppColors.accent, size: 30),
+            decoration: BoxDecoration(color: context.colors.accentTint, shape: BoxShape.circle),
+            child: Icon(Icons.face_retouching_natural_rounded, color: context.colors.accent, size: 30),
           ),
           const SizedBox(height: 24),
           Text(
@@ -60,10 +60,10 @@ class _EnableFaceIdStepState extends State<EnableFaceIdStep> {
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 10),
-          const Text(
+          Text(
             "Skip signing in next time — just confirm with Face ID and you're back in your trips.",
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 14, color: AppColors.textSecondary, height: 1.4),
+            style: TextStyle(fontSize: 14, color: context.colors.textSecondary, height: 1.4),
           ),
           const SizedBox(height: 32),
           SizedBox(
@@ -84,7 +84,7 @@ class _EnableFaceIdStepState extends State<EnableFaceIdStep> {
             width: double.infinity,
             child: TextButton(
               onPressed: _busy ? null : widget.onDone,
-              child: const Text('Not now', style: TextStyle(color: AppColors.textSecondary)),
+              child: Text('Not now', style: TextStyle(color: context.colors.textSecondary)),
             ),
           ),
         ],

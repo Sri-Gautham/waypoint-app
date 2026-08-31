@@ -67,10 +67,10 @@ class _GroupDestinationStepState extends State<GroupDestinationStep> {
           const SizedBox(height: 12),
           StepHeader(step: 2, total: 3, onBack: widget.onBack),
           const SizedBox(height: 24),
-          const Text('Destination', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+          Text('Destination', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: context.colors.textPrimary)),
           const SizedBox(height: 20),
           Container(
-            decoration: BoxDecoration(border: Border.all(color: AppColors.border, width: 1.5), borderRadius: BorderRadius.circular(10)),
+            decoration: BoxDecoration(border: Border.all(color: context.colors.border, width: 1.5), borderRadius: BorderRadius.circular(10)),
             padding: const EdgeInsets.all(3),
             child: Row(
               children: [
@@ -104,7 +104,7 @@ class _GroupDestinationStepState extends State<GroupDestinationStep> {
                   Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: AppColors.accentTint,
+                      color: context.colors.accentTint,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
@@ -115,7 +115,7 @@ class _GroupDestinationStepState extends State<GroupDestinationStep> {
                             child: Image.memory(draft.generatedCoverBytes!, width: 44, height: 44, fit: BoxFit.cover),
                           )
                         else
-                          const Icon(Icons.auto_awesome_rounded, color: AppColors.accent, size: 22),
+                          Icon(Icons.auto_awesome_rounded, color: context.colors.accent, size: 22),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Column(
@@ -123,12 +123,12 @@ class _GroupDestinationStepState extends State<GroupDestinationStep> {
                             children: [
                               Text(
                                 draft.generatedCoverBytes != null ? 'Generated cover ready' : 'Generate a cover',
-                                style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                                style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: context.colors.textPrimary),
                               ),
                               const SizedBox(height: 2),
-                              const Text(
+                              Text(
                                 'Based on this destination, on-device.',
-                                style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                                style: TextStyle(fontSize: 12, color: context.colors.textSecondary),
                               ),
                             ],
                           ),
@@ -139,7 +139,7 @@ class _GroupDestinationStepState extends State<GroupDestinationStep> {
                           style: OutlinedButton.styleFrom(
                             minimumSize: Size.zero,
                             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-                            foregroundColor: AppColors.accent,
+                            foregroundColor: context.colors.accent,
                             side: BorderSide.none,
                             backgroundColor: Colors.white,
                             textStyle: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700),
@@ -176,9 +176,9 @@ class _GroupDestinationStepState extends State<GroupDestinationStep> {
       onTap: () => setState(() => widget.draft.destMode = mode),
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 9),
-        decoration: BoxDecoration(color: selected ? AppColors.accent : Colors.transparent, borderRadius: BorderRadius.circular(7)),
+        decoration: BoxDecoration(color: selected ? context.colors.accent : Colors.transparent, borderRadius: BorderRadius.circular(7)),
         alignment: Alignment.center,
-        child: Text(label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: selected ? Colors.white : AppColors.textPrimary)),
+        child: Text(label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: selected ? Colors.white : context.colors.textPrimary)),
       ),
     );
   }

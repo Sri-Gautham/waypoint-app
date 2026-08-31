@@ -18,7 +18,7 @@ class AllSetStep extends StatelessWidget {
           Container(
             width: 64,
             height: 64,
-            decoration: const BoxDecoration(color: AppColors.accent, shape: BoxShape.circle),
+            decoration: BoxDecoration(color: context.colors.accent, shape: BoxShape.circle),
             child: const Icon(Icons.check_rounded, color: Colors.white, size: 32),
           ),
           const SizedBox(height: 24),
@@ -28,10 +28,10 @@ class AllSetStep extends StatelessWidget {
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 10),
-          const Text(
+          Text(
             "Your account is ready. Let's get you to your trips.",
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 14, color: AppColors.textSecondary, height: 1.4),
+            style: TextStyle(fontSize: 14, color: context.colors.textSecondary, height: 1.4),
           ),
           const SizedBox(height: 32),
           SizedBox(

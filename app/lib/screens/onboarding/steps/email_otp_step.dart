@@ -102,7 +102,7 @@ class _EmailOtpStepState extends State<EmailOtpStep> {
               const SizedBox(height: 8),
               Text(
                 'We sent a 6-digit code to ${widget.email}.',
-                style: const TextStyle(fontSize: 14, color: AppColors.textSecondary, height: 1.4),
+                style: TextStyle(fontSize: 14, color: context.colors.textSecondary, height: 1.4),
               ),
               const SizedBox(height: 28),
               TextField(
