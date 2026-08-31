@@ -6,7 +6,7 @@ unclear (e.g. after a compaction/restart) before assuming project state.
 Repo: https://github.com/Sri-Gautham/waypoint-app (private)
 Local path: `/Users/srigautham/Documents/My Projects/Personal Projects/travel-companion-app`
 
-## New feature: Dark mode — built, self-verified, not yet QA-verified
+## New feature: Dark mode — QA-verified, done
 
 User asked for light/dark mode support defaulting to the device's OS
 setting, alongside a bigger ask (personal status + 24h stories,
@@ -51,10 +51,31 @@ mode renders unchanged from before the refactor, dark mode renders
 correctly (dark background, light text, visible borders/accent, no
 unstyled or white-flash elements) on the sign-in screen. Have NOT
 visually walked every screen this way (no tap automation) — the
-`const`-removal fixes were applied per-file by reading each one, but a
-full QA pass across all 26 touched screens (especially ones with
-conditional/status-based coloring — balances owed/owed-to, activity
-badges, chat bubbles) is still warranted before considering this done.
+`const`-removal fixes were applied per-file by reading each one.
+
+**QA pass on `3f8d73c` — clean, no bugs found.** Rather than relying on
+`simctl` screenshots (documented as unreliable in this environment), QA
+read the resolved `AppColors` `ThemeExtension` directly off the live
+widget tree (`Theme.of(context).extension<AppColors>()`) and compared
+it field-by-field against `AppColors.light`/`.dark` — exact, not a
+visual judgment call. Confirmed: zero remaining static `AppColors.xxx`
+references anywhere outside the theme files (mechanical migration
+complete); every one of the ~30 hardcoded `Colors.white`/`Colors.black`
+references in `lib/` audited and found legitimate/theme-independent by
+design (photo+scrim overlays, text on accent-colored buttons, Apple's
+required Sign in with Apple branding, full-screen black lightbox
+viewers) — none are a stale light-mode leak; cold launch in both dark
+and light resolves every screen (Sign-in, Home, Trip Detail, Chat,
+Trips tab collapsed+expanded, Balances tab, Add Expense sheet, Group
+creation) to the exact expected palette, light mode pixel-for-pixel
+unchanged from before the refactor; semantic colors (moneyOwe vs
+moneyOwed, successBg vs pendingBg, chat bubble self/other) stay
+genuinely distinct in dark mode; and — the one check that needed a real
+running app, not just a resolved value — flipping the Simulator's OS
+appearance *while the app was already running* (`simctl ui <udid>
+appearance dark`, no restart) triggered a live repaint to the exact
+dark palette, confirming `ThemeMode.system` actually works, not just
+that the static values are correct. Dark mode is done.
 
 ## New feature: "Things to do nearby" — not yet QA-verified
 
