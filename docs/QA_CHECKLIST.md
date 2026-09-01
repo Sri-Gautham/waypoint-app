@@ -16,6 +16,12 @@ apart look suspiciously identical despite navigating, cross-check with a
 video-frame capture or direct widget-tree inspection before filing it as a
 bug.
 
+Also seen recently: an OS-level "Apple Account Verification" system dialog
+(tied to the Mac's own signed-in Apple ID, nothing to do with Waypoint)
+covering the entire Simulator screen, persistent across relaunches/rebuilds.
+If you hit this, widget-tree inspection (as used for the dark mode QA pass)
+is the reliable fallback over screenshots.
+
 ## Onboarding (`OnboardingFlow`) — real auth, 3 sign-in paths
 
 Apple and Google OAuth are now fully configured (Google Cloud Console +
@@ -336,6 +342,53 @@ it goes to the previous step without losing entered data.
   TBD" and not crash computing days-left), and with zero invitees selected
   (should create successfully with just you as a member, "1 total" on its
   Trip Detail).
+
+## Stories (new) — self-only, 24h photos, first-look QA needed
+
+Entry point is the top-right avatar on the Home tab (`HomeTab`). I could
+not drive this myself this pass (same Simulator-blocking dialog as the
+status line — see the gotcha note above), so this needs a genuine
+first-look pass, not a regression check.
+
+- **No active story**: avatar has no colored ring, no "+" badge. Tapping
+  it opens the add-photo bottom sheet (Choose from library / Take a
+  photo — same two options as the existing trip Photos flow).
+- **Adding a story**: picking or taking a photo uploads it and should
+  make the ring appear around the avatar shortly after (loading state
+  while uploading — check nothing crashes if you background the app or
+  tap away mid-upload).
+- **Active story present**: ring appears around the avatar, plus a small
+  "+" badge at its bottom-right corner. Tapping the avatar itself (not
+  the badge) opens the full-screen viewer; tapping the "+" badge opens
+  the add-photo flow directly without opening the viewer first.
+- **Viewer**: progress-bar segments across the top (one per photo),
+  auto-advancing roughly every 5 seconds; tapping the right half of the
+  screen skips to the next segment immediately, tapping the left half
+  goes back a segment (or restarts the first segment if already on it).
+  Viewer closes automatically after the last segment finishes. Close
+  (X) button in the top-right always works.
+- **Deleting from the viewer**: trash icon shows a confirm dialog
+  ("Delete this story?"); confirming removes just that photo and
+  continues to the next one (or closes the viewer if it was the only
+  one left); cancelling resumes playback where it left off (should not
+  reset to the beginning of that segment).
+- **Persistence**: added stories should survive a force-quit/relaunch
+  (confirms it's actually a Supabase Storage upload + DB row, not just
+  local state) — and should NOT be visible to a different signed-in
+  account on the same device (RLS is strictly owner-only; this is
+  worth a real cross-account spot-check if two test accounts are
+  available).
+- **24h expiry**: not practical to wait a full day out in a QA pass, but
+  worth sanity-checking the logic isn't inverted — a story added "now"
+  should show as active; if there's any way to backdate a test row's
+  `created_at` via the Supabase dashboard to >24h ago, confirm it
+  disappears from the avatar/viewer on next load (and gets cleaned up
+  from Storage, not just hidden).
+- No `RenderFlex overflow`/crash on any screen size when the ring or
+  "+" badge is showing (the badge sits slightly outside the avatar's
+  own bounds via `Positioned` with negative offsets — worth confirming
+  it doesn't get clipped or overlap the greeting text on smaller
+  simulator sizes).
 
 ## Profile status line (new) — self-only, not shown elsewhere yet
 

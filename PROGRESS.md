@@ -6,6 +6,77 @@ unclear (e.g. after a compaction/restart) before assuming project state.
 Repo: https://github.com/Sri-Gautham/waypoint-app (private)
 Local path: `/Users/srigautham/Documents/My Projects/Personal Projects/travel-companion-app`
 
+## New feature: Stories (24h photos) — self-only, built, not yet QA-verified
+
+Third and last in the agreed build order (dark mode → status line →
+stories). Originally scoped as "global, across all your trips" during
+brainstorming, but that assumed real trip-membership data existed to
+compute visibility from — the status-line work above found it doesn't
+(`Trip.members` is hardcoded placeholder data, no real `user_id`).
+Asked the user how to proceed; **decision: scope stories down to
+self/local for now** — no cross-user visibility at all, same
+retrenchment as the status line. Content is photos-only, no view
+tracking, per the original brainstorming decisions (both still hold).
+
+Asked one more scoping question before building: should stories persist
+to Supabase (survive reinstall/new device) or be purely on-device like
+trip Photos/receipts today? **User chose backend-persisted.**
+
+**What's built**:
+- New Supabase migration `create_stories_table_and_storage` — `stories`
+  table (id, user_id, image_path, created_at) with **strictly
+  owner-only RLS** (`auth.uid() = user_id` on SELECT/INSERT/DELETE, no
+  UPDATE policy needed — stories are never edited, only added/removed).
+  This is tighter than `trip_places`/`trip_day_status`'s interim
+  looseness on purpose: there's no cross-user case to allow for here at
+  all, unlike those tables which are loose only because trip membership
+  isn't enforceable yet. Also created a private `stories` Storage
+  bucket with `storage.objects` RLS scoped by matching the object
+  path's first folder segment to `auth.uid()` — this is the app's
+  first use of Supabase Storage (trip photos/receipts have always been
+  local-`File`-only).
+- `lib/models/story_item.dart` — id/imagePath/createdAt, with
+  `isExpired` computed as `createdAt + 24h < now()` (no separate
+  `expires_at` column — kept it to one source of truth).
+- `lib/services/stories_service.dart` — `fetchMyStories()` (returns
+  only active stories, opportunistically purges any expired rows/files
+  it finds along the way — fire-and-forget, no scheduled cleanup job),
+  `addStory()` (uploads to Storage then inserts the row),
+  `deleteStory()`, `downloadImage()` (bytes via the authenticated
+  client, not a public/signed URL — bucket is private, no need for one
+  at this scale).
+- `lib/screens/home/story_viewer_screen.dart` — full-screen,
+  Instagram-style viewer: top progress-bar segments auto-advancing
+  every 5s, tap-left/tap-right to go back/skip, a delete button (same
+  `AlertDialog` confirm pattern as deleting an expense) that removes
+  the current item and continues, close button. Image bytes are
+  fetched lazily per segment (not all up front) and cached for the
+  screen's lifetime.
+- `lib/screens/home/home_tab.dart` — converted from `StatelessWidget`
+  to `StatefulWidget` to hold story state locally (same pattern
+  `TripsTab` already uses for its own local photo state, not lifted
+  into `AppData` since stories are user-level, not trip-level). The
+  existing top-right initials avatar now doubles as the story entry
+  point: an accent-colored ring appears around it when an active story
+  exists; tapping it opens the viewer if one exists, or the add-photo
+  flow (reused the exact gallery/camera bottom-sheet pattern from
+  `TripsTab._addPhoto`) if not. A small "+" badge on the avatar (only
+  shown once a story is active) lets you add another photo without
+  first opening the viewer.
+
+**Verification status**: `flutter analyze lib` clean, full arm64
+build succeeds, installed and launched without crashing. Could NOT
+visually verify the actual add/view/delete flow — same blocker as the
+status line work: the Simulator screen is being covered by an
+unrelated OS-level "Apple Account Verification" dialog on every
+launch attempt (confirmed persistent across multiple rebuilds, not a
+one-off), and there's no Accessibility permission available to this
+environment to dismiss it via automation. This needs a genuine
+first-look QA pass — added a "Stories (new)" section to
+`docs/QA_CHECKLIST.md`. Worth a real signed-in-session spot check of
+the Storage bucket + RLS too, same open item as `trip_places`' still-
+unverified live write/read/remove round trip.
+
 ## New feature: Persistent status line — built, not yet QA-verified
 
 Second in the agreed build order (dark mode → status line → stories).
