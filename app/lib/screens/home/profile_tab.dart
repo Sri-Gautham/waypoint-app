@@ -41,7 +41,13 @@ class _ProfileTabState extends State<ProfileTab> {
         ],
       ),
     );
-    controller.dispose();
+    // Not disposing `controller` here deliberately — the dialog's exit
+    // transition can still be rendering a frame bound to it right after
+    // this await resolves, and disposing while that frame renders throws
+    // ("TextEditingController used after being disposed") and corrupts
+    // the Profile tab's widget tree. It's a short-lived, one-shot
+    // controller with nothing left referencing it once this returns, so
+    // leaving it for GC instead of an explicit dispose() is safe here.
     if (result == null) return;
 
     final trimmed = result.trim();
@@ -127,7 +133,14 @@ class _ProfileTabState extends State<ProfileTab> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.edit_outlined, size: 13, color: context.colors.textTertiary),
+                        if (_statusBusy)
+                          const SizedBox(
+                            width: 13,
+                            height: 13,
+                            child: CircularProgressIndicator(strokeWidth: 1.5),
+                          )
+                        else
+                          Icon(Icons.edit_outlined, size: 13, color: context.colors.textTertiary),
                         const SizedBox(width: 5),
                         Text(
                           data.statusText.isEmpty ? 'Add a status' : data.statusText,

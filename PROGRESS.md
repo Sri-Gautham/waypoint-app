@@ -77,7 +77,7 @@ first-look QA pass — added a "Stories (new)" section to
 the Storage bucket + RLS too, same open item as `trip_places`' still-
 unverified live write/read/remove round trip.
 
-## New feature: Persistent status line — built, not yet QA-verified
+## New feature: Persistent status line — bug found + fixed, back with QA
 
 Second in the agreed build order (dark mode → status line → stories).
 User asked for a WhatsApp/Instagram-style personal status alongside
@@ -129,8 +129,37 @@ signed-in Apple ID, not to Waypoint), and this environment has no
 Accessibility permission for UI automation to dismiss it — confirmed
 via `osascript`/System Events returning zero windows for the
 `Simulator` process. Reverted the temporary debug harness cleanly (no
-diff left in `main.dart`). Needs a QA pass to confirm the actual UI
-before considering this done.
+diff left in `main.dart`).
+
+**QA pass on `c6df126` — found a real, high-severity bug, since fixed.**
+`_editStatus` called `controller.dispose()` synchronously right after
+`await showDialog<String>(...)` resolved — a classic Flutter race:
+`AlertDialog`'s exit transition can still be rendering a frame bound to
+that `TextField`'s controller when the dispose runs, throwing "A
+TextEditingController was used after being disposed." QA's frame-by-
+frame instrumentation showed the Profile tab's widget count collapsing
+from ~1500+ to 91 the frame after — the screen goes effectively blank
+on every single Cancel/Save, not just a scary console line. Confirmed
+via QA's isolated repro (`app/integration_test/profile_status_repro_test.dart`
+in their worktree) that this is inherent to the pattern (manually-
+created controller + dispose right after an awaited `showDialog`), not
+a test-harness artifact — no other `showDialog` call in the app pairs
+a controller with an immediate post-await dispose this way, so it's
+new with this feature, not a pre-existing footgun elsewhere.
+
+**Fix**: dropped the manual `controller.dispose()` call entirely. It's
+a short-lived, one-shot controller with nothing referencing it once
+`_editStatus` returns (the dialog route is gone, the local variable
+goes out of scope) — leaving it for GC instead of an explicit dispose
+is safe and sidesteps the race outright, rather than trying to
+sequence the dispose after the exit transition finishes. Also added a
+small spinner to the status row while `_statusBusy` is true (QA
+flagged this as a minor inconsistency — the Face ID toggle on the same
+screen already shows one, the status edit didn't). `flutter analyze
+lib` clean, arm64 build succeeds. Sent back to QA to confirm the fix
+and finish the rest of the checklist (60-char limit, whitespace-only
+save reverting to placeholder, keyboard "done" submit) that the bug
+had blocked.
 
 ## New feature: Dark mode — QA-verified, done
 
