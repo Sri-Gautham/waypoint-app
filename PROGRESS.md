@@ -6,7 +6,7 @@ unclear (e.g. after a compaction/restart) before assuming project state.
 Repo: https://github.com/Sri-Gautham/waypoint-app (private)
 Local path: `/Users/srigautham/Documents/My Projects/Personal Projects/travel-companion-app`
 
-## New feature: Real trip membership (Phase 1) — built, not yet QA-verified
+## New feature: Real trip membership (Phase 1) — 1 hardening gap + 2 client bugs found and fixed, back with QA
 
 Follow-up to the status line/stories work, which both had to be scoped
 to self-only because trip membership was entirely mock. User asked to
@@ -175,6 +175,71 @@ the same way `trip_places`/`profiles` were earlier this session, which
 is a real but partial substitute — it confirms the policies exist and
 read correctly, not that the RPCs behave correctly under real
 concurrent use.
+
+**QA pass on `0daafd5` — deep audit given the stakes, 1 hardening gap
++ 2 client-side bugs found, all fixed.** QA matched the scope of the
+review to how security-sensitive this feature is: full schema/RLS/RPC
+audit via Supabase MCP, including **empirical anonymous-HTTP probing**
+(real `curl` calls with the anon key, no session) rather than just
+reading policy text. Confirmed correct, matching this doc exactly: the
+`trip_members` no-direct-write-policy design, the parameterless
+`is_trip_member`/`is_trip_admin` functions, that the old loose
+`trip_places`/`trip_day_status` policies are actually gone (not just
+superseded), the `join_code` unique index blocking a crafted-collision
+insert, and all 3 RPCs' `SECURITY DEFINER` + pinned `search_path`.
+
+**Hardening gap found**: all 5 new functions were `EXECUTE`-granted to
+`anon`, not just `authenticated` — Supabase grants this by default on
+new `public`-schema functions, not something the migrations had
+explicitly addressed. QA confirmed empirically this wasn't currently
+exploitable (`is_trip_member` returns `false` harmlessly for a null
+`auth.uid()`; `create_trip`/`redeem_trip_join_code` both fail on a
+`NOT NULL` violation before anything is written) — but it's protection
+by accident (a constraint happening to catch it), not by design, and
+the `redeem_trip_join_code` failure path leaked the `join_attempts`
+table/column name in its raw Postgres error text back to an
+unauthenticated caller. **Fixed**: `REVOKE EXECUTE ... FROM anon`
+explicitly on all 5 functions (a first attempt revoking only from
+`PUBLIC` didn't work — confirmed via `information_schema.routine_
+privileges` that `anon` still had it, since Supabase grants directly to
+`anon`, not merely via `PUBLIC` inheritance; fixed with an explicit
+per-role revoke and reverified `anon` is gone from every row). This
+also closes the `join_attempts` error-text leak for free, since `anon`
+can no longer call the function at all.
+
+Also noted, not changed: the join code is 6 *hex* characters
+(`upper(substr(md5(...),1,6))`), i.e. ~16.7M possible codes, smaller
+than "6-character code" might suggest at a glance. Left as-is — at the
+existing 10-attempts/minute throttle, brute-forcing one account's
+budget through that space would take on the order of thousands of
+years, so the actual entropy isn't the binding constraint here.
+
+**Client-side bugs found (both from code-reading — same standing
+constraint on dynamic reproduction as everything else)**:
+1. `AppData.joinTripWithCode` unconditionally inserted into `trips` and
+   reset `chargesByTrip[trip.id] = []` whenever a redeem call returned
+   a trip — but `redeem_trip_join_code` is deliberately idempotent
+   server-side (re-joining a trip you're already in is a harmless
+   no-op that still returns the trip id). So re-joining would duplicate
+   the trip in the local list (a real duplicate card in Trips tab) and
+   silently wipe any local-only charges already held for it. **Fixed**:
+   guard the insert/reset behind `!trips.any((t) => t.id == trip.id)`.
+2. Throttle and invalid-code failures were indistinguishable to the
+   user — `TripsService.redeemJoinCode` caught every failure into a
+   bare `null`, and `HomeTab` showed exactly one hardcoded message
+   either way, contradicting this doc's/the checklist's own claim that
+   throttling should show a distinct message. **Fixed**: replaced the
+   nullable return with a `JoinCodeResult`/`JoinCodeFailureReason`
+   result type (mirroring the existing `EtaResult`/`EtaUnavailableReason`
+   pattern in `eta_service.dart`, not inventing a new convention) that
+   distinguishes `invalidCode`/`throttled`/`notSignedIn`/`requestFailed`
+   by matching the RPC's raised error text, propagated through
+   `AppData.joinTripWithCode` up to `HomeTab`, which now shows a
+   distinct message per reason.
+
+`flutter analyze lib` clean, arm64 build succeeds, app launches
+without crashing. Sent back to QA to confirm both the grant fix and
+the two client-side fixes.
 
 ## New feature: Stories (24h photos) — self-only, QA-verified, done
 

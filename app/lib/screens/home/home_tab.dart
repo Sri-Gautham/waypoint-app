@@ -7,6 +7,7 @@ import '../../models/activity_item.dart';
 import '../../models/onboarding_data.dart';
 import '../../models/story_item.dart';
 import '../../services/stories_service.dart';
+import '../../services/trips_service.dart';
 import '../../state/app_data.dart';
 import '../../theme/app_colors.dart';
 import '../../widgets/trip_hero_card.dart';
@@ -61,18 +62,31 @@ class _HomeTabState extends State<HomeTab> {
     if (code == null || code.trim().isEmpty || !mounted) return;
 
     setState(() => _joiningTrip = true);
-    final trip = await AppDataScope.of(context).joinTripWithCode(code.trim());
+    final result = await AppDataScope.of(context).joinTripWithCode(code.trim());
     if (!mounted) return;
     setState(() => _joiningTrip = false);
-    if (trip == null) {
+    if (!result.succeeded) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("That code didn't work — check it and try again.")),
+        SnackBar(content: Text(_joinErrorMessage(result.reason!))),
       );
       return;
     }
     Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => TripDetailScreen(trip: trip)),
+      MaterialPageRoute(builder: (_) => TripDetailScreen(trip: result.trip!)),
     );
+  }
+
+  String _joinErrorMessage(JoinCodeFailureReason reason) {
+    switch (reason) {
+      case JoinCodeFailureReason.invalidCode:
+        return "That code didn't work — check it and try again.";
+      case JoinCodeFailureReason.throttled:
+        return 'Too many attempts — wait a minute and try again.';
+      case JoinCodeFailureReason.notSignedIn:
+        return 'Sign in again to join a trip.';
+      case JoinCodeFailureReason.requestFailed:
+        return "Couldn't join — check your connection and try again.";
+    }
   }
 
   Future<void> _loadStories() async {

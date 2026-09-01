@@ -55,14 +55,20 @@ class AppData extends ChangeNotifier {
     return trip;
   }
 
-  Future<Trip?> joinTripWithCode(String code) async {
-    final trip = await TripsService.instance.redeemJoinCode(code);
-    if (trip != null) {
+  Future<JoinCodeResult> joinTripWithCode(String code) async {
+    final result = await TripsService.instance.redeemJoinCode(code);
+    final trip = result.trip;
+    // Redeeming a code for a trip you're already in is a deliberate,
+    // harmless no-op server-side (see redeem_trip_join_code's `on
+    // conflict do nothing`) — guard against duplicating it in this
+    // local list too, and don't wipe any local-only charges already
+    // held for it by unconditionally resetting chargesByTrip.
+    if (trip != null && !trips.any((t) => t.id == trip.id)) {
       trips.insert(0, trip);
-      chargesByTrip[trip.id] = [];
+      chargesByTrip.putIfAbsent(trip.id, () => []);
       notifyListeners();
     }
-    return trip;
+    return result;
   }
 
   void addCharge(String tripId, Charge charge) {
