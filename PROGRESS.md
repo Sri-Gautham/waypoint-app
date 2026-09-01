@@ -77,7 +77,7 @@ first-look QA pass — added a "Stories (new)" section to
 the Storage bucket + RLS too, same open item as `trip_places`' still-
 unverified live write/read/remove round trip.
 
-## New feature: Persistent status line — bug found + fixed, back with QA
+## New feature: Persistent status line — QA-verified, done
 
 Second in the agreed build order (dark mode → status line → stories).
 User asked for a WhatsApp/Instagram-style personal status alongside
@@ -160,6 +160,24 @@ lib` clean, arm64 build succeeds. Sent back to QA to confirm the fix
 and finish the rest of the checklist (60-char limit, whitespace-only
 save reverting to placeholder, keyboard "done" submit) that the bug
 had blocked.
+
+**Re-check on `7a8b06f` — clean, full checklist passes.** QA reran the
+same frame-by-frame repro (zero exceptions across 10 stepped frames,
+widget count holds at 1346 through settle vs. the 91 it collapsed to
+before) confirming the disposal race is actually gone, then ran the
+full checklist clean in one pass: empty-state placeholder, dialog
+prefill (both empty and re-opening after a save), Cancel discarding
+typed text, Save persisting and rendering non-italic, the 60-char
+limit enforced on entry, a whitespace-only save trimming back to the
+placeholder, and keyboard "done"/IME submit saving the same as tapping
+Save. `flutter analyze lib` clean, busy-spinner addition confirmed
+matching the Face ID toggle. **Status line is done.** Standing open
+item, unchanged: the full restart-persistence round-trip against live
+Supabase (does `status_text` really survive a force-quit) is still
+unverified end-to-end — no real authenticated Simulator session
+reachable by anyone via automation so far this session; schema/RLS
+were already confirmed via Supabase MCP and nothing in the bugfix
+touched that path.
 
 ## New feature: Dark mode — QA-verified, done
 
