@@ -6,7 +6,7 @@ unclear (e.g. after a compaction/restart) before assuming project state.
 Repo: https://github.com/Sri-Gautham/waypoint-app (private)
 Local path: `/Users/srigautham/Documents/My Projects/Personal Projects/travel-companion-app`
 
-## New feature: Stories (24h photos) — self-only, bug found + fixed, back with QA
+## New feature: Stories (24h photos) — self-only, QA-verified, done
 
 Third and last in the agreed build order (dark mode → status line →
 stories). Originally scoped as "global, across all your trips" during
@@ -107,8 +107,12 @@ specifically autoplay that got stuck, silently, until a manual tap.
 
 **Fix**: resume the controller on the failure path too
 (`_controller.forward()` before returning), same as the existing
-Cancel branch. `flutter analyze lib` clean, arm64 build succeeds. Sent
-back to QA to confirm.
+Cancel branch. `flutter analyze lib` clean, arm64 build succeeds.
+
+**Re-check on `58a8bf1` — confirmed fixed.** QA reran the same repro:
+segment-0 progress went from stopped (0.0533, held during the dialog
+and the failed delete) to 1.0 after the 6s wait instead of staying
+frozen. `flutter analyze lib` still clean. **Stories is done.**
 
 Still not verifiable by anyone via automation (standing constraints,
 not new): the native photo-picker UI itself (same class of blocker as
