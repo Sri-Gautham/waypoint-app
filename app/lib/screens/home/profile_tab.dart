@@ -17,6 +17,42 @@ class ProfileTab extends StatefulWidget {
 
 class _ProfileTabState extends State<ProfileTab> {
   bool _faceIdBusy = false;
+  bool _statusBusy = false;
+
+  Future<void> _editStatus() async {
+    final controller = TextEditingController(text: widget.data.statusText);
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Set your status'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          maxLength: 60,
+          decoration: const InputDecoration(hintText: 'e.g. Ready for the next trip ✈️'),
+          onSubmitted: (value) => Navigator.of(context).pop(value),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(controller.text),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (result == null) return;
+
+    final trimmed = result.trim();
+    setState(() => _statusBusy = true);
+    try {
+      await AuthService.instance.setStatusText(trimmed);
+      setState(() => widget.data.statusText = trimmed);
+    } finally {
+      if (mounted) setState(() => _statusBusy = false);
+    }
+  }
 
   Future<void> _toggleFaceId(bool enable) async {
     if (enable) {
@@ -81,6 +117,29 @@ class _ProfileTabState extends State<ProfileTab> {
                 Text(
                   data.fullName.isEmpty ? 'Jamie Rivera' : data.fullName,
                   style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: context.colors.textPrimary),
+                ),
+                const SizedBox(height: 6),
+                InkWell(
+                  onTap: _statusBusy ? null : _editStatus,
+                  borderRadius: BorderRadius.circular(6),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.edit_outlined, size: 13, color: context.colors.textTertiary),
+                        const SizedBox(width: 5),
+                        Text(
+                          data.statusText.isEmpty ? 'Add a status' : data.statusText,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontStyle: data.statusText.isEmpty ? FontStyle.italic : FontStyle.normal,
+                            color: context.colors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ],
             ),

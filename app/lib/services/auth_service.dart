@@ -151,6 +151,7 @@ class AuthService {
     data.state = (row['home_state'] as String?) ?? '';
     data.zip = (row['home_zip'] as String?) ?? '';
     data.faceIdEnabled = (row['face_id_enabled'] as bool?) ?? false;
+    data.statusText = (row['status_text'] as String?) ?? '';
     return data;
   }
 
@@ -174,5 +175,11 @@ class AuthService {
     final user = _client.auth.currentUser;
     if (user == null) return;
     await _client.from('profiles').update({'face_id_enabled': enabled}).eq('id', user.id);
+  }
+
+  Future<void> setStatusText(String statusText) async {
+    final user = _client.auth.currentUser;
+    if (user == null) return;
+    await _client.from('profiles').update({'status_text': statusText}).eq('id', user.id);
   }
 }

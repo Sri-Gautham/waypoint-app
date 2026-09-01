@@ -337,6 +337,34 @@ it goes to the previous step without losing entered data.
   (should create successfully with just you as a member, "1 total" on its
   Trip Detail).
 
+## Profile status line (new) — self-only, not shown elsewhere yet
+
+A persistent "About"-style line the user sets on their own profile
+(`profiles.status_text`), edited from the Profile tab. Not yet shown
+anywhere else in the app (Trip Detail's member rows are still
+placeholder/mock data unrelated to the real signed-in profile — see
+`PROGRESS.md` for why). I could not visually drive this myself this
+pass (an unrelated system dialog blocked the Simulator screen), so
+this needs a full first-look QA pass, not just a regression check.
+
+- Profile tab: below the name, shows "Add a status" in italic when
+  `status_text` is empty; tapping it (or the small pencil icon) opens
+  a dialog with a text field pre-filled with the current status.
+- Entering text and tapping Save: dialog closes, the Profile tab
+  immediately shows the new text (not italic anymore), and it persists
+  across app restart (i.e. actually wrote to Supabase, not just local
+  state — check by force-quitting and relaunching signed in as the
+  same account).
+- Tapping Cancel (or dismissing without Save): no change, previous
+  status (or "Add a status" if none) still shows.
+- Clearing the text field to empty and saving: goes back to showing
+  "Add a status", not an empty line.
+- 60-character limit is enforced (the field should stop accepting
+  input at 60, not silently truncate on save or error out).
+- No crash if this is tapped rapidly / while a previous save is still
+  in flight (there's a busy-state guard disabling the tap while
+  saving — worth trying to double-tap quickly to confirm it holds).
+
 ## Dark mode (new) — OS-driven, no in-app toggle
 
 `AppColors` moved from static constants to a `ThemeExtension`

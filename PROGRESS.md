@@ -6,6 +6,61 @@ unclear (e.g. after a compaction/restart) before assuming project state.
 Repo: https://github.com/Sri-Gautham/waypoint-app (private)
 Local path: `/Users/srigautham/Documents/My Projects/Personal Projects/travel-companion-app`
 
+## New feature: Persistent status line — built, not yet QA-verified
+
+Second in the agreed build order (dark mode → status line → stories).
+User asked for a WhatsApp/Instagram-style personal status alongside
+24h stories (stories not started yet — see below). This is the
+persistent "About"-style line only, not stories.
+
+**Real architectural finding surfaced mid-build**: went to wire the
+status line into "wherever members appear" (Trip Detail's member
+list, etc.) and found there is currently no real trip-membership
+backend at all — `Trip.members` (`lib/models/trip.dart`) is a
+hardcoded `static const` list of name/initials/status/distance
+strings with no `user_id`, and `TripDetailScreen`'s own "You (Admin)"
+row is likewise a hardcoded placeholder (`name: 'You (Admin)',
+initials: 'ME'`), not wired to the real signed-in user's profile at
+all — `TripDetailScreen` doesn't even take an `OnboardingData`
+parameter. Confirmed `profiles`' live RLS is also strictly
+owner-only (`auth.uid() = id` on SELECT/UPDATE/INSERT) — even if the
+member data were real, nothing could read another user's status under
+today's policies. **Scoped down accordingly**: this feature is
+self-only for now — a real, backend-persisted status editable on your
+own Profile tab. Displaying it on other members anywhere is not
+buildable without first building real trip membership (a bigger,
+separate piece of work) — flagging this now since it also directly
+affects the stories feature's already-agreed "global, across shared
+trips" visibility scoping, which assumed real trip co-membership data
+that turns out not to exist yet.
+
+**What's built**:
+- New Supabase migration `add_status_text_to_profiles` — nullable
+  `status_text text` column on `profiles`. No RLS change needed
+  (existing owner-only policies already cover it).
+- `AuthService.loadProfile`/new `setStatusText` — mirrors the existing
+  `setFaceIdEnabled` pattern (dedicated single-field update rather than
+  routing through the full `saveProfile` form-save call).
+- `OnboardingData.statusText` — new field, empty by default.
+- `ProfileTab`: an editable line under the user's name — "Add a
+  status" (italic placeholder) when empty, the status text otherwise,
+  small edit icon, tap opens an `AlertDialog` with a 60-char-limited
+  `TextField` (same `AlertDialog` pattern already used for the delete-
+  expense confirmation in `balances_tab.dart`).
+
+**Verification status**: `flutter analyze lib` clean, full arm64 build
+succeeds. Could NOT visually verify the edit flow this time — tried
+the usual "temporarily render the screen directly from `main()`"
+technique used earlier this session, but every screenshot attempt was
+blocked by an unrelated OS-level "Apple Account Verification" system
+dialog covering the whole Simulator screen (tied to the Mac's own
+signed-in Apple ID, not to Waypoint), and this environment has no
+Accessibility permission for UI automation to dismiss it — confirmed
+via `osascript`/System Events returning zero windows for the
+`Simulator` process. Reverted the temporary debug harness cleanly (no
+diff left in `main.dart`). Needs a QA pass to confirm the actual UI
+before considering this done.
+
 ## New feature: Dark mode — QA-verified, done
 
 User asked for light/dark mode support defaulting to the device's OS

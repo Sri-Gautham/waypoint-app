@@ -13,6 +13,11 @@ class OnboardingData {
 
   bool faceIdEnabled = false;
 
+  /// A short, persistent "About"-style line the user sets on their own
+  /// profile (WhatsApp/Instagram bio, not a rotating status). Empty
+  /// until set.
+  String statusText = '';
+
   String get fullName => '$firstName $lastName'.trim();
 
   String get initials {
