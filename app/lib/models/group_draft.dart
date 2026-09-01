@@ -22,7 +22,4 @@ class GroupDraft {
   String city = '';
   String state = '';
   String zip = '';
-
-  final List<String> manualInvitees = [];
-  final Set<String> selectedContactIds = {};
 }

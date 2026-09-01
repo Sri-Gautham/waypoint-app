@@ -3,42 +3,36 @@ import 'dart:typed_data';
 import '../theme/cover_theme.dart';
 import 'activity_log_entry.dart';
 
-enum MemberStatus { admin, member, invited }
+enum MemberStatus { admin, member }
 
 enum TripStatus { upcoming, past }
 
 class TripMember {
-  const TripMember({
-    required this.name,
-    required this.initials,
-    required this.status,
-    required this.distance,
-  });
+  const TripMember({required this.userId, required this.name, required this.initials, required this.status});
 
+  final String userId;
   final String name;
   final String initials;
   final MemberStatus status;
-
-  /// Approximate distance from this member's home to the trip destination.
-  /// "TBD" until a member accepts and their home address is on file.
-  final String distance;
 }
 
-/// A trip group. Sample/placeholder data for now — will come from the
-/// backend once groups and membership are wired up.
+/// A real, backend-persisted trip group — see the `trips`/`trip_members`
+/// Supabase tables and `TripsService`, which is the only place these get
+/// constructed (via [fromRow]).
 class Trip {
   const Trip({
     required this.id,
     required this.name,
     required this.destination,
     required this.dateLabel,
-    required this.status,
-    required this.daysLeft,
+    required this.startDate,
     required this.weatherTemp,
     required this.weatherCondition,
     required this.etaLabel,
     required this.cover,
     required this.members,
+    required this.myRole,
+    required this.joinCode,
     this.activityLog = const [],
     this.coverImageBytes,
   });
@@ -47,91 +41,124 @@ class Trip {
   final String name;
   final String destination;
   final String dateLabel;
-  final TripStatus status;
-  final int daysLeft;
+
+  /// Used to compute [status]/[daysLeft] — null means "no date set yet".
+  final DateTime? startDate;
+
+  /// No real weather data source — always a placeholder. Not stored.
   final String weatherTemp;
   final String weatherCondition;
+
+  /// Decorative only — the real per-user ETA-sharing feature (trip_day_status)
+  /// is rendered separately in TripDetailScreen's ETA section, not from this.
   final String etaLabel;
+
   final CoverTheme cover;
 
-  /// Everyone but the signed-in user, who is always the admin and is
-  /// prepended separately wherever the full roster is shown.
+  /// Everyone on the trip EXCEPT the signed-in user, who is rendered
+  /// separately using [myRole] — matches the convention every screen
+  /// that renders a roster already assumes (chat, balances, trip detail).
   final List<TripMember> members;
 
-  /// Only populated for past trips.
+  /// The signed-in user's own role on this trip.
+  final MemberStatus myRole;
+
+  /// Real, redeemable via "Join with code" — see TripsService.redeemJoinCode.
+  final String joinCode;
+
+  /// Only ever populated for past trips; no real backend for this yet.
   final List<ActivityLogEntry> activityLog;
 
-  /// A generated/fetched cover photo (see CoverGenerationService). When
-  /// present, this takes priority over [cover]'s illustrated palette —
-  /// see TripCoverArt, the one widget that renders either.
+  /// Set only immediately after creation from the locally-generated cover
+  /// (see CoverGenerationService) — NOT persisted, so this is null again
+  /// after a reload; falls back to [cover]'s illustrated palette then.
   final Uint8List? coverImageBytes;
 
-  static const lakeTahoe = Trip(
-    id: 't1',
-    name: 'Lake Tahoe Crew',
-    destination: 'Lake Tahoe, CA',
-    dateLabel: 'This Sat, Sep 6',
-    status: TripStatus.upcoming,
-    daysLeft: 12,
-    weatherTemp: '72°F',
-    weatherCondition: 'Sunny, trip day',
-    etaLabel: '2:30 PM',
-    cover: CoverTheme.mountainLake,
-    members: [
-      TripMember(name: 'Sam Park', initials: 'SP', status: MemberStatus.member, distance: '38 mi'),
-      TripMember(name: 'Alex Kim', initials: 'AK', status: MemberStatus.member, distance: '210 mi'),
-      TripMember(name: 'Priya Nair', initials: 'PN', status: MemberStatus.invited, distance: '95 mi'),
-      TripMember(name: 'Jordan Lee', initials: 'JL', status: MemberStatus.invited, distance: '340 mi'),
-    ],
-  );
+  TripStatus get status {
+    if (startDate == null) return TripStatus.upcoming;
+    final today = DateTime.now();
+    final startDay = DateTime(startDate!.year, startDate!.month, startDate!.day);
+    final todayDay = DateTime(today.year, today.month, today.day);
+    return startDay.isBefore(todayDay) ? TripStatus.past : TripStatus.upcoming;
+  }
 
-  static const weekendCabin = Trip(
-    id: 't2',
-    name: 'Weekend at the Cabin',
-    destination: 'Big Bear, CA',
-    dateLabel: 'Oct 18 – Oct 20',
-    status: TripStatus.upcoming,
-    daysLeft: 47,
-    weatherTemp: '58°F',
-    weatherCondition: 'Partly cloudy',
-    etaLabel: '4:15 PM',
-    cover: CoverTheme.forest,
-    members: [
-      TripMember(name: 'Priya Nair', initials: 'PN', status: MemberStatus.member, distance: '95 mi'),
-      TripMember(name: 'Jordan Lee', initials: 'JL', status: MemberStatus.member, distance: '340 mi'),
-      TripMember(name: 'Sam Park', initials: 'SP', status: MemberStatus.member, distance: '38 mi'),
-    ],
-  );
+  int get daysLeft {
+    if (startDate == null) return 0;
+    final diff = startDate!.difference(DateTime.now()).inDays;
+    return diff < 0 ? 0 : diff;
+  }
 
-  static const napaWineTour = Trip(
-    id: 't3',
-    name: 'Napa Wine Tour',
-    destination: 'Napa, CA',
-    dateLabel: 'Jun 12 – Jun 13',
-    status: TripStatus.past,
-    daysLeft: 0,
-    weatherTemp: '81°F',
-    weatherCondition: 'Sunny',
-    etaLabel: '—',
-    cover: CoverTheme.beach,
-    members: [
-      TripMember(name: 'Sam Park', initials: 'SP', status: MemberStatus.member, distance: '38 mi'),
-      TripMember(name: 'Alex Kim', initials: 'AK', status: MemberStatus.member, distance: '210 mi'),
-      TripMember(name: 'Morgan Diaz', initials: 'MD', status: MemberStatus.member, distance: '150 mi'),
-    ],
-    activityLog: [
-      ActivityLogEntry(kind: ActivityLogKind.person, text: 'Morgan Diaz joined the trip', time: 'Jun 10'),
-      ActivityLogEntry(kind: ActivityLogKind.receipt, text: 'You added an expense: Winery tour tickets (\$150)', time: 'Jun 12'),
-      ActivityLogEntry(kind: ActivityLogKind.photo, text: 'Sam Park uploaded 3 photos', time: 'Jun 12'),
-      ActivityLogEntry(kind: ActivityLogKind.chat, text: 'Alex Kim: "That was an amazing trip."', time: 'Jun 13'),
-      ActivityLogEntry(kind: ActivityLogKind.receipt, text: 'Morgan Diaz added an expense: Lunch (\$60)', time: 'Jun 13'),
-    ],
-  );
+  static const _weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  static const _months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-  static const sampleNextTrip = lakeTahoe;
+  static String formatDateLabel(DateTime? start, DateTime? end) {
+    if (start == null) return 'Date TBD';
+    var label = '${_weekdays[start.weekday - 1]}, ${_months[start.month - 1]} ${start.day}';
+    if (end != null) label += ' – ${_months[end.month - 1]} ${end.day}';
+    return label;
+  }
 
-  static const all = [lakeTahoe, weekendCabin, napaWineTour];
+  static String formatDestinationLine({
+    required String city,
+    required String state,
+    required String zip,
+  }) {
+    if (city.trim().isNotEmpty && state.trim().isNotEmpty) return '${city.trim()}, ${state.trim()}';
+    if (zip.trim().isNotEmpty) return 'ZIP ${zip.trim()}';
+    return 'Destination TBD';
+  }
 
-  static List<Trip> get upcoming => all.where((t) => t.status == TripStatus.upcoming).toList();
-  static List<Trip> get past => all.where((t) => t.status == TripStatus.past).toList();
+  /// Builds a [Trip] from a Supabase row shaped like TripsService's
+  /// embedded select (`trips.*` plus a nested `trip_members` list, each
+  /// with a nested `profiles` for the member's name). [currentUserId]
+  /// splits the roster into [myRole] + everyone else in [members].
+  factory Trip.fromRow(Map<String, dynamic> row, {required String currentUserId, Uint8List? generatedCoverBytes}) {
+    final memberRows = (row['trip_members'] as List? ?? const []).cast<Map<String, dynamic>>();
+
+    MemberStatus myRole = MemberStatus.member;
+    final others = <TripMember>[];
+    for (final m in memberRows) {
+      final userId = m['user_id'] as String;
+      final role = (m['role'] as String?) == 'admin' ? MemberStatus.admin : MemberStatus.member;
+      if (userId == currentUserId) {
+        myRole = role;
+        continue;
+      }
+      final profile = m['profiles'] as Map<String, dynamic>?;
+      final firstName = (profile?['first_name'] as String?) ?? '';
+      final lastName = (profile?['last_name'] as String?) ?? '';
+      final name = '$firstName $lastName'.trim();
+      final letters = (firstName.isNotEmpty ? firstName[0] : '') + (lastName.isNotEmpty ? lastName[0] : '');
+      others.add(TripMember(
+        userId: userId,
+        name: name.isEmpty ? 'Member' : name,
+        initials: letters.isEmpty ? '??' : letters.toUpperCase(),
+        status: role,
+      ));
+    }
+
+    final start = row['start_date'] == null ? null : DateTime.parse(row['start_date'] as String);
+    final end = row['end_date'] == null ? null : DateTime.parse(row['end_date'] as String);
+    final presetName = row['cover_preset'] as String?;
+
+    return Trip(
+      id: row['id'] as String,
+      name: row['name'] as String,
+      destination: formatDestinationLine(
+        city: (row['destination_city'] as String?) ?? '',
+        state: (row['destination_state'] as String?) ?? '',
+        zip: (row['destination_zip'] as String?) ?? '',
+      ),
+      dateLabel: formatDateLabel(start, end),
+      startDate: start,
+      weatherTemp: '—°F',
+      weatherCondition: 'Forecast pending',
+      etaLabel: '—',
+      cover: CoverTheme.all.firstWhere((t) => t.name == presetName, orElse: () => CoverTheme.all.first),
+      members: others,
+      myRole: myRole,
+      joinCode: row['join_code'] as String,
+      coverImageBytes: generatedCoverBytes,
+    );
+  }
 }

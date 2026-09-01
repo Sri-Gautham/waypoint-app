@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../models/trip.dart';
 import '../../services/auth_service.dart';
@@ -25,10 +26,54 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
   int? _myEtaMinutes;
   EtaUnavailableReason? _shareError;
 
+  String _myName = 'You';
+  String _myInitials = '';
+
   @override
   void initState() {
     super.initState();
     if (_isTripDay) _loadEtas();
+    _loadMyProfile();
+  }
+
+  Future<void> _loadMyProfile() async {
+    try {
+      final profile = await AuthService.instance.loadProfile();
+      if (!mounted) return;
+      setState(() {
+        if (profile.fullName.isNotEmpty) _myName = profile.fullName;
+        _myInitials = profile.initials;
+      });
+    } catch (_) {
+      // keep the 'You' / 'ME' defaults
+    }
+  }
+
+  Future<void> _showInvite(BuildContext context) async {
+    await showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Invite to this trip'),
+        content: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Expanded(
+              child: Text(
+                widget.trip.joinCode,
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, letterSpacing: 1, color: context.colors.textPrimary),
+              ),
+            ),
+            TextButton(
+              onPressed: () => Clipboard.setData(ClipboardData(text: widget.trip.joinCode)),
+              child: const Text('Copy'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Done')),
+        ],
+      ),
+    );
   }
 
   Future<void> _loadEtas() async {
@@ -236,6 +281,7 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
               const SizedBox(height: 24),
               _EtaSection(
                 trip: trip,
+                myName: _myName,
                 etas: _etas,
                 loading: _loadingEtas,
                 sharing: _sharing,
@@ -249,13 +295,24 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text('Members', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: context.colors.textPrimary)),
-                Text('${trip.members.length + 1} total', style: TextStyle(fontSize: 12, color: context.colors.textSecondary)),
+                Row(
+                  children: [
+                    Text('${trip.members.length + 1} total', style: TextStyle(fontSize: 12, color: context.colors.textSecondary)),
+                    if (trip.myRole == MemberStatus.admin) ...[
+                      const SizedBox(width: 10),
+                      InkWell(
+                        onTap: () => _showInvite(context),
+                        child: Text('Invite', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: context.colors.accent)),
+                      ),
+                    ],
+                  ],
+                ),
               ],
             ),
             const SizedBox(height: 10),
-            _MemberRow(name: 'You (Admin)', initials: 'ME', status: MemberStatus.admin, distance: '—'),
+            _MemberRow(name: _myName, initials: _myInitials.isEmpty ? 'ME' : _myInitials, status: trip.myRole),
             for (final member in trip.members)
-              _MemberRow(name: member.name, initials: member.initials, status: member.status, distance: member.distance),
+              _MemberRow(name: member.name, initials: member.initials, status: member.status),
           ],
         ),
       ),
@@ -266,6 +323,7 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
 class _EtaSection extends StatelessWidget {
   const _EtaSection({
     required this.trip,
+    required this.myName,
     required this.etas,
     required this.loading,
     required this.sharing,
@@ -275,6 +333,7 @@ class _EtaSection extends StatelessWidget {
   });
 
   final Trip trip;
+  final String myName;
   final List<MemberEta> etas;
   final bool loading;
   final bool sharing;
@@ -299,7 +358,7 @@ class _EtaSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final everyone = ['You', ...trip.members.map((m) => m.name)];
+    final everyone = [myName, ...trip.members.map((m) => m.name)];
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -370,12 +429,11 @@ class _EtaSection extends StatelessWidget {
 }
 
 class _MemberRow extends StatelessWidget {
-  const _MemberRow({required this.name, required this.initials, required this.status, required this.distance});
+  const _MemberRow({required this.name, required this.initials, required this.status});
 
   final String name;
   final String initials;
   final MemberStatus status;
-  final String distance;
 
   (Color, Color, String) _badge(BuildContext context) {
     switch (status) {
@@ -383,8 +441,6 @@ class _MemberRow extends StatelessWidget {
         return (context.colors.accentTint, context.colors.accent, 'Admin');
       case MemberStatus.member:
         return (context.colors.successBg, context.colors.success, 'Member');
-      case MemberStatus.invited:
-        return (context.colors.pendingBg, context.colors.textSecondary, 'Invited');
     }
   }
 
@@ -404,21 +460,15 @@ class _MemberRow extends StatelessWidget {
           ),
           const SizedBox(width: 10),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Row(
               children: [
-                Row(
-                  children: [
-                    Text(name, style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: context.colors.textPrimary)),
-                    const SizedBox(width: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(999)),
-                      child: Text(label, style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: fg)),
-                    ),
-                  ],
+                Text(name, style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: context.colors.textPrimary)),
+                const SizedBox(width: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                  decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(999)),
+                  child: Text(label, style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: fg)),
                 ),
-                Text('$distance from home', style: TextStyle(fontSize: 12, color: context.colors.textSecondary)),
               ],
             ),
           ),

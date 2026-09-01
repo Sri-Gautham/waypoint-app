@@ -145,6 +145,17 @@ class _TripsTabState extends State<TripsTab> {
         children: [
           Text('Trips', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: context.colors.textPrimary)),
           const SizedBox(height: 20),
+          if (appData.loading)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 32),
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else if (appData.trips.isEmpty)
+            Text(
+              'No trips yet — create a group or join one with a code from the Home tab.',
+              style: TextStyle(fontSize: 13, color: context.colors.textSecondary, height: 1.4),
+            )
+          else ...[
           const _SectionLabel('Upcoming'),
           const SizedBox(height: 10),
           for (final trip in appData.upcoming) ...[
@@ -181,6 +192,7 @@ class _TripsTabState extends State<TripsTab> {
                 onNavigate: _navigateTo,
               ),
             ),
+          ],
         ],
       ),
     );

@@ -27,11 +27,52 @@ class _HomeTabState extends State<HomeTab> {
   final _picker = ImagePicker();
   List<StoryItem> _stories = const [];
   bool _loadingStories = true;
+  bool _joiningTrip = false;
 
   @override
   void initState() {
     super.initState();
     _loadStories();
+  }
+
+  Future<void> _joinWithCode() async {
+    final controller = TextEditingController();
+    final code = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Join with code'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          textCapitalization: TextCapitalization.characters,
+          maxLength: 6,
+          decoration: const InputDecoration(hintText: 'e.g. AB3XQ9'),
+          onSubmitted: (value) => Navigator.of(context).pop(value),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.of(context).pop(controller.text), child: const Text('Join')),
+        ],
+      ),
+    );
+    // Not disposing `controller` here deliberately — same dialog-exit-
+    // transition disposal race documented on the status-line edit dialog
+    // in profile_tab.dart.
+    if (code == null || code.trim().isEmpty || !mounted) return;
+
+    setState(() => _joiningTrip = true);
+    final trip = await AppDataScope.of(context).joinTripWithCode(code.trim());
+    if (!mounted) return;
+    setState(() => _joiningTrip = false);
+    if (trip == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("That code didn't work — check it and try again.")),
+      );
+      return;
+    }
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => TripDetailScreen(trip: trip)),
+    );
   }
 
   Future<void> _loadStories() async {
@@ -165,13 +206,42 @@ class _HomeTabState extends State<HomeTab> {
             ],
           ),
           const SizedBox(height: 24),
-          TripHeroCard(
-            trip: trip,
-            eyebrow: 'NEXT TRIP',
-            onTap: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => TripDetailScreen(trip: trip)),
+          if (appData.loading)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 32),
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else if (trip != null)
+            TripHeroCard(
+              trip: trip,
+              eyebrow: 'NEXT TRIP',
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => TripDetailScreen(trip: trip)),
+              ),
+            )
+          else
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: context.colors.accentTint,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'No trips yet',
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: context.colors.textPrimary),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Create a group or join one with a code to get started.',
+                    style: TextStyle(fontSize: 13, color: context.colors.textSecondary, height: 1.4),
+                  ),
+                ],
+              ),
             ),
-          ),
           const SizedBox(height: 20),
           Row(
             children: [
@@ -187,9 +257,11 @@ class _HomeTabState extends State<HomeTab> {
               const SizedBox(width: 10),
               Expanded(
                 child: OutlinedButton(
-                  onPressed: null,
+                  onPressed: _joiningTrip ? null : _joinWithCode,
                   style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(44)),
-                  child: const Text('Join with code', style: TextStyle(fontSize: 13)),
+                  child: _joiningTrip
+                      ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                      : const Text('Join with code', style: TextStyle(fontSize: 13)),
                 ),
               ),
             ],

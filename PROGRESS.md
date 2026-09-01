@@ -6,6 +6,176 @@ unclear (e.g. after a compaction/restart) before assuming project state.
 Repo: https://github.com/Sri-Gautham/waypoint-app (private)
 Local path: `/Users/srigautham/Documents/My Projects/Personal Projects/travel-companion-app`
 
+## New feature: Real trip membership (Phase 1) — built, not yet QA-verified
+
+Follow-up to the status line/stories work, which both had to be scoped
+to self-only because trip membership was entirely mock. User asked to
+build real membership. This ballooned during scoping into something
+much bigger (email invites with auto-join-after-install, App Store
+Connect + TestFlight, Google Play Console, Branch.io-style deferred
+deep linking) — user chose to sequence this as **Phase 1: real
+membership + invite-by-code only, no external dependencies**, with
+Phase 2 (stores + deep linking + email invites) scoped separately
+later. Full plan is at the (session-local) plan file used to get
+approval; this entry documents what actually got built.
+
+**Decisions locked in during scoping**: invite-by-code only in this
+phase (no email sending); Charges/Payments migration to real member
+ids explicitly deferred (they still reference members by raw name
+string — a real but separate follow-up); the 3 hardcoded demo trips
+(`Trip.all`) removed entirely, not kept as a local demo alongside real
+ones — a fresh account now sees a genuine empty state.
+
+**Database** (all applied + verified live via Supabase MCP, not just
+written and assumed correct):
+- New `trips` table (name, notes, start/end date, destination fields,
+  `cover_preset`, a real unique `join_code`, `created_by`) and
+  `trip_members` (trip_id, user_id, role admin/member, joined_at).
+- Security-definer helper functions `is_trip_member(trip_id)` /
+  `is_trip_admin(trip_id)` avoid the classic RLS-self-reference-
+  recursion problem on `trip_members`' own SELECT policy — deliberately
+  take no `user_id` parameter (hardcode `auth.uid()` internally)
+  after a Plan-agent security review caught that a parameterized
+  version would itself be a callable RPC letting anyone probe "is user
+  Y on trip X" for an arbitrary pair.
+- `trip_members` has **no direct insert/update/delete policy for
+  clients at all** — Postgres default-denies with RLS on and no
+  matching policy, so every write goes through three RPCs instead:
+  `create_trip` (creates the trip + inserts the caller as admin,
+  atomically, with a join-code collision-retry loop), 
+  `redeem_trip_join_code` (case-insensitive lookup, idempotent
+  re-join via `on conflict do nothing`, and a brute-force throttle via
+  a small `join_attempts` table — max 10 attempts/user/minute, another
+  Plan-review finding), and `leave_trip` (deletes your own row; if
+  you're the last member the trip itself is deleted, cascading cleanup
+  to `trip_places`/`trip_day_status`; if you're the last admin but not
+  last member, auto-promotes the next member by join order).
+- **Tightened `trip_places`/`trip_day_status`** in the same feature —
+  both previously used deliberately loose "any signed-in user"
+  policies as an explicit interim placeholder until membership existed
+  for real. Verified both tables were empty (0 rows) before altering
+  `trip_id` from `text` to a real `uuid` FK against `trips(id)`, then
+  replaced ALL their policies (not just the ones that were `true`-
+  qualified — the INSERT policies were already scoped to the acting
+  user but not to trip membership, a second gap closed here) with
+  `is_trip_member`-based checks. **Caught and fixed a real mistake
+  mid-migration**: a first pass at dropping the old policies used
+  guessed policy names that didn't match the real ones, so `DROP
+  POLICY IF EXISTS` silently no-op'd and the loose policies were still
+  live — caught by re-querying `pg_policies` immediately after instead
+  of assuming the migration did what it said, fixed with the real
+  names in a follow-up migration, verified clean afterward.
+- `trip_members.user_id` points at `public.profiles(id)`, not
+  `auth.users(id)` — needed so PostgREST's embedded-select
+  (`trip_members(...profiles(first_name,last_name))`) can actually
+  detect the join; `auth.users` isn't exposed to PostgREST at all.
+  Safe 1:1 swap since every account gets a `profiles` row via the
+  existing `handle_new_user` trigger.
+
+**App code**:
+- `lib/models/trip.dart` — `Trip`/`TripMember` rewritten around real
+  data: `TripMember` gains `userId`, drops the mock `distance` field;
+  `MemberStatus.invited` removed entirely (a `trip_members` row only
+  ever exists once someone has actually redeemed a code — no
+  pending/invited state in this phase); `status`/`daysLeft` become
+  computed getters from a real `startDate` instead of stored fields;
+  new `Trip.fromRow` factory parses a Supabase embedded-select row,
+  splitting the roster into `myRole` (the signed-in user's own role)
+  and `members` (everyone else — kept as "everyone but you" to match
+  the convention chat/balances/trips-tab already assumed, avoiding a
+  much bigger ripple). All 3 hardcoded demo trips removed. `weatherTemp`/
+  `weatherCondition`/`etaLabel` stay as placeholder strings (no real
+  weather source — explicit non-goal); AI-generated cover bytes are
+  NOT persisted (`cover_preset` name is, actual generated image is
+  only kept for the current in-memory session right after creation).
+- `lib/services/trips_service.dart` (new) — `fetchMyTrips`,
+  `createTrip`, `redeemJoinCode`, `leaveTrip`, all thin wrappers over
+  the RPCs/embedded-select above.
+- `lib/state/app_data.dart` — was fully synchronous, seeded from
+  `Trip.all` (doc comment literally said "no backend yet"); now has a
+  `loading` flag and an async `loadTrips()`, `nextTrip` is nullable
+  (genuinely no trips is now a real, reachable state, not something
+  that could never happen with mock data always present).
+  `chargesByTrip`'s old seed data (`lib/data/sample_charges.dart`) was
+  keyed entirely to the now-deleted mock trip ids — deleted as
+  orphaned rather than left dead; `chargesByTrip` now starts empty.
+- `lib/main.dart` — `_StartupGate` awaits `AppData.loadTrips()` after
+  loading the profile (deliberately after that await, not before —
+  `AppDataScope.of(context)` can't be called synchronously during
+  `initState`).
+- `lib/screens/group/create_group_flow.dart` /
+  `steps/group_invite_step.dart` — "Create group" now calls the real
+  `TripsService.createTrip` (async, with a loading/error state) instead
+  of building a `Trip` purely in memory. The invite step lost its
+  entire previous purpose (a fake, never-persisted "invite code", plus
+  a contact-picker/manual-invitee UI that instantly fabricated fake
+  `MemberStatus.invited` "members" who'd never actually joined
+  anything — actively wrong under a real-membership model, not just
+  outdated) and is now a lightweight review-before-create step; the
+  real join code is surfaced afterward, from Trip Detail, once the
+  trip genuinely exists. `sample_contacts.dart` deleted as orphaned
+  (was only ever used by the removed contact picker).
+  `GroupDraft.manualInvitees`/`selectedContactIds` removed (unused).
+- `lib/screens/home/home_tab.dart` — the previously-dead "Join with
+  code" button now works: a dialog prompts for a code, calls
+  `AppData.joinTripWithCode`, navigates into the trip on success. Added
+  a loading state and a genuine "No trips yet" empty state for
+  `AppData.nextTrip` now being nullable.
+- `lib/screens/trips/trips_tab.dart` — added the same loading/empty
+  handling; the existing member-rendering code needed no changes since
+  `Trip.members`' shape/convention was deliberately preserved.
+- `lib/screens/trip/trip_detail_screen.dart` — the "You (Admin)" row
+  was hardcoded and the screen didn't even take a current-user param;
+  now resolves the real signed-in user's name/initials via
+  `AuthService.instance.loadProfile()` (matching the exact pattern
+  `_shareMyEta` in this same file already used, rather than threading a
+  new required param through every screen that constructs this one).
+  Added an "Invite" action (admin-only) opening a dialog with the
+  trip's real join code + copy button. `_MemberRow` dropped `distance`
+  and the `invited` badge case. Incidental correctness fix while
+  already touching "who is the current user" in this file: `_EtaSection`
+  previously hardcoded the literal string `'You'` as the self row's
+  name in its ETA list — since real ETA shares are written under your
+  actual profile name (see `_shareMyEta`), that self row would never
+  match after actually sharing an ETA with a real name set, silently
+  showing "Not shared yet" forever. Now passed the real resolved name.
+- `lib/screens/trip/chat_screen.dart` — dropped a
+  `.where((m) => m.status == MemberStatus.member)` filter that existed
+  to exclude fake invited-but-not-joined members; no longer needed
+  since every member row is real now.
+
+**Verification status**: `flutter analyze lib` clean throughout (fixed
+2 `use_build_context_synchronously` lints along the way — both genuine
+async-gap `BuildContext` uses after a `showDialog`/`await`, fixed with
+`mounted` checks, not suppressed). Full arm64 build succeeds, app
+installs and launches without crashing. Went further than the usual
+build-and-launch check given the stakes here (real RLS, real RPCs, a
+full model rewrite): used the established "temporarily render a screen
+directly from `main()`" technique to visually confirm, with fake data,
+that (1) `TripDetailScreen`'s new Members section renders the real
+"You" row with correct Admin badge, other members with correct Member
+badges, the right total count, and the admin-only "Invite" link, all
+without overflow; (2) Home's new empty state ("No trips yet" +
+enabled "Create a group"/"Join with code" buttons, both previously
+one of them dead) renders correctly; (3) Trips tab's empty-state
+message renders correctly. Reverted the debug harness cleanly each
+time (`git diff` confirmed no leftover diff in `main.dart` beyond the
+real `_StartupGate` change).
+
+**What's NOT verified and needs a real signed-in session** (standing
+constraint all session — no live session reachable via automation by
+me or QA so far): the actual `create_trip` → real join code →
+`redeem_trip_join_code` round trip end-to-end between two real
+accounts; that a third, uninvolved account genuinely cannot see a
+trip it's not a member of; that the join-code throttle actually
+triggers after 10 attempts; that `leave_trip`'s last-admin-promotion
+and last-member-deletes-the-trip paths behave as designed. Schema/RLS
+were verified directly via Supabase MCP (`list_tables`, `pg_policies`)
+the same way `trip_places`/`profiles` were earlier this session, which
+is a real but partial substitute — it confirms the policies exist and
+read correctly, not that the RPCs behave correctly under real
+concurrent use.
+
 ## New feature: Stories (24h photos) — self-only, QA-verified, done
 
 Third and last in the agreed build order (dark mode → status line →

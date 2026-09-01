@@ -60,12 +60,23 @@ class _StartupGate extends StatefulWidget {
 }
 
 class _StartupGateState extends State<_StartupGate> {
-  late final Future<Widget> _destination = _resolve();
+  late Future<Widget> _destination;
+
+  @override
+  void initState() {
+    super.initState();
+    _destination = _resolve();
+  }
 
   Future<Widget> _resolve() async {
     if (!AuthService.instance.isSignedIn) return const OnboardingFlow();
     try {
       final profile = await AuthService.instance.loadProfile();
+      if (!mounted) return const OnboardingFlow();
+      // Deliberately after the await above, not before — AppDataScope.of
+      // (an InheritedWidget lookup) can't be called synchronously during
+      // initState, only once the first build has happened.
+      await AppDataScope.of(context).loadTrips();
       return profile.faceIdEnabled ? FaceIdGateScreen(data: profile) : MainShell(data: profile);
     } catch (_) {
       return const OnboardingFlow();

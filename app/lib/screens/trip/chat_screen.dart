@@ -67,7 +67,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   String get _subtitle {
-    final accepted = ['You', ...widget.trip.members.where((m) => m.status == MemberStatus.member).map((m) => m.name)];
+    final accepted = ['You', ...widget.trip.members.map((m) => m.name)];
     if (accepted.length == 1) return accepted.first;
     return '${accepted.sublist(0, accepted.length - 1).join(', ')} & ${accepted.last}';
   }

@@ -61,40 +61,123 @@ remain the practical ceiling for those two specifically.
 
 ## Home tab (`HomeTab`)
 
+**Trips are now real and backend-persisted (see "Trip membership"
+below) — the 3 hardcoded demo trips (Lake Tahoe Crew, Weekend at the
+Cabin, Napa Wine Tour) are gone entirely.** A fresh/new account has
+zero trips until it actually creates or joins one — this is expected,
+not a bug, and is the main new thing to verify here.
+
+- Cold launch with no trips yet: instead of a hero card, a "No trips
+  yet" card with "Create a group or join one with a code to get
+  started" — confirm this shows instead of a blank space or a crash,
+  and that it's genuinely gone (replaced by the hero card) as soon as
+  you have a real trip.
+- A brief loading spinner should show where the hero card goes while
+  `AppData` fetches trips on startup — shouldn't flash empty-then-full
+  in a jarring way, and shouldn't hang indefinitely on a slow/offline
+  connection (confirm it eventually resolves to either a real trip or
+  the empty state, not stuck spinning forever).
 - Greeting shows the right first name and initials avatar.
-- "Next trip" hero card: landscape art renders (not blank/broken), correct
-  trip name/destination/date, avatar stack caps at 2 visible + a "+N"
-  overflow badge matching the actual remaining member count.
+- Once you have at least one trip: "Next trip" hero card — landscape
+  art renders, correct trip name/destination/date, avatar stack caps
+  at 2 visible + a "+N" overflow badge matching the actual remaining
+  member count (this will just be you until someone else joins via a
+  real code — see below).
 - Tapping the hero card opens Trip Detail for that trip.
-- "Create a group" now opens the real `CreateGroupFlow` wizard (see new
-  section below) — no longer disabled. "Join with code" is still visibly
-  disabled — confirm it doesn't crash or silently no-op with a stray
-  console error.
-- Recent activity list renders all sample items.
-- After creating a group (see below), Home's hero card should immediately
-  show the NEW trip, not the old default (Lake Tahoe Crew) — `AppData`'s
-  `nextTrip` is the first `upcoming` trip and newly created trips are
-  inserted at the front.
+- "Create a group" opens the real `CreateGroupFlow` wizard (see its
+  section below, substantially rewritten). "Join with code" is now
+  **enabled** (previously permanently disabled) — tapping it opens a
+  dialog prompting for a 6-character code; see "Trip membership" below
+  for what to verify there.
+- Recent activity list still renders sample/placeholder items —
+  unrelated to real trips, not backed by anything yet, unchanged from
+  before.
+
+## Trip membership (new) — join codes, real roster, RLS
+
+The core of this batch of work: trips and their membership are now a
+real Supabase backend (`trips`/`trip_members` tables + `create_trip`/
+`redeem_trip_join_code`/`leave_trip` RPCs) instead of hardcoded mock
+data. I could not drive the actual create → get code → redeem code
+round trip myself — no real signed-in Simulator session has been
+reachable via automation all session — so this needs a genuine
+first-look pass, ideally with **two real signed-in accounts** if you
+can get them, since several of the most important things to verify
+only show up with a second account involved.
+
+- **Create → join round trip (needs 2 accounts)**: Account A creates a
+  trip, opens its "Invite" dialog (next to the member count on Trip
+  Detail — only visible to the admin), copies the code. Account B taps
+  "Join with code" on Home, enters it, and should land on that trip's
+  Detail screen with both accounts now showing in the Members list —
+  A as Admin, B as Member. Re-fetching (e.g. force-quit and relaunch)
+  on either account should show the same up-to-date roster for both.
+- **Invalid/garbage code**: entering a code that doesn't match any
+  trip shows a clear inline/snackbar error ("That code didn't work"),
+  not a crash or a silent no-op.
+- **Re-joining a trip you're already in**: entering a code for a trip
+  you already belong to should be a harmless no-op (still lands you on
+  that trip, doesn't create a duplicate membership row or error out) —
+  this is the `on conflict do nothing` behavior in
+  `redeem_trip_join_code`, worth confirming it actually holds.
+- **Throttling**: entering wrong codes rapidly more than ~10 times in
+  a minute should eventually surface a "too many attempts" style error
+  instead of continuing to just say "invalid code" — a lower-priority
+  check, but worth trying if you have time, since it's a real security
+  mechanism (brute-force protection on the join code) and easy to miss
+  if it's silently not firing.
+- **Isolation (needs a 3rd, uninvolved account or a Supabase dashboard
+  spot-check)**: an account that was never invited to a trip and never
+  redeemed its code should NOT be able to see that trip at all —
+  neither in its own Trips list nor by any other means. This is the
+  main security property this whole feature exists to enforce; if
+  you have Supabase dashboard access, cross-checking
+  `select * from trips` / `trip_members` against what each test
+  account's app actually shows is a good substitute if a 3rd real
+  account isn't available.
+- **Leaving a trip**: not yet wired up to any UI button (the
+  `leave_trip` RPC exists but there's no "Leave trip" action in the
+  app yet in this phase) — nothing to check here beyond confirming its
+  absence isn't accidentally causing a crash somewhere; it's simply
+  not built yet, by design.
 
 ## Trip Detail (`TripDetailScreen`)
 
-- Hero image shows the days-left badge (top-right) and destination + date +
-  ETA (bottom-left) — values match the `Trip` passed in.
+- Hero image shows the days-left badge (top-right) and destination + date
+  (bottom-left) — values match the `Trip` passed in. The "ETA —" line
+  underneath is a decorative placeholder (no real data source, always
+  "—" — not a bug), separate from the real per-user ETA-sharing section
+  further down.
 - "Start" button shows a snackbar placeholder, no crash (real navigation
   deep-link is a future task).
-- Weather card shows the trip's temp/condition.
-- Members section: admin (You) + every `TripMember`, each with the correct
-  status badge (Admin/Member/Invited) and distance text.
+- Weather card always shows "—°F" / "Forecast pending" — decorative
+  placeholder, no real weather source, same as the ETA line above.
+- **Members section (rewritten — real data now)**: "You" row shows your
+  actual name and initials (resolved via your profile, not a hardcoded
+  "You (Admin)"/"ME") with an Admin or Member badge matching your real
+  role on that trip; every other real member shows their actual name
+  and a Member (or Admin, if they are one) badge. No more "Invited"
+  badge state (removed — a member row only ever exists once someone
+  has actually joined) and no more "X mi from home" distance line
+  under each name (removed — was always mock data, never backed by
+  anything real). The member count next to the "Members" heading
+  should read `N total` where N = your real trip's member count.
+- **"Invite" link (new, admin-only)**: appears next to the member count
+  only when your role on that trip is Admin — not for a Member. Tapping
+  it opens a dialog showing the trip's real join code with a "Copy"
+  button; confirm the copied value actually matches what's on screen
+  (paste it somewhere to check) and that "Done" closes the dialog
+  cleanly.
 - Chat icon opens `ChatScreen` for the same trip.
 
-### Today's ETAs (new — only shows on trip day)
+### Today's ETAs (only shows on trip day)
 
-None of the 3 seeded sample trips are dated today, so this section won't
-appear on them — **create a new trip via the group wizard with today's
-date** (Home > Create a group > pick today in the date picker) to test it.
-It should appear between the weather/Start row and Members, and NOT
-appear at all on any trip whose date isn't today (including all 3 seeded
-trips) or on past trips.
+There are no more seeded sample trips to test this against — **create a
+new trip via the group wizard with today's date** (Home > Create a
+group > pick today in the date picker) to test it; this is now the
+only way to get any trip at all, seeded or otherwise. It should appear
+between the weather/Start row and Members, and NOT appear at all on
+any trip whose date isn't today or on past trips.
 
 - Tapping "Share my ETA" triggers the OS location-permission prompt the
   first time (can't be driven by `integration_test` — check it appears
@@ -102,11 +185,12 @@ trips) or on past trips.
   hanging or crashing). Granting it (or pre-granting via Simulator's
   Settings app, or `xcrun simctl privacy <udid> grant location
   com.srigautham.waypoint` beforehand) should let the flow complete.
-- On success: the button relabels to "Update my ETA (N min)", "You" in
-  the list below shows that same value + "just now", and every other
-  listed member shows "Not shared yet" (there's no real second account
-  sharing into the same trip in this environment, so that's the expected
-  steady state, not a bug).
+- On success: the button relabels to "Update my ETA (N min)", **your
+  real name** (not the literal string "You" — this now resolves your
+  actual profile name, same fix as the Members section above) in the
+  list below shows that same value + "just now", and every other
+  listed member shows "Not shared yet" unless a second real account
+  has also shared into the same trip.
 - Tapping "Update my ETA" again re-shares (button shows a spinner, no
   double-fire if tapped rapidly) and the "just now"/minute-count should
   refresh.
@@ -154,14 +238,20 @@ trips) or on past trips.
 
 ## Trips tab (`TripsTab`)
 
+**No more seeded trips** — same as Home, this tab shows a genuine "No
+trips yet" message (not a hero card) until the account has actually
+created or joined at least one real trip, and a loading spinner
+briefly while `AppData` fetches on startup. Confirm both states render
+correctly rather than assuming trips are always present, which every
+older note below was written against.
+
 - Upcoming section: one hero card per upcoming `Trip`, correct cover art per
   trip (they should look visibly different, not all the same palette),
   avatar overlap + overflow badge correct per trip.
 - Tapping an Upcoming card's hero image opens Trip Detail: for the trip
-  matching Home's current `activeGroup`-equivalent (Lake Tahoe Crew) it
-  should show the same data as Home's card; for a *different* trip it
-  should construct fresh detail data without crashing or showing
-  stale/wrong info.
+  matching Home's current next-trip hero card, it should show the same
+  data as Home's card; for a *different* trip it should construct fresh
+  detail data without crashing or showing stale/wrong info.
 - **New**: below each Upcoming hero card, a separate "Details ▾" row
   toggles inline expansion (Members + Things to do nearby — see below).
   Tapping this row must NOT also navigate to Trip Detail (separate tap
@@ -177,9 +267,12 @@ trips) or on past trips.
 - **Trip Memories (new)**: cover art (same image/illustration as the
   card's own cover), "TRIP MEMORIES" label, destination + date line
   overlaid on it. Below that, two stat tiles: "Total spent" (sum of every
-  charge for that trip — cross-check against `sample_charges.dart`'s `t3`
-  entries for the seeded past trip, should be a real non-zero dollar
-  figure, not $0.00) and "Photos" (matches the photo count shown in the
+  charge for that trip — there's no more seeded past trip with mock
+  charges to check this against; create one with yesterday as its start
+  date (see the Cross-cutting note on this below) to get a real Past
+  trip, add a few expenses to it, and confirm the tile matches, not
+  $0.00 despite real entries existing) and "Photos" (matches the photo
+  count shown in the
   Photos section below it exactly, including after adding a new photo —
   expand/collapse and re-expand to confirm it updates, doesn't just
   reflect the count from when the card first rendered).
@@ -232,10 +325,16 @@ bug if so, just means the key hasn't been added yet.
 
 ## Balances tab (`BalancesTab`)
 
+**`sample_charges.dart` (previously seeded mock charges for the 3
+hardcoded demo trips) was deleted** along with those trips — it was
+keyed entirely to trip ids that no longer exist. Every real trip now
+starts with genuinely zero charges (`AppData.chargesByTrip` starts
+empty), so there's no pre-seeded arithmetic to spot-check against
+anymore — add a few expenses manually via "Add expense" first, then
+verify the totals below against what you just entered by hand.
+
 - Overall balance card: net amount is the correct cross-trip,
-  payment-adjusted aggregate — spot-check the arithmetic against the seeded
-  charges in `sample_charges.dart` (worth hardcoding an expected value in an
-  automated test rather than re-deriving it by hand each run).
+  payment-adjusted aggregate.
 - Upcoming/Past filter toggle switches the visible trip list.
 - Each trip card's balance is per-trip only (not payment-adjusted, matches
   the design's intentional scoping) and its label/color match the sign
@@ -265,8 +364,7 @@ bug if so, just means the key hasn't been added yet.
   cancelling, it should still work normally, not be stuck half-swiped);
   Delete removes it immediately, and both the trip's balance and the
   Balances tab's overall balance update right away, matching what a
-  manual recompute would give (spot-check against `sample_charges.dart`
-  minus the deleted entry).
+  manual recompute would give against whatever expenses you'd entered.
 - **Scan receipt (new)**: the "Scan" button at the top of the sheet opens
   the same Library/Camera choice sheet as the Trips tab's photo picker.
   After picking a photo: a small thumbnail replaces the receipt icon, the
@@ -289,59 +387,50 @@ bug if so, just means the key hasn't been added yet.
   balance, flips their row to "Settled up" once fully paid, and the
   Balances tab's overall card reflects the change after returning to it.
 
-## Group creation (`CreateGroupFlow`)
+## Group creation (`CreateGroupFlow`) — now creates a real, backend-persisted trip
+
+**Rewritten along with trip membership becoming real (see the new
+"Trip membership" section below and `PROGRESS.md`) — this replaces the
+previous checklist entry for this flow, don't assume the old
+invite-code/contact-picker behavior described in prior checklist
+revisions still applies. It doesn't; that UI was removed.**
 
 Reached via Home's "Create a group" button. 3 steps, back-button behavior:
 tapping back on step 1 pops the whole flow (returns to Home); on steps 2/3
 it goes to the previous step without losing entered data.
 
-- **Step 1 (Basics)**: header shows "1 / 3". 4 cover swatches (Mountain
-  Lake / Beach / Desert / Forest), each a distinct icon+color; tapping one
-  selects it (ring border) and deselects the others — exactly one selected
-  at a time. Trip name and Notes fields accept input. Start/End date
-  fields open a native date picker on tap and display the picked date
-  (format "Sat, Sep 6"); End date is optional.
-- **Step 2 (Destination)**: has a new "Generate cover" card below the
-  address fields. Tapping "Generate" with no city/trip name entered shows
-  an inline error instead of crashing. On iOS Simulator, generation will
-  report unavailable (Image Playground needs a real Apple-Intelligence-
-  capable device) — expect a "This device can't generate covers" message,
-  not a crash; this is expected in Simulator, not a bug. On Android it
-  needs an Unsplash API key that isn't configured yet (see `PROGRESS.md`)
-  — expect "Cover photos aren't set up on Android yet", also expected.
-  Either way, the 4 preset swatches in Step 1 still work as the fallback
-  cover, and picking one after a (hypothetical) successful generation
-  should clear the generated cover per the UI's own wording.
-
-  Separately, the General area/Exact address toggle — General area is
-  selected by default. Switching to
-  Exact address reveals Street address + Apt/Unit fields above City;
-  switching back to General area hides them again (and their entered
-  values, if any, shouldn't cause a crash when hidden then re-shown).
-  City/State fields always visible; ZIP is optional in both modes.
-- **Step 3 (Invite)**: header shows "3 / 3". Invite code display derives
-  from the trip name typed in step 1 (falls back to "TRIP-482" if no name
-  was entered) — check it updates if you go back and change the name.
-  "Copy" copies the code to the clipboard and shows "Copied!" briefly,
-  then reverts to "Copy". Adding a phone/email via the text field creates
-  a removable chip below it (tap the chip's X to remove); the input clears
-  after adding. All 5 sample contacts are listed with checkboxes;
-  selecting/deselecting them doesn't affect the manual-invite chips or
-  vice versa. "Create group" is always enabled (no required fields on
-  this step).
-- **On "Create group"**: navigates to that new trip's Trip Detail screen
-  (not back to Home) — the back button from there should return to Home,
-  not back into the wizard. The new trip should immediately be visible on:
-  Home's hero card (see note in Home section above), Trips tab's Upcoming
-  list, and Balances tab's Upcoming list (with $0 balance / "Settled up"
-  and an empty Activity list, since it starts with no charges — "Add
-  expense" should still work against it like any other trip).
-- **Edge cases worth checking**: creating a group with an empty trip name
-  (should fall back to "My Trip"), with no destination fields filled
-  (should show "Destination TBD"), with no start date (should show "Date
-  TBD" and not crash computing days-left), and with zero invitees selected
-  (should create successfully with just you as a member, "1 total" on its
-  Trip Detail).
+- **Step 1 (Basics)**: unchanged from before — header "1 / 3", 4 cover
+  swatches (Mountain Lake / Beach / Desert / Forest) with exclusive
+  selection, Trip name / Notes fields, Start/End date pickers (End
+  optional).
+- **Step 2 (Destination)**: unchanged — "Generate cover" card (expect
+  "can't generate" on Simulator, not a crash), General area/Exact
+  address toggle (Exact reveals Street/Apt above City), City/State
+  always visible, ZIP optional both modes.
+- **Step 3 — now "Review & create", not "Invite members"**: no invite
+  code shown here anymore (there's nothing to show one for yet — the
+  trip doesn't exist until you tap Create), no contact picker, no
+  manual phone/email chips — all removed since they never did anything
+  real. Instead: a review card showing the trip name, destination line,
+  date range, and notes (if any) exactly as they'll be created. "Create
+  group" shows a spinner while the request is in flight and is disabled
+  during it (can't double-tap-create); on failure shows an inline error
+  and stays on this step so you can retry, rather than losing your
+  entered data.
+- **On successful "Create group"**: navigates to the new trip's Trip
+  Detail screen (not back to Home) — confirm you land there with the
+  trip you just described, showing "1 total" member (just you, as
+  Admin), and a real join code visible via the new "Invite" link next
+  to the member count (see "Trip membership" section). Back from there
+  returns to Home, not into the wizard. The new trip should appear on:
+  Home's hero card, Trips tab's Upcoming list, and Balances tab's
+  Upcoming list ($0 balance / "Settled up", empty Activity, "Add
+  expense" still works against it).
+- **Edge cases worth checking**: empty trip name falls back to "My
+  Trip"; no destination fields filled shows "Destination TBD"; no start
+  date shows "Date TBD" and doesn't crash computing days-left; a
+  network failure on Create (e.g. airplane mode) shows the inline error
+  rather than crashing or silently doing nothing.
 
 ## Stories (new) — self-only, 24h photos, first-look QA needed
 
@@ -468,9 +557,14 @@ unreadable low-contrast text in dark mode specifically.
   state instead of `AppDataScope.of(context)`.
 
 - No uncaught exceptions/red screens in the console across the full flow:
-  cold launch → onboarding → Home → Trip Detail → Chat → back → Trips tab →
-  expand a past trip → Balances tab → Add Expense → Settle Now → Settle Up →
-  back.
+  cold launch → onboarding → Home (now: **create a group first** — there's
+  no seeded trip to walk through anymore) → Trip Detail → Chat → back →
+  Trips tab → Balances tab → Add Expense → Settle Now → Settle Up → back.
+  ("Expand a past trip" from the old version of this checklist is still
+  reachable — the date picker in step 1 allows picking yesterday as the
+  start date, which is enough to make a freshly-created trip show as
+  Past immediately; use that to get a real past trip to test against
+  rather than needing a Supabase dashboard backdate.)
 - No `RenderFlex overflow` or similar layout warnings on any screen at
   standard simulator sizes.
 - Text input fields (Add Expense amount/description, Home Address fields,
