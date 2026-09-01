@@ -6,7 +6,7 @@ unclear (e.g. after a compaction/restart) before assuming project state.
 Repo: https://github.com/Sri-Gautham/waypoint-app (private)
 Local path: `/Users/srigautham/Documents/My Projects/Personal Projects/travel-companion-app`
 
-## New feature: Stories (24h photos) — self-only, built, not yet QA-verified
+## New feature: Stories (24h photos) — self-only, bug found + fixed, back with QA
 
 Third and last in the agreed build order (dark mode → status line →
 stories). Originally scoped as "global, across all your trips" during
@@ -76,6 +76,48 @@ first-look QA pass — added a "Stories (new)" section to
 `docs/QA_CHECKLIST.md`. Worth a real signed-in-session spot check of
 the Storage bucket + RLS too, same open item as `trip_places`' still-
 unverified live write/read/remove round trip.
+
+**QA pass on `fa779b9` — one real bug found, since fixed; everything
+else clean.** Schema/RLS confirmed correct via Supabase MCP (`stories`
+strictly owner-only on SELECT/INSERT/DELETE, the `stories` Storage
+bucket's objects policies scoped to the first path segment matching
+`auth.uid()`, matching `addStory()`'s `<user_id>/<timestamp>.jpg`
+convention — first use of Storage in this app went in cleanly). 24h
+expiry math checked correct. Home tab's no-active-story entry point
+(the only path testable without a real session) confirmed clean: no
+ring, no "+" badge, tap opens the add-photo sheet, dismisses without
+error.
+
+**Bug**: `story_viewer_screen.dart`'s `_confirmDelete()` calls
+`_controller.stop()` before the confirm dialog opens, and only ever
+resumes it (`.forward()`) on Cancel or on a successful delete — a
+*failed* delete (`if (!ok) return;`) left the method returning with
+the controller still stopped and nothing left to resume it. QA
+confirmed this dynamically (not just by reading): `deleteStory()`
+against an unauthenticated client fails every time, which made the
+failure path directly reproducible without a real session — opened
+the viewer, let autoplay start, triggered a delete that failed,
+then sampled the progress bar for 6+ seconds (more than a full 5s
+segment) and it never moved. Not a rare edge case either — any
+transient network hiccup during a real delete hits this same path,
+since `deleteStory()` swallows exceptions and just returns `false`.
+Manual tap-left/right still worked fine throughout (goes through
+`_loadAndPlay`, which does resume the controller) — it was
+specifically autoplay that got stuck, silently, until a manual tap.
+
+**Fix**: resume the controller on the failure path too
+(`_controller.forward()` before returning), same as the existing
+Cancel branch. `flutter analyze lib` clean, arm64 build succeeds. Sent
+back to QA to confirm.
+
+Still not verifiable by anyone via automation (standing constraints,
+not new): the native photo-picker UI itself (same class of blocker as
+Apple/Google sign-in), the active-story path end-to-end (ring, "+"
+badge, playback of a real photo, restart-persistence — all need a
+real signed-in session with a real photo added), and a cross-account
+RLS spot-check (needs two real accounts). The static RLS policy read
+is the best available substitute for that last one and it looks
+correct.
 
 ## New feature: Persistent status line — QA-verified, done
 

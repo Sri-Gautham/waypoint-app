@@ -103,7 +103,14 @@ class _StoryViewerScreenState extends State<StoryViewerScreen> with SingleTicker
     final ok = await StoriesService.instance.deleteStory(_current);
     if (!mounted) return;
     setState(() => _deleting = false);
-    if (!ok) return;
+    if (!ok) {
+      // Resume autoplay same as a cancelled delete — otherwise a failed
+      // delete (e.g. a transient network error) leaves the current
+      // segment's progress permanently stalled with no way to recover
+      // except a manual tap.
+      _controller.forward();
+      return;
+    }
 
     if (_stories.length == 1) {
       Navigator.of(context).pop();
