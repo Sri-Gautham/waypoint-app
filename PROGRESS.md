@@ -6,7 +6,7 @@ unclear (e.g. after a compaction/restart) before assuming project state.
 Repo: https://github.com/Sri-Gautham/waypoint-app (private)
 Local path: `/Users/srigautham/Documents/My Projects/Personal Projects/travel-companion-app`
 
-## New feature: Real trip membership (Phase 1) — 1 hardening gap + 2 client bugs found and fixed, back with QA
+## New feature: Real trip membership (Phase 1) — QA-verified, done (with one standing caveat)
 
 Follow-up to the status line/stories work, which both had to be scoped
 to self-only because trip membership was entirely mock. User asked to
@@ -240,6 +240,41 @@ constraint on dynamic reproduction as everything else)**:
 `flutter analyze lib` clean, arm64 build succeeds, app launches
 without crashing. Sent back to QA to confirm both the grant fix and
 the two client-side fixes.
+
+**Re-check on `08ea085` — confirmed, with one item honestly flagged as
+unverifiable here rather than glossed over.** Anon-grant revoke
+confirmed two ways: `information_schema.routine_privileges` now shows
+only `authenticated`/`postgres`/`service_role` on all 5 functions, and
+QA re-ran the same empirical anonymous-`curl` probe from the first
+pass — all 5 now return a clean `permission denied for function
+<name>` (401) instead of getting far enough to hit the old `NOT NULL`
+errors. Solid, closed.
+
+The join-code error-message plumbing (`JoinCodeResult`/
+`JoinCodeFailureReason`) was verified fully end-to-end through the
+real UI — tapped "Join with code" and confirmed it shows "Sign in
+again to join a trip." (the `notSignedIn`-specific message) rather
+than the old generic one, real evidence the switch statement and the
+`AppData` → `HomeTab` threading are wired correctly.
+
+The re-join dedup fix specifically **could not be dynamically
+verified** — QA was upfront about why rather than claiming a pass it
+didn't earn: `AppData.joinTripWithCode` always goes through the real
+`TripsService.redeemJoinCode` → the real RPC, and without a live
+signed-in session that call can only ever resolve to
+`JoinCodeFailureReason.notSignedIn` — the dedup branch itself never
+executes in QA's harness no matter how the test is set up, since
+there's no way to fabricate a real "already joined" service response
+without either a real account or a test seam that isn't QA's to add.
+Confirmed correct by reading the diff (the `!trips.any(...)` guard and
+`putIfAbsent` are both right), not by reproducing the original bug and
+watching it stop happening. **This remains the one genuinely open
+item on Phase 1** — closing it needs two real signed-in test accounts:
+join the same trip twice on one of them and confirm no duplicate card
+appears in Trips tab. Same standing constraint as the create→join
+round trip and the isolation check noted earlier in this section.
+
+**Phase 1 is done.** Pushed to `origin/main` — see commit log.
 
 ## New feature: Stories (24h photos) — self-only, QA-verified, done
 
